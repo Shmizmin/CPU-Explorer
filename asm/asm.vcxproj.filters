@@ -39,23 +39,12 @@
     <ClCompile Include="src\assert.cpp">
       <Filter>Header Files\cpp</Filter>
     </ClCompile>
-    <ClCompile Include="lexer.ixx">
+    <ClCompile Include="src\filerator.ixx">
       <Filter>Module Files\ixx</Filter>
     </ClCompile>
-    <ClCompile Include="filerator.ixx">
-      <Filter>Module Files\ixx</Filter>
-    </ClCompile>
-    <ClCompile Include="filerator.cpp">
+    <ClCompile Include="src\filerator.cpp">
       <Filter>Module Files\cpp</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="licensing.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-    <Text Include="documentation.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\assert.hpp">
@@ -64,5 +53,13 @@
     <ClInclude Include="src\literals.hpp">
       <Filter>Header Files\hpp</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="docs\documentation.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="docs\licensing.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

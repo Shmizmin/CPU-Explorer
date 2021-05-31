@@ -1,7 +1,7 @@
 {
     "Version": "1.1",
     "Data": {
-        "Source": "c:\\users\\connor\\desktop\\cpu-explorer\\asm\\filerator.ixx",
+        "Source": "c:\\users\\connor\\desktop\\cpu-explorer\\asm\\src\\filerator.ixx",
         "ProvidedModule": "filerator",
         "ImportedModules": [
             "common"

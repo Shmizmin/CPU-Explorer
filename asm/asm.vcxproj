@@ -176,20 +176,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="filerator.cpp" />
-    <ClCompile Include="filerator.ixx" />
-    <ClCompile Include="lexer.ixx" />
     <ClCompile Include="src\assert.cpp" />
     <ClCompile Include="src\common.ixx" />
+    <ClCompile Include="src\filerator.cpp" />
+    <ClCompile Include="src\filerator.ixx" />
     <ClCompile Include="src\main.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="documentation.txt" />
-    <Text Include="licensing.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\assert.hpp" />
     <ClInclude Include="src\literals.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="docs\documentation.txt" />
+    <Text Include="docs\licensing.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
