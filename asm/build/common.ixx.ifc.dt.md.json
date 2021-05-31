@@ -1,0 +1,17 @@
+{
+    "Version": "1.1",
+    "Data": {
+        "Source": "c:\\users\\connor\\desktop\\cpu-explorer\\asm\\src\\common.ixx",
+        "ProvidedModule": "common",
+        "ImportedModules": [
+            "std.core",
+            "std.regex",
+            "std.memory",
+            "std.threading"
+        ],
+        "ImportedHeaderUnits": [
+            "C:\\Users\\Connor\\Desktop\\cpu-explorer\\asm\\src\\literals.hpp",
+            "C:\\Users\\Connor\\Desktop\\cpu-explorer\\asm\\src\\assert.hpp"
+        ]
+    }
+}

@@ -1,0 +1,40 @@
+{
+    "Version": "1.1",
+    "Data": {
+        "Source": "c:\\users\\connor\\desktop\\cpu-explorer\\asm\\filerator.ixx",
+        "ProvidedModule": "filerator",
+        "Includes": [],
+        "ImportedModules": [
+            {
+                "Name": "common",
+                "BMI": "C:\\Users\\Connor\\Desktop\\cpu-explorer\\asm\\build\\common.ixx.ifc"
+            },
+            {
+                "Name": "std.core",
+                "BMI": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Preview\\VC\\Tools\\MSVC\\14.29.30129\\ifc\\x64\\release\\std.core.ifc"
+            },
+            {
+                "Name": "std.memory",
+                "BMI": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Preview\\VC\\Tools\\MSVC\\14.29.30129\\ifc\\x64\\release\\std.memory.ifc"
+            },
+            {
+                "Name": "std.regex",
+                "BMI": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Preview\\VC\\Tools\\MSVC\\14.29.30129\\ifc\\x64\\release\\std.regex.ifc"
+            },
+            {
+                "Name": "std.threading",
+                "BMI": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Preview\\VC\\Tools\\MSVC\\14.29.30129\\ifc\\x64\\release\\std.threading.ifc"
+            }
+        ],
+        "ImportedHeaderUnits": [
+            {
+                "Header": "c:\\users\\connor\\desktop\\cpu-explorer\\asm\\src\\assert.hpp",
+                "BMI": "C:\\Users\\Connor\\Desktop\\cpu-explorer\\asm\\build\\assert.hpp_VWTSDFVFPCGEJDID.ifc"
+            },
+            {
+                "Header": "c:\\users\\connor\\desktop\\cpu-explorer\\asm\\src\\literals.hpp",
+                "BMI": "C:\\Users\\Connor\\Desktop\\cpu-explorer\\asm\\build\\literals.hpp_NT8XMPJ9TD3BF1TW.ifc"
+            }
+        ]
+    }
+}

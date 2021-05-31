@@ -1,0 +1,9 @@
+{
+    "Version": "1.1",
+    "Data": {
+        "Source": "c:\\users\\connor\\desktop\\cpu-explorer\\asm\\lexer.ixx",
+        "ProvidedModule": "lexer",
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

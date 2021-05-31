@@ -1,0 +1,5 @@
+Exit Codes:
+	Code 00: successful program execution
+	Code 01: unspecified runtime error
+	
+	Code 10: the specified file does not exist

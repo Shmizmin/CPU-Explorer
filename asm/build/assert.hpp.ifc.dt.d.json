@@ -1,0 +1,10 @@
+{
+    "Version": "1.1",
+    "Data": {
+        "Source": "c:\\users\\connor\\desktop\\cpu-explorer\\asm\\src\\assert.hpp",
+        "ProvidedModule": "",
+        "Includes": [],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\hpp">
+      <UniqueIdentifier>{64297158-6678-4e9d-8235-1b4a3b5df918}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\cpp">
+      <UniqueIdentifier>{2bca5613-6ba9-472f-8297-34ab190b3205}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Module Files">
+      <UniqueIdentifier>{fe22d92d-c473-4ef4-9302-2ac85bd5e5ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Module Files\ixx">
+      <UniqueIdentifier>{3a772836-0907-4ef2-bea9-7fdb87c99df4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Module Files\cpp">
+      <UniqueIdentifier>{cccfa921-d9d7-4916-a784-82895a8cdd13}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assert.cpp">
+      <Filter>Header Files\cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="lexer.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="filerator.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="filerator.cpp">
+      <Filter>Module Files\cpp</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="licensing.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="documentation.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\assert.hpp">
+      <Filter>Header Files\hpp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\literals.hpp">
+      <Filter>Header Files\hpp</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
