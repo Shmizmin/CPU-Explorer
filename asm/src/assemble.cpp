@@ -102,33 +102,141 @@ namespace
 	}
 
 	//extract operand encoding type
-	auto get_encoding_type(std::array<std::string, 3_uz> operands) noexcept
+	auto get_encoding_type(auto operands) noexcept
 	{
-		const auto& op1 = std::get<1_uz>(operands);
-		const auto& op2 = std::get<2_uz>(operands);
+		const auto&[instruction, op1, op2] = operands;
+		auto encoding = ::Operands::NONE;
+		using enum Operands;
 
-		switch (op1[0])
+		if (op1.matched)
 		{
-		case 'r':
-			switch (op2[0])
+			switch (op1.str()[0])
 			{
-				case 'r':
-					break;
+			case 'r':
+				if (!op2.matched)
+				{
+					switch (op1.str()[1])
+					{
+						case '0': encoding = R0; break;
+						case '1': encoding = R1; break;
+						case '2': encoding = R2; break;
+					}
+				}
 
-				case '#':
-					break;
+				else
+				{
+					switch (op2.str()[0])
+					{
+						case 'r':
+								 if (op1.str() == "r0" && op2.str() == "r0") encoding = R0_R0;
+							else if (op1.str() == "r0" && op2.str() == "r1") encoding = R0_R1;
+							else if (op1.str() == "r0" && op2.str() == "r2") encoding = R0_R2;
 
-				case '$':
-					break;
+							else if (op1.str() == "r1" && op2.str() == "r0") encoding = R1_R0;
+							else if (op1.str() == "r1" && op2.str() == "r1") encoding = R1_R1;
+							else if (op1.str() == "r1" && op2.str() == "r2") encoding = R1_R2;
+
+							else if (op1.str() == "r2" && op2.str() == "r0") encoding = R2_R0;
+							else if (op1.str() == "r2" && op2.str() == "r1") encoding = R2_R1;
+							else if (op1.str() == "r2" && op2.str() == "r2") encoding = R2_R2;
+
+							break;
+
+						case '#':
+							switch (op1.str()[1])
+							{
+								case '0': encoding = R0_IMM; break;
+								case '1': encoding = R1_IMM; break;
+								case '2': encoding = R2_IMM; break;
+							}
+							break;
+
+						case '%':
+							switch (op1.str()[1])
+							{
+								case '0': encoding = R0_MEM; break;
+								case '1': encoding = R1_MEM; break;
+								case '2': encoding = R2_MEM; break;
+							}
+							break;
+					}
+				}
+				break;
+
+			case '#':
+				if (!op2.matched)
+				{
+					encoding = IMM;
+				}
+				break;
+
+			case '%':
+				if (!op2.matched)
+				{
+					encoding = MEM;
+				}
+
+				else if (op2.str()[0] == 'r')
+				{
+					switch (op2.str()[1])
+					{
+						case '0': encoding = MEM_R0; break;
+						case '1': encoding = MEM_R1; break;
+						case '2': encoding = MEM_R2; break;
+					}
+				}
+				break;
+
+			case 'd':
+				encoding = DISCARD;
+				break;
+
+			case 'i':
+				encoding = IP;
+				break;
+
+			case 'f':
+				encoding = FLAGS;
+				break;
+
+			case 'S':
+				if (!op2.matched)
+				{
+					encoding = SP;
+				}
+
+				else
+				{
+					switch (op2.str()[0])
+					{
+					case 'r':
+						switch (op2.str()[1])
+						{
+							case '0': encoding = SP_R0; break;
+							case '1': encoding = SP_R1; break;
+							case '2': encoding = SP_R2; break;
+						}
+						break;
+
+					case '#':
+						encoding = SP_IMM;
+						break;
+
+					case '%':
+						encoding = SP_MEM;
+						break;
+					}
+				}
+				break;
 			}
-			break;
-
-		case '#':
-			break;
-
-		case '$':
-			break;
 		}
+
+		else
+		{
+			encoding = NONE;
+		}
+
+		return encoding;
 	}
 
 #pragma warning(push)
@@ -294,7 +402,6 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 	for (auto&& line : lines)
 	{
 		auto f = find_operands(line);
-		f[1] = "";
 
 
 		switch (line[0])
