@@ -3,3 +3,14 @@ Exit Codes:
 	Code 01: unspecified runtime error
 	
 	Code 10: the specified file does not exist
+	Code 11: an invalid number of arguments was passed
+
+
+Flags Register:
+	0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+	ZF CF OF u  u  u  u  u  u  u  u  u  u  u  u  u
+
+Execution Vectors:
+	Reset Vector: [0xFFF1-0xFFF2]
+	SfInt Vector: [0xFFF3-0xFFF4]
+	HwInt Vector: [0xFFF5-0xFFF6]

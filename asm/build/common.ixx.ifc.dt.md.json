@@ -7,7 +7,8 @@
             "std.core",
             "std.regex",
             "std.memory",
-            "std.threading"
+            "std.threading",
+            "std.filesystem"
         ],
         "ImportedHeaderUnits": [
             "C:\\Users\\Connor\\Desktop\\cpu-explorer\\asm\\src\\literals.hpp",

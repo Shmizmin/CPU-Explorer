@@ -1,3 +1,6 @@
+module;
+#include <cstdint>
+#include <cstdlib>
 export module common;
 
 //standard library imports
@@ -5,6 +8,7 @@ export import std.core;
 export import std.regex;
 export import std.memory;
 export import std.threading;
+export import std.filesystem;
 
 //custom library imports
 export import "literals.hpp";
@@ -20,10 +24,7 @@ export namespace cpu
 		static constexpr const auto mem_size = std::numeric_limits<std::uint16_t>::max();
 
 		//number of bits in the processor's registers
-		static constexpr const auto reg_size = 8_uz;
-
-		//number of registers that the processor has
-		static constexpr const auto reg_count = 8_uz;
+		static constexpr const auto reg_size = 16_uz;
 	}
 
 	//globally defined debug values

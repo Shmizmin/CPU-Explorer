@@ -4,6 +4,6 @@ export import common;
 
 export namespace cpu
 {
-	//function that reads a file and returns it's contents
-	std::vector<std::uint8_t> filerator(const char* path) noexcept;
+	//loads the contents of a specified file into a string
+	std::string filerator(const char* path) noexcept;
 }

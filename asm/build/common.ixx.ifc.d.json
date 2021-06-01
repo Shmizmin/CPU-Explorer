@@ -3,23 +3,46 @@
     "Data": {
         "Source": "c:\\users\\connor\\desktop\\cpu-explorer\\asm\\src\\common.ixx",
         "ProvidedModule": "common",
-        "Includes": [],
+        "Includes": [
+            "c:\\program files (x86)\\microsoft visual studio\\2019\\preview\\vc\\tools\\msvc\\14.29.30129\\include\\cstdint",
+            "c:\\program files (x86)\\microsoft visual studio\\2019\\preview\\vc\\tools\\msvc\\14.29.30129\\include\\yvals_core.h",
+            "c:\\program files (x86)\\microsoft visual studio\\2019\\preview\\vc\\tools\\msvc\\14.29.30129\\include\\vcruntime.h",
+            "c:\\program files (x86)\\microsoft visual studio\\2019\\preview\\vc\\tools\\msvc\\14.29.30129\\include\\sal.h",
+            "c:\\program files (x86)\\microsoft visual studio\\2019\\preview\\vc\\tools\\msvc\\14.29.30129\\include\\concurrencysal.h",
+            "c:\\program files (x86)\\microsoft visual studio\\2019\\preview\\vc\\tools\\msvc\\14.29.30129\\include\\vadefs.h",
+            "c:\\program files (x86)\\microsoft visual studio\\2019\\preview\\vc\\tools\\msvc\\14.29.30129\\include\\xkeycheck.h",
+            "c:\\program files (x86)\\microsoft visual studio\\2019\\preview\\vc\\tools\\msvc\\14.29.30129\\include\\stdint.h",
+            "c:\\program files (x86)\\microsoft visual studio\\2019\\preview\\vc\\tools\\msvc\\14.29.30129\\include\\cstdlib",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.19041.0\\ucrt\\math.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.19041.0\\ucrt\\corecrt_math.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.19041.0\\ucrt\\corecrt.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.19041.0\\ucrt\\stdlib.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.19041.0\\ucrt\\corecrt_malloc.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.19041.0\\ucrt\\corecrt_search.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.19041.0\\ucrt\\stddef.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.19041.0\\ucrt\\corecrt_wstdlib.h",
+            "c:\\program files (x86)\\microsoft visual studio\\2019\\preview\\vc\\tools\\msvc\\14.29.30129\\include\\limits.h"
+        ],
         "ImportedModules": [
             {
                 "Name": "std.core",
-                "BMI": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Preview\\VC\\Tools\\MSVC\\14.29.30129\\ifc\\x64\\release\\std.core.ifc"
+                "BMI": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Preview\\VC\\Tools\\MSVC\\14.29.30129\\ifc\\x64\\debug\\std.core.ifc"
             },
             {
                 "Name": "std.regex",
-                "BMI": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Preview\\VC\\Tools\\MSVC\\14.29.30129\\ifc\\x64\\release\\std.regex.ifc"
+                "BMI": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Preview\\VC\\Tools\\MSVC\\14.29.30129\\ifc\\x64\\debug\\std.regex.ifc"
             },
             {
                 "Name": "std.memory",
-                "BMI": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Preview\\VC\\Tools\\MSVC\\14.29.30129\\ifc\\x64\\release\\std.memory.ifc"
+                "BMI": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Preview\\VC\\Tools\\MSVC\\14.29.30129\\ifc\\x64\\debug\\std.memory.ifc"
             },
             {
                 "Name": "std.threading",
-                "BMI": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Preview\\VC\\Tools\\MSVC\\14.29.30129\\ifc\\x64\\release\\std.threading.ifc"
+                "BMI": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Preview\\VC\\Tools\\MSVC\\14.29.30129\\ifc\\x64\\debug\\std.threading.ifc"
+            },
+            {
+                "Name": "std.filesystem",
+                "BMI": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Preview\\VC\\Tools\\MSVC\\14.29.30129\\ifc\\x64\\debug\\std.filesystem.ifc"
             }
         ],
         "ImportedHeaderUnits": [

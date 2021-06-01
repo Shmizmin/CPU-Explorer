@@ -45,6 +45,18 @@
     <ClCompile Include="src\filerator.cpp">
       <Filter>Module Files\cpp</Filter>
     </ClCompile>
+    <ClCompile Include="src\save.cpp">
+      <Filter>Module Files\cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\save.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assemble.cpp">
+      <Filter>Module Files\cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assemble.ixx">
+      <Filter>Module Files\ixx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\assert.hpp">

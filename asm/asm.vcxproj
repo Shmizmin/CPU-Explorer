@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -78,13 +78,13 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\Executables\</OutDir>
+    <OutDir>..\Executables-Debug\</OutDir>
     <IntDir>.\build\</IntDir>
     <TargetName>asm</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\Executables\</OutDir>
+    <OutDir>..\Executables-Release\</OutDir>
     <IntDir>.\build\</IntDir>
     <TargetName>asm</TargetName>
   </PropertyGroup>
@@ -176,11 +176,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\assemble.cpp" />
+    <ClCompile Include="src\assemble.ixx" />
     <ClCompile Include="src\assert.cpp" />
     <ClCompile Include="src\common.ixx" />
     <ClCompile Include="src\filerator.cpp" />
     <ClCompile Include="src\filerator.ixx" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\save.cpp" />
+    <ClCompile Include="src\save.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\assert.hpp" />

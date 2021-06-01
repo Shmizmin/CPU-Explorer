@@ -1,30 +1,24 @@
 import filerator;
 
-//function that reads a file and returns it's contents
-std::vector<std::uint8_t> cpu::filerator(const char* path) noexcept
+//loads the contents of a specified file into a string
+std::string cpu::filerator(const char* path) noexcept
 {
-	//create the filestream object from the specified path
-	std::ifstream f(path, std::ios::binary);
+	//open the stream to load the file
+	std::ifstream f(path);
 
-	//verify that the file in the filestream is readable
-	if (!f.is_open()) [[unlikely]]
-	{
-		std::cerr << "The specified file does not exist";
-		std::exit(10);
-	}
-
-	//retrieve the length of the files in bytes
-	f.seekg(0, std::ios::end);
-	auto bytes = f.tellg();
+	//retrieve the size of the file
+	f.ignore(std::numeric_limits<std::streamsize>::max());
+	auto bytes = f.gcount();
 	f.seekg(0, std::ios::beg);
 
-	//create a file buffer of the same size as the file itself
-	std::vector<std::uint8_t> buffer(bytes);
+	//create a copy buffer
+	std::string result;
+	result.resize(bytes);
 
-	//copy the contents of the file to the file buffer
-	buffer.assign(std::istreambuf_iterator<char>(f),
+	//read the file into the buffer
+	result.assign(std::istreambuf_iterator<char>(f),
 				  std::istreambuf_iterator<char>());
 
-	//return the contents of the file buffer from this function
-	return buffer;
+	//return the newly created buffer
+	return result;
 }
