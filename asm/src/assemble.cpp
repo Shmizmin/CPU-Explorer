@@ -34,6 +34,251 @@ namespace
 			prevPos = pos + 1_uz;
 		}
 	}
+
+	//each of the possible configurations of operands in our assembly langauge
+	enum class Operands
+	{
+		R0_R0,
+		R0_R1,
+		R0_R2,
+
+		R1_R0,
+		R1_R1,
+		R1_R2,
+
+		R2_R0,
+		R2_R1,
+		R2_R2,
+
+		R0_IMM,
+		R1_IMM,
+		R2_IMM,
+
+		R0_MEM,
+		R1_MEM,
+		R2_MEM,
+
+		MEM_R0,
+		MEM_R1,
+		MEM_R2,
+
+		R0,
+		R1,
+		R2,
+		IMM,
+		MEM,
+
+		SP,
+		IP,
+		FLAGS,
+
+		SP_R0,
+		SP_R1,
+		SP_R2,
+		SP_IMM,
+		SP_MEM,
+
+		DISCARD,
+		NONE,
+	};
+
+	//extract operand from a line into a 3 size array of string
+	auto find_operands(const std::string& line) noexcept
+	{
+		//https://regex101.com/r/uhtAvu/1
+		std::regex insn(R"((?:([a-z]*) ((?:r[0-9])|(?:(?:#|%)[0-9]+))?(?:, )?((?:r[0-9])|(?:(?:#|%)[0-9]+))(?: )*(?:;(?:.*))?)$)");
+		std::smatch matches;
+		if (!std::regex_match(line, matches, insn))
+		{
+			std::cerr << "Assembly Syntax Error";
+			std::exit(12);
+		}
+
+		//assembly is likely valid so return the matches we made
+		else
+		{
+			return std::array{ matches[1], matches[2], matches[3] };
+		}
+	}
+
+	//extract operand encoding type
+	auto get_encoding_type(std::array<std::string, 3_uz> operands) noexcept
+	{
+		const auto& op1 = std::get<1_uz>(operands);
+		const auto& op2 = std::get<2_uz>(operands);
+
+		switch (op1[0])
+		{
+		case 'r':
+			switch (op2[0])
+			{
+				case 'r':
+					break;
+
+				case '#':
+					break;
+
+				case '$':
+					break;
+			}
+			break;
+
+		case '#':
+			break;
+
+		case '$':
+			break;
+		}
+	}
+
+#pragma warning(push)
+#pragma warning(disable: 4100)
+	auto do_decrement(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_cmp(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_call(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_move(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_not(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_and(const std::string& line) noexcept
+	{
+
+	}
+
+
+	auto do_xor(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_or(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_out(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_add(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_sub(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_rotate_left(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_rotate_right(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_shift_left(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_shift_right(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_increment(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_jmp(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_je(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_jo(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_jc(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_jl(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_jg(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_jle(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_jge(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_jne(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_jno(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_jnc(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_push(const std::string& line) noexcept
+	{
+
+	}
+
+	auto do_pop(const std::string& line) noexcept
+	{
+
+	}
+#pragma warning(pop)
 }
 
 //takes in assembly source and returns raw binary
@@ -48,10 +293,9 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 	//iterate over each line of source code
 	for (auto&& line : lines)
 	{
-		//for (auto&& c : line)
-		//{
-		//	if (c == ';')
-		//}
+		auto f = find_operands(line);
+		f[1] = "";
+
 
 		switch (line[0])
 		{

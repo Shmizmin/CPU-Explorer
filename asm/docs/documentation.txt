@@ -4,7 +4,7 @@ Exit Codes:
 	
 	Code 10: the specified file does not exist
 	Code 11: an invalid number of arguments was passed
-
+	Code 12: there was a syntax error in parsing the supplied assembly file
 
 Flags Register:
 	0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0

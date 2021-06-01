@@ -194,6 +194,9 @@
     <Text Include="docs\documentation.txt" />
     <Text Include="docs\licensing.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\test.asm" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

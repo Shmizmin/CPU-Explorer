@@ -1,3 +1,2 @@
-Hello
-Something
-Newline Newline
+inc %50
+return
