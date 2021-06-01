@@ -5,6 +5,7 @@ Exit Codes:
 	Code 10: the specified file does not exist
 	Code 11: an invalid number of arguments was passed
 	Code 12: there was a syntax error in parsing the supplied assembly file
+	Code 13: an operand type was passed to an instruction that doesn't accept that type
 
 Flags Register:
 	0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
@@ -14,3 +15,21 @@ Execution Vectors:
 	Reset Vector: [0xFFF1-0xFFF2]
 	SfInt Vector: [0xFFF3-0xFFF4]
 	HwInt Vector: [0xFFF5-0xFFF6]
+	
+Execution Registers:
+	Output Register: [0xFFF7-0xFFF8]
+	Input  Register: [0xFFF9-0xFFFA]
+
+	Speed  Register: [0xFFFB-0xFFFC]
+
+Execution Flags:
+	Unused:                   [0xFFFD]
+		#$xx = unspecified
+
+	Mask Hardware Interrupts: [0xFFFE]
+		#$FF = enabled
+		#$xx = disabled
+
+	Enhanced Instruction Set: [0xFFFF]
+		#$FF = enabled
+		#$xx = disabled

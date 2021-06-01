@@ -81,6 +81,7 @@ namespace
 		DISCARD,
 		NONE,
 	};
+	using enum Operands;
 
 	//extract operand from a line into a 3 size array of string
 	auto find_operands(const std::string& line) noexcept
@@ -106,7 +107,6 @@ namespace
 	{
 		const auto&[instruction, op1, op2] = operands;
 		auto encoding = ::Operands::NONE;
-		using enum Operands;
 
 		if (op1.matched)
 		{
@@ -241,151 +241,443 @@ namespace
 
 #pragma warning(push)
 #pragma warning(disable: 4100)
-	auto do_decrement(const std::string& line) noexcept
+
+#ifndef DEFAULT_CASE
+#define DEFAULT_CASE default:                                             \
+	std::cerr << "Invalid operand types for the specified instruction\n"; \
+	std::exit(13);                                                        \
+	break;
+
+	auto do_decrement(auto& code, auto type) noexcept
+	{
+		switch (type)
+		{
+			case R0:  code.emplace_back(0xF8_byte); break;
+			case R1:  code.emplace_back(0xF9_byte); break;
+			case R2:  code.emplace_back(0xFA_byte); break;
+			case MEM: code.emplace_back(0xFB_byte); break;
+			DEFAULT_CASE
+		}
+	}
+
+	auto do_increment(auto& code, auto type) noexcept
+	{
+		switch (type)
+		{
+			case R0:  code.emplace_back(0xE8_byte); break;
+			case R1:  code.emplace_back(0xE9_byte); break;
+			case R2:  code.emplace_back(0xEA_byte); break;
+			case MEM: code.emplace_back(0xEB_byte); break;
+			DEFAULT_CASE
+		}
+	}
+
+	auto do_cmp(auto& code, auto type) noexcept
+	{
+		switch (type)
+		{
+			case R0_R1:  code.emplace_back(0x06_byte); break;
+			case R0_R2:  code.emplace_back(0x16_byte); break;
+
+			case R1_R0:  code.emplace_back(0x26_byte); break;
+			case R1_R2:  code.emplace_back(0x36_byte); break;
+
+			case R2_R0:  code.emplace_back(0x46_byte); break;
+			case R2_R1:  code.emplace_back(0x56_byte); break;
+
+			case R0_IMM: code.emplace_back(0x66_byte); break;
+			case R1_IMM: code.emplace_back(0x76_byte); break;
+			case R2_IMM: code.emplace_back(0x86_byte); break;
+
+			case R0_MEM: code.emplace_back(0x96_byte); break;
+			case R1_MEM: code.emplace_back(0xA6_byte); break;
+			case R2_MEM: code.emplace_back(0xB6_byte); break;
+
+			case MEM_R0: code.emplace_back(0xC6_byte); break;
+			case MEM_R1: code.emplace_back(0xD6_byte); break;
+			case MEM_R2: code.emplace_back(0xE6_byte); break;
+
+			DEFAULT_CASE
+		}
+	}
+
+	auto do_call(auto& code, auto type) noexcept
 	{
 
 	}
 
-	auto do_cmp(const std::string& line) noexcept
+	auto do_move(auto& code, auto type) noexcept
+	{
+		switch (type)
+		{
+			case R0_R1:  code.emplace_back(0x00_byte); break;
+			case R0_R2:  code.emplace_back(0x10_byte); break;
+
+			case R1_R0:  code.emplace_back(0x20_byte); break;
+			case R1_R2:  code.emplace_back(0x30_byte); break;
+
+			case R2_R0:  code.emplace_back(0x40_byte); break;
+			case R2_R1:  code.emplace_back(0x50_byte); break;
+
+			case R0_IMM: code.emplace_back(0x60_byte); break;
+			case R1_IMM: code.emplace_back(0x70_byte); break;
+			case R2_IMM: code.emplace_back(0x80_byte); break;
+
+			case R0_MEM: code.emplace_back(0x90_byte); break;
+			case R1_MEM: code.emplace_back(0xA0_byte); break;
+			case R2_MEM: code.emplace_back(0xB0_byte); break;
+
+			case MEM_R0: code.emplace_back(0xC0_byte); break;
+			case MEM_R1: code.emplace_back(0xD0_byte); break;
+			case MEM_R2: code.emplace_back(0xE0_byte); break;
+
+			DEFAULT_CASE
+		}
+	}
+
+	auto do_not(auto& code, auto type) noexcept
 	{
 
 	}
 
-	auto do_call(const std::string& line) noexcept
+	auto do_and(auto& code, auto type) noexcept
+	{
+		switch (type)
+		{
+			case R0_R1:  code.emplace_back(0x05_byte); break;
+			case R0_R2:  code.emplace_back(0x15_byte); break;
+
+			case R1_R0:  code.emplace_back(0x25_byte); break;
+			case R1_R2:  code.emplace_back(0x35_byte); break;
+
+			case R2_R0:  code.emplace_back(0x45_byte); break;
+			case R2_R1:  code.emplace_back(0x55_byte); break;
+
+			case R0_IMM: code.emplace_back(0x65_byte); break;
+			case R1_IMM: code.emplace_back(0x75_byte); break;
+			case R2_IMM: code.emplace_back(0x85_byte); break;
+
+			case R0_MEM: code.emplace_back(0x95_byte); break;
+			case R1_MEM: code.emplace_back(0xA5_byte); break;
+			case R2_MEM: code.emplace_back(0xB5_byte); break;
+
+			case MEM_R0: code.emplace_back(0xC5_byte); break;
+			case MEM_R1: code.emplace_back(0xD5_byte); break;
+			case MEM_R2: code.emplace_back(0xE5_byte); break;
+
+			DEFAULT_CASE
+		}
+	}
+
+	auto do_xor(auto& code, auto type) noexcept
+	{
+		switch (type)
+		{
+			case R0_R0:  code.emplace_back(0xF0_byte); break;
+			case R1_R1:  code.emplace_back(0xF1_byte); break;
+			case R2_R2:  code.emplace_back(0xF2_byte); break;
+
+			case R0_R1:  code.emplace_back(0x03_byte); break;
+			case R0_R2:  code.emplace_back(0x13_byte); break;
+
+			case R1_R0:  code.emplace_back(0x23_byte); break;
+			case R1_R2:  code.emplace_back(0x33_byte); break;
+
+			case R2_R0:  code.emplace_back(0x43_byte); break;
+			case R2_R1:  code.emplace_back(0x53_byte); break;
+
+			case R0_IMM: code.emplace_back(0x63_byte); break;
+			case R1_IMM: code.emplace_back(0x73_byte); break;
+			case R2_IMM: code.emplace_back(0x83_byte); break;
+
+			case R0_MEM: code.emplace_back(0x93_byte); break;
+			case R1_MEM: code.emplace_back(0xA3_byte); break;
+			case R2_MEM: code.emplace_back(0xB3_byte); break;
+
+			case MEM_R0: code.emplace_back(0xC3_byte); break;
+			case MEM_R1: code.emplace_back(0xD3_byte); break;
+			case MEM_R2: code.emplace_back(0xE3_byte); break;
+
+			DEFAULT_CASE
+		}
+	}
+
+	auto do_or(auto& code, auto type) noexcept
+	{
+		switch (type)
+		{
+			case R0_R1:  code.emplace_back(0x04_byte); break;
+			case R0_R2:  code.emplace_back(0x14_byte); break;
+
+			case R1_R0:  code.emplace_back(0x24_byte); break;
+			case R1_R2:  code.emplace_back(0x34_byte); break;
+
+			case R2_R0:  code.emplace_back(0x44_byte); break;
+			case R2_R1:  code.emplace_back(0x54_byte); break;
+
+			case R0_IMM: code.emplace_back(0x64_byte); break;
+			case R1_IMM: code.emplace_back(0x74_byte); break;
+			case R2_IMM: code.emplace_back(0x84_byte); break;
+
+			case R0_MEM: code.emplace_back(0x94_byte); break;
+			case R1_MEM: code.emplace_back(0xA4_byte); break;
+			case R2_MEM: code.emplace_back(0xB4_byte); break;
+
+			case MEM_R0: code.emplace_back(0xC4_byte); break;
+			case MEM_R1: code.emplace_back(0xD4_byte); break;
+			case MEM_R2: code.emplace_back(0xE4_byte); break;
+
+			DEFAULT_CASE
+		}
+	}
+
+	auto do_add(auto& code, auto type) noexcept
+	{
+		switch (type)
+		{
+			case R0_R1:  code.emplace_back(0x01_byte); break;
+			case R0_R2:  code.emplace_back(0x11_byte); break;
+
+			case R1_R0:  code.emplace_back(0x21_byte); break;
+			case R1_R2:  code.emplace_back(0x31_byte); break;
+
+			case R2_R0:  code.emplace_back(0x41_byte); break;
+			case R2_R1:  code.emplace_back(0x51_byte); break;
+
+			case R0_IMM: code.emplace_back(0x61_byte); break;
+			case R1_IMM: code.emplace_back(0x71_byte); break;
+			case R2_IMM: code.emplace_back(0x81_byte); break;
+
+			case R0_MEM: code.emplace_back(0x91_byte); break;
+			case R1_MEM: code.emplace_back(0xA1_byte); break;
+			case R2_MEM: code.emplace_back(0xB1_byte); break;
+
+			case MEM_R0: code.emplace_back(0xC1_byte); break;
+			case MEM_R1: code.emplace_back(0xD1_byte); break;
+			case MEM_R2: code.emplace_back(0xE1_byte); break;
+
+			case SP_R0:  code.emplace_back(0xXX_byte); break;
+			case SP_R1:  code.emplace_back(0xXX_byte); break;
+			case SP_R2:  code.emplace_back(0xXX_byte); break;
+			case SP_IMM: code.emplace_back(0xXX_byte); break;
+			case SP_MEM: code.emplace_back(0xXX_byte); break;
+
+
+			DEFAULT_CASE
+		}
+	}
+
+	auto do_sub(auto& code, auto type) noexcept
+	{
+		switch (type)
+		{
+			case R0_R1:  code.emplace_back(0x02_byte); break;
+			case R0_R2:  code.emplace_back(0x12_byte); break;
+
+			case R1_R0:  code.emplace_back(0x22_byte); break;
+			case R1_R2:  code.emplace_back(0x32_byte); break;
+
+			case R2_R0:  code.emplace_back(0x42_byte); break;
+			case R2_R1:  code.emplace_back(0x52_byte); break;
+
+			case R0_IMM: code.emplace_back(0x62_byte); break;
+			case R1_IMM: code.emplace_back(0x72_byte); break;
+			case R2_IMM: code.emplace_back(0x82_byte); break;
+
+			case R0_MEM: code.emplace_back(0x92_byte); break;
+			case R1_MEM: code.emplace_back(0xA2_byte); break;
+			case R2_MEM: code.emplace_back(0xB2_byte); break;
+
+			case MEM_R0: code.emplace_back(0xC2_byte); break;
+			case MEM_R1: code.emplace_back(0xD2_byte); break;
+			case MEM_R2: code.emplace_back(0xE2_byte); break;
+
+			DEFAULT_CASE
+		}
+	}
+
+	auto do_rotate_left(auto& code, auto type) noexcept
+	{
+		switch (type)
+		{
+			case R0_R1:  code.emplace_back(0x0D_byte); break;
+			case R0_R2:  code.emplace_back(0x1D_byte); break;
+
+			case R1_R0:  code.emplace_back(0x2D_byte); break;
+			case R1_R2:  code.emplace_back(0x3D_byte); break;
+
+			case R2_R0:  code.emplace_back(0x4D_byte); break;
+			case R2_R1:  code.emplace_back(0x5D_byte); break;
+
+			case R0_IMM: code.emplace_back(0x6D_byte); break;
+			case R1_IMM: code.emplace_back(0x7D_byte); break;
+			case R2_IMM: code.emplace_back(0x8D_byte); break;
+
+			case R0_MEM: code.emplace_back(0x9D_byte); break;
+			case R1_MEM: code.emplace_back(0xAD_byte); break;
+			case R2_MEM: code.emplace_back(0xBD_byte); break;
+
+			case MEM_R0: code.emplace_back(0xCD_byte); break;
+			case MEM_R1: code.emplace_back(0xDD_byte); break;
+			case MEM_R2: code.emplace_back(0xED_byte); break;
+
+			DEFAULT_CASE
+		}
+	}
+
+	auto do_rotate_right(auto& code, auto type) noexcept
+	{
+		switch (type)
+		{
+			case R0_R1:  code.emplace_back(0x0C_byte); break;
+			case R0_R2:  code.emplace_back(0x1C_byte); break;
+
+			case R1_R0:  code.emplace_back(0x2C_byte); break;
+			case R1_R2:  code.emplace_back(0x3C_byte); break;
+
+			case R2_R0:  code.emplace_back(0x4C_byte); break;
+			case R2_R1:  code.emplace_back(0x5C_byte); break;
+
+			case R0_IMM: code.emplace_back(0x6C_byte); break;
+			case R1_IMM: code.emplace_back(0x7C_byte); break;
+			case R2_IMM: code.emplace_back(0x8C_byte); break;
+
+			case R0_MEM: code.emplace_back(0x9C_byte); break;
+			case R1_MEM: code.emplace_back(0xAC_byte); break;
+			case R2_MEM: code.emplace_back(0xBC_byte); break;
+
+			case MEM_R0: code.emplace_back(0xCC_byte); break;
+			case MEM_R1: code.emplace_back(0xDC_byte); break;
+			case MEM_R2: code.emplace_back(0xEC_byte); break;
+
+			DEFAULT_CASE
+		}
+	}
+
+	auto do_shift_left(auto& code, auto type) noexcept
+	{
+		switch (type)
+		{
+			case R0_R1:  code.emplace_back(0x0F_byte); break;
+			case R0_R2:  code.emplace_back(0x1F_byte); break;
+
+			case R1_R0:  code.emplace_back(0x2F_byte); break;
+			case R1_R2:  code.emplace_back(0x3F_byte); break;
+
+			case R2_R0:  code.emplace_back(0x4F_byte); break;
+			case R2_R1:  code.emplace_back(0x5F_byte); break;
+
+			case R0_IMM: code.emplace_back(0x6F_byte); break;
+			case R1_IMM: code.emplace_back(0x7F_byte); break;
+			case R2_IMM: code.emplace_back(0x8F_byte); break;
+
+			case R0_MEM: code.emplace_back(0x9F_byte); break;
+			case R1_MEM: code.emplace_back(0xAF_byte); break;
+			case R2_MEM: code.emplace_back(0xBF_byte); break;
+
+			case MEM_R0: code.emplace_back(0xCF_byte); break;
+			case MEM_R1: code.emplace_back(0xDF_byte); break;
+			case MEM_R2: code.emplace_back(0xEF_byte); break;
+
+			DEFAULT_CASE
+		}
+	}
+
+	auto do_shift_right(auto& code, auto type) noexcept
+	{
+		switch (type)
+		{
+		case R0_R1:  code.emplace_back(0x0E_byte); break;
+		case R0_R2:  code.emplace_back(0x1E_byte); break;
+
+		case R1_R0:  code.emplace_back(0x2E_byte); break;
+		case R1_R2:  code.emplace_back(0x3E_byte); break;
+
+		case R2_R0:  code.emplace_back(0x4E_byte); break;
+		case R2_R1:  code.emplace_back(0x5E_byte); break;
+
+		case R0_IMM: code.emplace_back(0x6E_byte); break;
+		case R1_IMM: code.emplace_back(0x7E_byte); break;
+		case R2_IMM: code.emplace_back(0x8E_byte); break;
+
+		case R0_MEM: code.emplace_back(0x9E_byte); break;
+		case R1_MEM: code.emplace_back(0xAE_byte); break;
+		case R2_MEM: code.emplace_back(0xBE_byte); break;
+
+		case MEM_R0: code.emplace_back(0xCE_byte); break;
+		case MEM_R1: code.emplace_back(0xDE_byte); break;
+		case MEM_R2: code.emplace_back(0xEE_byte); break;
+
+		DEFAULT_CASE
+		}
+	}
+
+	auto do_jmp(auto& code, auto type) noexcept
 	{
 
 	}
 
-	auto do_move(const std::string& line) noexcept
+	auto do_je(auto& code, auto type) noexcept
 	{
 
 	}
 
-	auto do_not(const std::string& line) noexcept
+	auto do_jo(auto& code, auto type) noexcept
 	{
 
 	}
 
-	auto do_and(const std::string& line) noexcept
+	auto do_jc(auto& code, auto type) noexcept
 	{
 
 	}
 
-
-	auto do_xor(const std::string& line) noexcept
+	auto do_jl(auto& code, auto type) noexcept
 	{
 
 	}
 
-	auto do_or(const std::string& line) noexcept
+	auto do_jg(auto& code, auto type) noexcept
 	{
 
 	}
 
-	auto do_out(const std::string& line) noexcept
+	auto do_jle(auto& code, auto type) noexcept
 	{
 
 	}
 
-	auto do_add(const std::string& line) noexcept
+	auto do_jge(auto& code, auto type) noexcept
 	{
 
 	}
 
-	auto do_sub(const std::string& line) noexcept
+	auto do_jne(auto& code, auto type) noexcept
 	{
 
 	}
 
-	auto do_rotate_left(const std::string& line) noexcept
+	auto do_jno(auto& code, auto type) noexcept
 	{
 
 	}
 
-	auto do_rotate_right(const std::string& line) noexcept
+	auto do_jnc(auto& code, auto type) noexcept
 	{
 
 	}
 
-	auto do_shift_left(const std::string& line) noexcept
+	auto do_push(auto& code, auto type) noexcept
 	{
 
 	}
 
-	auto do_shift_right(const std::string& line) noexcept
+	auto do_pop(auto& code, auto type) noexcept
 	{
 
 	}
-
-	auto do_increment(const std::string& line) noexcept
-	{
-
-	}
-
-	auto do_jmp(const std::string& line) noexcept
-	{
-
-	}
-
-	auto do_je(const std::string& line) noexcept
-	{
-
-	}
-
-	auto do_jo(const std::string& line) noexcept
-	{
-
-	}
-
-	auto do_jc(const std::string& line) noexcept
-	{
-
-	}
-
-	auto do_jl(const std::string& line) noexcept
-	{
-
-	}
-
-	auto do_jg(const std::string& line) noexcept
-	{
-
-	}
-
-	auto do_jle(const std::string& line) noexcept
-	{
-
-	}
-
-	auto do_jge(const std::string& line) noexcept
-	{
-
-	}
-
-	auto do_jne(const std::string& line) noexcept
-	{
-
-	}
-
-	auto do_jno(const std::string& line) noexcept
-	{
-
-	}
-
-	auto do_jnc(const std::string& line) noexcept
-	{
-
-	}
-
-	auto do_push(const std::string& line) noexcept
-	{
-
-	}
-
-	auto do_pop(const std::string& line) noexcept
-	{
-
-	}
+#undef DEFAULT_CASE
+#endif
 #pragma warning(pop)
 }
 
@@ -402,7 +694,7 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 	for (auto&& line : lines)
 	{
 		auto f = find_operands(line);
-
+		auto o = get_encoding_type(f);
 
 		switch (line[0])
 		{
@@ -416,11 +708,11 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 			{
 				case 'i':
 					//di
-					code.emplace_back(0xEF_byte);
+					code.emplace_back(0xFF_byte);
 					break;
 
 				case 'e':
-					do_decrement(line);
+					do_decrement(code, o);
 					break;
 			}
 			break;
@@ -429,49 +721,40 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 			switch (line[1])
 			{
 				case 'm':
-					do_cmp(line);
+					do_cmp(code, o);
 					break;
 
 				case 'a':
-					do_call(line);
+					do_call(code, o);
 					break;
 			}
 			break;
 			
 		case 'n':
-			do_not(line);
+			do_not(code, o);
 			break;
 
 		case 'm':
-			do_move(line);
+			do_move(code, o);
 			break;
 
 		case 'x':
-			do_xor(line);
+			do_xor(code, o);
 			break;
 
 		case 'o':
-			switch (line[1])
-			{
-			case 'u':
-				do_out(line);
-				break;
-
-			case 'r':
-				do_or(line);
-				break;
-			}
+			do_or(code, o);
 			break;
 
 		case 'a':
 			switch (line[1])
 			{
 				case 'd':
-					do_add(line);
+					do_add(code, o);
 					break;
 
 				case 'n':
-					do_and(line);
+					do_and(code, o);
 					break;
 			}
 			break;
@@ -484,7 +767,7 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 					{
 						case 's':
 							//reset
-							code.emplace_back(0xE5_byte);
+							code.emplace_back(0xF5_byte);
 							break;
 
 						case 'e':
@@ -499,11 +782,11 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 					switch (line[2])
 					{
 						case 'l':
-							do_rotate_left(line);
+							do_rotate_left(code, o);
 							break;
 
 						case 'r':
-							do_rotate_right(line);
+							do_rotate_right(code, o);
 							break;
 					}
 					break;
@@ -515,22 +798,22 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 			{
 				case 'w':
 					//swint
-					code.emplace_back(0xE3_byte);
+					code.emplace_back(0xF3_byte);
 					break;
 
 				case 'u':
-					do_sub(line);
+					do_sub(code, o);
 					break;
 
 				case 'h':
 					switch (line[2])
 					{
 						case 'l':
-							do_shift_left(line);
+							do_shift_left(code, o);
 							break;
 
 						case 'r':
-							do_shift_right(line);
+							do_shift_right(code, o);
 							break;
 					}
 					break;
@@ -541,12 +824,12 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 			switch (line[2])
 			{
 				case 'c':
-					do_increment(line);
+					do_increment(code, o);
 					break;
 
 				case 't':
 					//intret
-					code.emplace_back(0xE4_byte);
+					code.emplace_back(0xF4_byte);
 					break;
 			}
 			break;
@@ -555,44 +838,44 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 			switch (line[1])
 			{
 				case 'm':
-					do_jmp(line);
+					do_jmp(code, o);
 					break;
 
 				case 'e':
-					do_je(line);
+					do_je(code, o);
 					break;
 
 				case 'o':
-					do_jo(line);
+					do_jo(code, o);
 					break;
 
 				case 'c':
-					do_jc(line);
+					do_jc(code, o);
 					break;
 
 				case 'l':
-					if (line[2] == 'e') do_jle(line);
-					else do_jl(line);
+					if (line[2] == 'e') do_jle(code, o);
+					else do_jl(code, o);
 					break;
 
 				case 'g':
-					if (line[2] == 'e') do_jge(line);
-					else do_jg(line);
+					if (line[2] == 'e') do_jge(code, o);
+					else do_jg(code, o);
 					break;
 
 				case 'n':
 					switch (line[2])
 					{
 						case 'e':
-							do_jne(line);
+							do_jne(code, o);
 							break;
 
 						case 'o':
-							do_jno(line);
+							do_jno(code, o);
 							break;
 
 						case 'c':
-							do_jnc(line);
+							do_jnc(code, o);
 							break;
 					}
 					break;
@@ -606,22 +889,22 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 					if (line[4] == 'a')
 					{
 						//pushall
-						code.emplace_back(0xED_byte);
+						code.emplace_back(0xFC_byte);
 						break;
 					}
 
-					do_push(line);
+					do_push(code, o);
 					break;
 
 				case 'o':
 					if (line[3] == 'a')
 					{
 						//popall
-						code.emplace_back(0xEE_byte);
+						code.emplace_back(0xFD_byte);
 						break;
 					}
 
-					do_pop(line);
+					do_pop(code, o);
 					break;
 			}
 			break;
