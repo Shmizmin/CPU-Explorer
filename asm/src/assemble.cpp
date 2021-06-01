@@ -84,7 +84,7 @@ namespace
 	using enum Operands;
 
 	//extract operand from a line into a 3 size array of string
-	auto find_operands(const std::string& line) noexcept
+	auto find_operands(const auto& line) noexcept
 	{
 		//https://regex101.com/r/uhtAvu/1
 		std::regex insn(R"((?:([a-z]*) ((?:r[0-9])|(?:(?:#|%)[0-9]+))?(?:, )?((?:r[0-9])|(?:(?:#|%)[0-9]+))(?: )*(?:;(?:.*))?)$)");
@@ -102,10 +102,32 @@ namespace
 		}
 	}
 
+	//extract numeric operands
+	template<std::size_t index>
+	auto get_numeric_operand(const auto& operands) noexcept
+	{
+		const auto& [instruction, op1, op2] = operands;
+
+			 if constexpr (index == 1_uz) return static_cast<std::uint16_t>(std::stoi(op1.str().substr(1_uz)));
+		else if constexpr (index == 2_uz) return static_cast<std::uint16_t>(std::stoi(op2.str().substr(1_uz)));
+
+		else static_assert(false, "get_numeric_index requires an index of 1 or 2");
+	}
+
+	template<std::size_t index>
+	auto embed_numeric(auto& code, const auto& operands) noexcept
+	{
+		auto whole = get_numeric_operand<index>(operands);
+		auto upper = static_cast<std::uint8_t>((whole & 0xFF00) >> 8);
+		auto lower = static_cast<std::uint8_t>((whole & 0x00FF) >> 0);
+		code.emplace_back(std::byte{ lower });
+		code.emplace_back(std::byte{ upper });
+	}
+	
 	//extract operand encoding type
 	auto get_encoding_type(auto operands) noexcept
 	{
-		const auto&[instruction, op1, op2] = operands;
+		const auto& [instruction, op1, op2] = operands;
 		auto encoding = ::Operands::NONE;
 
 		if (op1.matched)
@@ -248,31 +270,31 @@ namespace
 	std::exit(13);                                                        \
 	break;
 
-	auto do_decrement(auto& code, auto type) noexcept
+	auto do_decrement(auto& code, auto type, const auto& operands) noexcept
 	{
 		switch (type)
 		{
 			case R0:  code.emplace_back(0xF8_byte); break;
 			case R1:  code.emplace_back(0xF9_byte); break;
 			case R2:  code.emplace_back(0xFA_byte); break;
-			case MEM: code.emplace_back(0xFB_byte); break;
+			case MEM: code.emplace_back(0xFB_byte); embed_numeric<1_uz>(code, operands); break;
 			DEFAULT_CASE
 		}
 	}
 
-	auto do_increment(auto& code, auto type) noexcept
+	auto do_increment(auto& code, auto type, const auto& operands) noexcept
 	{
 		switch (type)
 		{
 			case R0:  code.emplace_back(0xE8_byte); break;
 			case R1:  code.emplace_back(0xE9_byte); break;
 			case R2:  code.emplace_back(0xEA_byte); break;
-			case MEM: code.emplace_back(0xEB_byte); break;
+			case MEM: code.emplace_back(0xEB_byte); embed_numeric<1_uz>(code, operands); break;
 			DEFAULT_CASE
 		}
 	}
 
-	auto do_cmp(auto& code, auto type) noexcept
+	auto do_cmp(auto& code, auto type, const auto& operands) noexcept
 	{
 		switch (type)
 		{
@@ -285,28 +307,32 @@ namespace
 			case R2_R0:  code.emplace_back(0x46_byte); break;
 			case R2_R1:  code.emplace_back(0x56_byte); break;
 
-			case R0_IMM: code.emplace_back(0x66_byte); break;
-			case R1_IMM: code.emplace_back(0x76_byte); break;
-			case R2_IMM: code.emplace_back(0x86_byte); break;
+			case R0_IMM: code.emplace_back(0x66_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_IMM: code.emplace_back(0x76_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_IMM: code.emplace_back(0x86_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case R0_MEM: code.emplace_back(0x96_byte); break;
-			case R1_MEM: code.emplace_back(0xA6_byte); break;
-			case R2_MEM: code.emplace_back(0xB6_byte); break;
+			case R0_MEM: code.emplace_back(0x96_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_MEM: code.emplace_back(0xA6_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_MEM: code.emplace_back(0xB6_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case MEM_R0: code.emplace_back(0xC6_byte); break;
-			case MEM_R1: code.emplace_back(0xD6_byte); break;
-			case MEM_R2: code.emplace_back(0xE6_byte); break;
+			case MEM_R0: code.emplace_back(0xC6_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R1: code.emplace_back(0xD6_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R2: code.emplace_back(0xE6_byte); embed_numeric<1_uz>(code, operands); break;
 
 			DEFAULT_CASE
 		}
 	}
 
-	auto do_call(auto& code, auto type) noexcept
+	auto do_call(auto& code, auto type, const auto& operands) noexcept
 	{
-
+		switch (type)
+		{
+			case MEM: code.emplace_back(0x47_byte); embed_numeric<1_uz>(code, operands); break;
+			DEFAULT_CASE
+		}
 	}
 
-	auto do_move(auto& code, auto type) noexcept
+	auto do_move(auto& code, auto type, const auto& operands) noexcept
 	{
 		switch (type)
 		{
@@ -319,28 +345,35 @@ namespace
 			case R2_R0:  code.emplace_back(0x40_byte); break;
 			case R2_R1:  code.emplace_back(0x50_byte); break;
 
-			case R0_IMM: code.emplace_back(0x60_byte); break;
-			case R1_IMM: code.emplace_back(0x70_byte); break;
-			case R2_IMM: code.emplace_back(0x80_byte); break;
+			case R0_IMM: code.emplace_back(0x60_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_IMM: code.emplace_back(0x70_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_IMM: code.emplace_back(0x80_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case R0_MEM: code.emplace_back(0x90_byte); break;
-			case R1_MEM: code.emplace_back(0xA0_byte); break;
-			case R2_MEM: code.emplace_back(0xB0_byte); break;
+			case R0_MEM: code.emplace_back(0x90_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_MEM: code.emplace_back(0xA0_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_MEM: code.emplace_back(0xB0_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case MEM_R0: code.emplace_back(0xC0_byte); break;
-			case MEM_R1: code.emplace_back(0xD0_byte); break;
-			case MEM_R2: code.emplace_back(0xE0_byte); break;
+			case MEM_R0: code.emplace_back(0xC0_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R1: code.emplace_back(0xD0_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R2: code.emplace_back(0xE0_byte); embed_numeric<1_uz>(code, operands); break;
 
 			DEFAULT_CASE
 		}
 	}
 
-	auto do_not(auto& code, auto type) noexcept
+	auto do_not(auto& code, auto type, const auto& operands) noexcept
 	{
-
+		switch (type)
+		{
+			case R0:  code.emplace_back(0x58_byte); break;
+			case R1:  code.emplace_back(0x59_byte); break;
+			case R2:  code.emplace_back(0x5A_byte); break;
+			case MEM: code.emplace_back(0x5B_byte); embed_numeric<1_uz>(code, operands); break;
+			DEFAULT_CASE
+		}
 	}
 
-	auto do_and(auto& code, auto type) noexcept
+	auto do_and(auto& code, auto type, const auto& operands) noexcept
 	{
 		switch (type)
 		{
@@ -353,23 +386,23 @@ namespace
 			case R2_R0:  code.emplace_back(0x45_byte); break;
 			case R2_R1:  code.emplace_back(0x55_byte); break;
 
-			case R0_IMM: code.emplace_back(0x65_byte); break;
-			case R1_IMM: code.emplace_back(0x75_byte); break;
-			case R2_IMM: code.emplace_back(0x85_byte); break;
+			case R0_IMM: code.emplace_back(0x65_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_IMM: code.emplace_back(0x75_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_IMM: code.emplace_back(0x85_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case R0_MEM: code.emplace_back(0x95_byte); break;
-			case R1_MEM: code.emplace_back(0xA5_byte); break;
-			case R2_MEM: code.emplace_back(0xB5_byte); break;
+			case R0_MEM: code.emplace_back(0x95_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_MEM: code.emplace_back(0xA5_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_MEM: code.emplace_back(0xB5_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case MEM_R0: code.emplace_back(0xC5_byte); break;
-			case MEM_R1: code.emplace_back(0xD5_byte); break;
-			case MEM_R2: code.emplace_back(0xE5_byte); break;
+			case MEM_R0: code.emplace_back(0xC5_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R1: code.emplace_back(0xD5_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R2: code.emplace_back(0xE5_byte); embed_numeric<1_uz>(code, operands); break;
 
 			DEFAULT_CASE
 		}
 	}
 
-	auto do_xor(auto& code, auto type) noexcept
+	auto do_xor(auto& code, auto type, const auto& operands) noexcept
 	{
 		switch (type)
 		{
@@ -386,23 +419,23 @@ namespace
 			case R2_R0:  code.emplace_back(0x43_byte); break;
 			case R2_R1:  code.emplace_back(0x53_byte); break;
 
-			case R0_IMM: code.emplace_back(0x63_byte); break;
-			case R1_IMM: code.emplace_back(0x73_byte); break;
-			case R2_IMM: code.emplace_back(0x83_byte); break;
+			case R0_IMM: code.emplace_back(0x63_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_IMM: code.emplace_back(0x73_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_IMM: code.emplace_back(0x83_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case R0_MEM: code.emplace_back(0x93_byte); break;
-			case R1_MEM: code.emplace_back(0xA3_byte); break;
-			case R2_MEM: code.emplace_back(0xB3_byte); break;
+			case R0_MEM: code.emplace_back(0x93_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_MEM: code.emplace_back(0xA3_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_MEM: code.emplace_back(0xB3_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case MEM_R0: code.emplace_back(0xC3_byte); break;
-			case MEM_R1: code.emplace_back(0xD3_byte); break;
-			case MEM_R2: code.emplace_back(0xE3_byte); break;
+			case MEM_R0: code.emplace_back(0xC3_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R1: code.emplace_back(0xD3_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R2: code.emplace_back(0xE3_byte); embed_numeric<1_uz>(code, operands); break;
 
 			DEFAULT_CASE
 		}
 	}
 
-	auto do_or(auto& code, auto type) noexcept
+	auto do_or(auto& code, auto type, const auto& operands) noexcept
 	{
 		switch (type)
 		{
@@ -415,23 +448,23 @@ namespace
 			case R2_R0:  code.emplace_back(0x44_byte); break;
 			case R2_R1:  code.emplace_back(0x54_byte); break;
 
-			case R0_IMM: code.emplace_back(0x64_byte); break;
-			case R1_IMM: code.emplace_back(0x74_byte); break;
-			case R2_IMM: code.emplace_back(0x84_byte); break;
+			case R0_IMM: code.emplace_back(0x64_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_IMM: code.emplace_back(0x74_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_IMM: code.emplace_back(0x84_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case R0_MEM: code.emplace_back(0x94_byte); break;
-			case R1_MEM: code.emplace_back(0xA4_byte); break;
-			case R2_MEM: code.emplace_back(0xB4_byte); break;
+			case R0_MEM: code.emplace_back(0x94_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_MEM: code.emplace_back(0xA4_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_MEM: code.emplace_back(0xB4_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case MEM_R0: code.emplace_back(0xC4_byte); break;
-			case MEM_R1: code.emplace_back(0xD4_byte); break;
-			case MEM_R2: code.emplace_back(0xE4_byte); break;
+			case MEM_R0: code.emplace_back(0xC4_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R1: code.emplace_back(0xD4_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R2: code.emplace_back(0xE4_byte); embed_numeric<1_uz>(code, operands); break;
 
 			DEFAULT_CASE
 		}
 	}
 
-	auto do_add(auto& code, auto type) noexcept
+	auto do_add(auto& code, auto type, const auto& operands) noexcept
 	{
 		switch (type)
 		{
@@ -444,30 +477,29 @@ namespace
 			case R2_R0:  code.emplace_back(0x41_byte); break;
 			case R2_R1:  code.emplace_back(0x51_byte); break;
 
-			case R0_IMM: code.emplace_back(0x61_byte); break;
-			case R1_IMM: code.emplace_back(0x71_byte); break;
-			case R2_IMM: code.emplace_back(0x81_byte); break;
+			case R0_IMM: code.emplace_back(0x61_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_IMM: code.emplace_back(0x71_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_IMM: code.emplace_back(0x81_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case R0_MEM: code.emplace_back(0x91_byte); break;
-			case R1_MEM: code.emplace_back(0xA1_byte); break;
-			case R2_MEM: code.emplace_back(0xB1_byte); break;
+			case R0_MEM: code.emplace_back(0x91_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_MEM: code.emplace_back(0xA1_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_MEM: code.emplace_back(0xB1_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case MEM_R0: code.emplace_back(0xC1_byte); break;
-			case MEM_R1: code.emplace_back(0xD1_byte); break;
-			case MEM_R2: code.emplace_back(0xE1_byte); break;
+			case MEM_R0: code.emplace_back(0xC1_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R1: code.emplace_back(0xD1_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R2: code.emplace_back(0xE1_byte); embed_numeric<1_uz>(code, operands); break;
 
-			case SP_R0:  code.emplace_back(0xXX_byte); break;
-			case SP_R1:  code.emplace_back(0xXX_byte); break;
-			case SP_R2:  code.emplace_back(0xXX_byte); break;
-			case SP_IMM: code.emplace_back(0xXX_byte); break;
-			case SP_MEM: code.emplace_back(0xXX_byte); break;
-
+			case SP_R0:  code.emplace_back(0x0A_byte); break;
+			case SP_R1:  code.emplace_back(0x1A_byte); break;
+			case SP_R2:  code.emplace_back(0x2A_byte); break;
+			case SP_IMM: code.emplace_back(0x3A_byte); embed_numeric<2_uz>(code, operands); break;
+			case SP_MEM: code.emplace_back(0x4A_byte); embed_numeric<2_uz>(code, operands); break;
 
 			DEFAULT_CASE
 		}
 	}
 
-	auto do_sub(auto& code, auto type) noexcept
+	auto do_sub(auto& code, auto type, const auto& operands) noexcept
 	{
 		switch (type)
 		{
@@ -480,23 +512,29 @@ namespace
 			case R2_R0:  code.emplace_back(0x42_byte); break;
 			case R2_R1:  code.emplace_back(0x52_byte); break;
 
-			case R0_IMM: code.emplace_back(0x62_byte); break;
-			case R1_IMM: code.emplace_back(0x72_byte); break;
-			case R2_IMM: code.emplace_back(0x82_byte); break;
+			case R0_IMM: code.emplace_back(0x62_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_IMM: code.emplace_back(0x72_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_IMM: code.emplace_back(0x82_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case R0_MEM: code.emplace_back(0x92_byte); break;
-			case R1_MEM: code.emplace_back(0xA2_byte); break;
-			case R2_MEM: code.emplace_back(0xB2_byte); break;
+			case R0_MEM: code.emplace_back(0x92_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_MEM: code.emplace_back(0xA2_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_MEM: code.emplace_back(0xB2_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case MEM_R0: code.emplace_back(0xC2_byte); break;
-			case MEM_R1: code.emplace_back(0xD2_byte); break;
-			case MEM_R2: code.emplace_back(0xE2_byte); break;
+			case MEM_R0: code.emplace_back(0xC2_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R1: code.emplace_back(0xD2_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R2: code.emplace_back(0xE2_byte); embed_numeric<1_uz>(code, operands); break;
+
+			case SP_R0:  code.emplace_back(0x0B_byte); break;
+			case SP_R1:  code.emplace_back(0x1B_byte); break;
+			case SP_R2:  code.emplace_back(0x2B_byte); break;
+			case SP_IMM: code.emplace_back(0x3B_byte); embed_numeric<2_uz>(code, operands); break;
+			case SP_MEM: code.emplace_back(0x4B_byte); embed_numeric<2_uz>(code, operands); break;
 
 			DEFAULT_CASE
 		}
 	}
 
-	auto do_rotate_left(auto& code, auto type) noexcept
+	auto do_rotate_left(auto& code, auto type, const auto& operands) noexcept
 	{
 		switch (type)
 		{
@@ -509,23 +547,23 @@ namespace
 			case R2_R0:  code.emplace_back(0x4D_byte); break;
 			case R2_R1:  code.emplace_back(0x5D_byte); break;
 
-			case R0_IMM: code.emplace_back(0x6D_byte); break;
-			case R1_IMM: code.emplace_back(0x7D_byte); break;
-			case R2_IMM: code.emplace_back(0x8D_byte); break;
+			case R0_IMM: code.emplace_back(0x6D_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_IMM: code.emplace_back(0x7D_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_IMM: code.emplace_back(0x8D_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case R0_MEM: code.emplace_back(0x9D_byte); break;
-			case R1_MEM: code.emplace_back(0xAD_byte); break;
-			case R2_MEM: code.emplace_back(0xBD_byte); break;
+			case R0_MEM: code.emplace_back(0x9D_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_MEM: code.emplace_back(0xAD_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_MEM: code.emplace_back(0xBD_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case MEM_R0: code.emplace_back(0xCD_byte); break;
-			case MEM_R1: code.emplace_back(0xDD_byte); break;
-			case MEM_R2: code.emplace_back(0xED_byte); break;
+			case MEM_R0: code.emplace_back(0xCD_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R1: code.emplace_back(0xDD_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R2: code.emplace_back(0xED_byte); embed_numeric<1_uz>(code, operands); break;
 
 			DEFAULT_CASE
 		}
 	}
 
-	auto do_rotate_right(auto& code, auto type) noexcept
+	auto do_rotate_right(auto& code, auto type, const auto& operands) noexcept
 	{
 		switch (type)
 		{
@@ -538,23 +576,23 @@ namespace
 			case R2_R0:  code.emplace_back(0x4C_byte); break;
 			case R2_R1:  code.emplace_back(0x5C_byte); break;
 
-			case R0_IMM: code.emplace_back(0x6C_byte); break;
-			case R1_IMM: code.emplace_back(0x7C_byte); break;
-			case R2_IMM: code.emplace_back(0x8C_byte); break;
+			case R0_IMM: code.emplace_back(0x6C_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_IMM: code.emplace_back(0x7C_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_IMM: code.emplace_back(0x8C_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case R0_MEM: code.emplace_back(0x9C_byte); break;
-			case R1_MEM: code.emplace_back(0xAC_byte); break;
-			case R2_MEM: code.emplace_back(0xBC_byte); break;
+			case R0_MEM: code.emplace_back(0x9C_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_MEM: code.emplace_back(0xAC_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_MEM: code.emplace_back(0xBC_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case MEM_R0: code.emplace_back(0xCC_byte); break;
-			case MEM_R1: code.emplace_back(0xDC_byte); break;
-			case MEM_R2: code.emplace_back(0xEC_byte); break;
+			case MEM_R0: code.emplace_back(0xCC_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R1: code.emplace_back(0xDC_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R2: code.emplace_back(0xEC_byte); embed_numeric<1_uz>(code, operands); break;
 
 			DEFAULT_CASE
 		}
 	}
 
-	auto do_shift_left(auto& code, auto type) noexcept
+	auto do_shift_left(auto& code, auto type, const auto& operands) noexcept
 	{
 		switch (type)
 		{
@@ -567,114 +605,207 @@ namespace
 			case R2_R0:  code.emplace_back(0x4F_byte); break;
 			case R2_R1:  code.emplace_back(0x5F_byte); break;
 
-			case R0_IMM: code.emplace_back(0x6F_byte); break;
-			case R1_IMM: code.emplace_back(0x7F_byte); break;
-			case R2_IMM: code.emplace_back(0x8F_byte); break;
+			case R0_IMM: code.emplace_back(0x6F_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_IMM: code.emplace_back(0x7F_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_IMM: code.emplace_back(0x8F_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case R0_MEM: code.emplace_back(0x9F_byte); break;
-			case R1_MEM: code.emplace_back(0xAF_byte); break;
-			case R2_MEM: code.emplace_back(0xBF_byte); break;
+			case R0_MEM: code.emplace_back(0x9F_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_MEM: code.emplace_back(0xAF_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_MEM: code.emplace_back(0xBF_byte); embed_numeric<2_uz>(code, operands); break;
 
-			case MEM_R0: code.emplace_back(0xCF_byte); break;
-			case MEM_R1: code.emplace_back(0xDF_byte); break;
-			case MEM_R2: code.emplace_back(0xEF_byte); break;
+			case MEM_R0: code.emplace_back(0xCF_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R1: code.emplace_back(0xDF_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R2: code.emplace_back(0xEF_byte); embed_numeric<1_uz>(code, operands); break;
 
 			DEFAULT_CASE
 		}
 	}
 
-	auto do_shift_right(auto& code, auto type) noexcept
+	auto do_shift_right(auto& code, auto type, const auto& operands) noexcept
 	{
 		switch (type)
 		{
-		case R0_R1:  code.emplace_back(0x0E_byte); break;
-		case R0_R2:  code.emplace_back(0x1E_byte); break;
+			case R0_R1:  code.emplace_back(0x0E_byte); break;
+			case R0_R2:  code.emplace_back(0x1E_byte); break;
 
-		case R1_R0:  code.emplace_back(0x2E_byte); break;
-		case R1_R2:  code.emplace_back(0x3E_byte); break;
+			case R1_R0:  code.emplace_back(0x2E_byte); break;
+			case R1_R2:  code.emplace_back(0x3E_byte); break;
 
-		case R2_R0:  code.emplace_back(0x4E_byte); break;
-		case R2_R1:  code.emplace_back(0x5E_byte); break;
+			case R2_R0:  code.emplace_back(0x4E_byte); break;
+			case R2_R1:  code.emplace_back(0x5E_byte); break;
 
-		case R0_IMM: code.emplace_back(0x6E_byte); break;
-		case R1_IMM: code.emplace_back(0x7E_byte); break;
-		case R2_IMM: code.emplace_back(0x8E_byte); break;
+			case R0_IMM: code.emplace_back(0x6E_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_IMM: code.emplace_back(0x7E_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_IMM: code.emplace_back(0x8E_byte); embed_numeric<2_uz>(code, operands); break;
 
-		case R0_MEM: code.emplace_back(0x9E_byte); break;
-		case R1_MEM: code.emplace_back(0xAE_byte); break;
-		case R2_MEM: code.emplace_back(0xBE_byte); break;
+			case R0_MEM: code.emplace_back(0x9E_byte); embed_numeric<2_uz>(code, operands); break;
+			case R1_MEM: code.emplace_back(0xAE_byte); embed_numeric<2_uz>(code, operands); break;
+			case R2_MEM: code.emplace_back(0xBE_byte); embed_numeric<2_uz>(code, operands); break;
 
-		case MEM_R0: code.emplace_back(0xCE_byte); break;
-		case MEM_R1: code.emplace_back(0xDE_byte); break;
-		case MEM_R2: code.emplace_back(0xEE_byte); break;
+			case MEM_R0: code.emplace_back(0xCE_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R1: code.emplace_back(0xDE_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM_R2: code.emplace_back(0xEE_byte); embed_numeric<1_uz>(code, operands); break;
 
-		DEFAULT_CASE
+			DEFAULT_CASE
 		}
 	}
 
-	auto do_jmp(auto& code, auto type) noexcept
+	auto do_jmp(auto& code, auto type, const auto& operands) noexcept
 	{
-
+		switch (type)
+		{
+			case R0:  code.emplace_back(0x07_byte); break;
+			case R1:  code.emplace_back(0x17_byte); break;
+			case R2:  code.emplace_back(0x27_byte); break;
+			case MEM: code.emplace_back(0x37_byte); embed_numeric<1_uz>(code, operands); break;
+			DEFAULT_CASE
+		}
 	}
 
-	auto do_je(auto& code, auto type) noexcept
+	auto do_je(auto& code, auto type, const auto& operands) noexcept
 	{
-
+		switch (type)
+		{
+			case R0:  code.emplace_back(0x69_byte); break;
+			case R1:  code.emplace_back(0x79_byte); break;
+			case R2:  code.emplace_back(0x89_byte); break;
+			case MEM: code.emplace_back(0x99_byte); embed_numeric<1_uz>(code, operands); break;
+			DEFAULT_CASE
+		}
 	}
 
-	auto do_jo(auto& code, auto type) noexcept
+	auto do_jo(auto& code, auto type, const auto& operands) noexcept
 	{
-
+		switch (type)
+		{
+			case R0:  code.emplace_back(0x6A_byte); break;
+			case R1:  code.emplace_back(0x7A_byte); break;
+			case R2:  code.emplace_back(0x8A_byte); break;
+			case MEM: code.emplace_back(0x9A_byte); embed_numeric<1_uz>(code, operands); break;
+			DEFAULT_CASE
+		}
 	}
 
-	auto do_jc(auto& code, auto type) noexcept
+	auto do_jc(auto& code, auto type, const auto& operands) noexcept
 	{
-
+		switch (type)
+		{
+			case R0:  code.emplace_back(0xAA_byte); break;
+			case R1:  code.emplace_back(0xBA_byte); break;
+			case R2:  code.emplace_back(0xCA_byte); break;
+			case MEM: code.emplace_back(0xDA_byte); embed_numeric<1_uz>(code, operands); break;
+			DEFAULT_CASE
+		}
 	}
 
-	auto do_jl(auto& code, auto type) noexcept
+	auto do_jl(auto& code, auto type, const auto& operands) noexcept
 	{
-
+		switch (type)
+		{
+			case R0:  code.emplace_back(0x67_byte); break;
+			case R1:  code.emplace_back(0x77_byte); break;
+			case R2:  code.emplace_back(0x87_byte); break;
+			case MEM: code.emplace_back(0x97_byte); embed_numeric<1_uz>(code, operands); break;
+			DEFAULT_CASE
+		}
 	}
 
-	auto do_jg(auto& code, auto type) noexcept
+	auto do_jg(auto& code, auto type, const auto& operands) noexcept
 	{
-
+		switch (type)
+		{
+			case R0:  code.emplace_back(0xA7_byte); break;
+			case R1:  code.emplace_back(0xB7_byte); break;
+			case R2:  code.emplace_back(0xC7_byte); break;
+			case MEM: code.emplace_back(0xD7_byte); embed_numeric<1_uz>(code, operands); break;
+			DEFAULT_CASE
+		}
 	}
 
-	auto do_jle(auto& code, auto type) noexcept
+	auto do_jle(auto& code, auto type, const auto& operands) noexcept
 	{
-
+		switch (type)
+		{
+			case R0:  code.emplace_back(0x68_byte); break;
+			case R1:  code.emplace_back(0x78_byte); break;
+			case R2:  code.emplace_back(0x88_byte); break;
+			case MEM: code.emplace_back(0x98_byte); embed_numeric<1_uz>(code, operands); break;
+			DEFAULT_CASE
+		}
 	}
 
-	auto do_jge(auto& code, auto type) noexcept
+	auto do_jge(auto& code, auto type, const auto& operands) noexcept
 	{
-
+		switch (type)
+		{
+			case R0:  code.emplace_back(0xA8_byte); break;
+			case R1:  code.emplace_back(0xB8_byte); break;
+			case R2:  code.emplace_back(0xC8_byte); break;
+			case MEM: code.emplace_back(0xD8_byte); embed_numeric<1_uz>(code, operands); break;
+			DEFAULT_CASE
+		}
 	}
 
-	auto do_jne(auto& code, auto type) noexcept
+	auto do_jne(auto& code, auto type, const auto& operands) noexcept
 	{
-
+		switch (type)
+		{
+			case R0:  code.emplace_back(0xA9_byte); break;
+			case R1:  code.emplace_back(0xB9_byte); break;
+			case R2:  code.emplace_back(0xC9_byte); break;
+			case MEM: code.emplace_back(0xD9_byte); embed_numeric<1_uz>(code, operands); break;
+			DEFAULT_CASE
+		}
 	}
 
-	auto do_jno(auto& code, auto type) noexcept
+	auto do_jno(auto& code, auto type, const auto& operands) noexcept
 	{
-
+		switch (type)
+		{
+			case R0:  code.emplace_back(0x6B_byte); break;
+			case R1:  code.emplace_back(0x7B_byte); break;
+			case R2:  code.emplace_back(0x8B_byte); break;
+			case MEM: code.emplace_back(0x9B_byte); embed_numeric<1_uz>(code, operands); break;
+			DEFAULT_CASE
+		}
 	}
 
-	auto do_jnc(auto& code, auto type) noexcept
+	auto do_jnc(auto& code, auto type, const auto& operands) noexcept
 	{
-
+		switch (type)
+		{
+			case R0:  code.emplace_back(0xAB_byte); break;
+			case R1:  code.emplace_back(0xBB_byte); break;
+			case R2:  code.emplace_back(0xCB_byte); break;
+			case MEM: code.emplace_back(0xDB_byte); embed_numeric<1_uz>(code, operands); break;
+			DEFAULT_CASE
+		}
 	}
 
-	auto do_push(auto& code, auto type) noexcept
+	auto do_push(auto& code, auto type, const auto& operands) noexcept
 	{
-
+		switch (type)
+		{
+			case R0:    code.emplace_back(0x08_byte); break;
+			case R1:    code.emplace_back(0x18_byte); break;
+			case R2:    code.emplace_back(0x28_byte); break;
+			case IMM:   code.emplace_back(0x38_byte); embed_numeric<1_uz>(code, operands); break;
+			case MEM:   code.emplace_back(0x48_byte); embed_numeric<1_uz>(code, operands); break;
+			case FLAGS: code.emplace_back(0xF6_byte); break;
+		}
 	}
 
-	auto do_pop(auto& code, auto type) noexcept
+	auto do_pop(auto& code, auto type, const auto& operands) noexcept
 	{
-
+		switch (type)
+		{
+			case R0:      code.emplace_back(0x09_byte); break;
+			case R1:      code.emplace_back(0x19_byte); break;
+			case R2:      code.emplace_back(0x29_byte); break;
+			case DISCARD: code.emplace_back(0x39_byte); break;
+			case FLAGS:   code.emplace_back(0xF7_byte); break;
+			case MEM:     code.emplace_back(0x49_byte); embed_numeric<1_uz>(code, operands); break;
+		}
 	}
 #undef DEFAULT_CASE
 #endif
@@ -712,7 +843,7 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 					break;
 
 				case 'e':
-					do_decrement(code, o);
+					do_decrement(code, o, f);
 					break;
 			}
 			break;
@@ -721,40 +852,40 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 			switch (line[1])
 			{
 				case 'm':
-					do_cmp(code, o);
+					do_cmp(code, o, f);
 					break;
 
 				case 'a':
-					do_call(code, o);
+					do_call(code, o, f);
 					break;
 			}
 			break;
 			
 		case 'n':
-			do_not(code, o);
+			do_not(code, o, f);
 			break;
 
 		case 'm':
-			do_move(code, o);
+			do_move(code, o, f);
 			break;
 
 		case 'x':
-			do_xor(code, o);
+			do_xor(code, o, f);
 			break;
 
 		case 'o':
-			do_or(code, o);
+			do_or(code, o, f);
 			break;
 
 		case 'a':
 			switch (line[1])
 			{
 				case 'd':
-					do_add(code, o);
+					do_add(code, o, f);
 					break;
 
 				case 'n':
-					do_and(code, o);
+					do_and(code, o, f);
 					break;
 			}
 			break;
@@ -782,11 +913,11 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 					switch (line[2])
 					{
 						case 'l':
-							do_rotate_left(code, o);
+							do_rotate_left(code, o, f);
 							break;
 
 						case 'r':
-							do_rotate_right(code, o);
+							do_rotate_right(code, o, f);
 							break;
 					}
 					break;
@@ -802,18 +933,18 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 					break;
 
 				case 'u':
-					do_sub(code, o);
+					do_sub(code, o, f);
 					break;
 
 				case 'h':
 					switch (line[2])
 					{
 						case 'l':
-							do_shift_left(code, o);
+							do_shift_left(code, o, f);
 							break;
 
 						case 'r':
-							do_shift_right(code, o);
+							do_shift_right(code, o, f);
 							break;
 					}
 					break;
@@ -824,7 +955,7 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 			switch (line[2])
 			{
 				case 'c':
-					do_increment(code, o);
+					do_increment(code, o, f);
 					break;
 
 				case 't':
@@ -838,44 +969,44 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 			switch (line[1])
 			{
 				case 'm':
-					do_jmp(code, o);
+					do_jmp(code, o, f);
 					break;
 
 				case 'e':
-					do_je(code, o);
+					do_je(code, o, f);
 					break;
 
 				case 'o':
-					do_jo(code, o);
+					do_jo(code, o, f);
 					break;
 
 				case 'c':
-					do_jc(code, o);
+					do_jc(code, o, f);
 					break;
 
 				case 'l':
-					if (line[2] == 'e') do_jle(code, o);
-					else do_jl(code, o);
+					if (line[2] == 'e') do_jle(code, o, f);
+					else do_jl(code, o, f);
 					break;
 
 				case 'g':
-					if (line[2] == 'e') do_jge(code, o);
-					else do_jg(code, o);
+					if (line[2] == 'e') do_jge(code, o, f);
+					else do_jg(code, o, f);
 					break;
 
 				case 'n':
 					switch (line[2])
 					{
 						case 'e':
-							do_jne(code, o);
+							do_jne(code, o, f);
 							break;
 
 						case 'o':
-							do_jno(code, o);
+							do_jno(code, o, f);
 							break;
 
 						case 'c':
-							do_jnc(code, o);
+							do_jnc(code, o, f);
 							break;
 					}
 					break;
@@ -893,7 +1024,7 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 						break;
 					}
 
-					do_push(code, o);
+					do_push(code, o, f);
 					break;
 
 				case 'o':
@@ -904,7 +1035,7 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 						break;
 					}
 
-					do_pop(code, o);
+					do_pop(code, o, f);
 					break;
 			}
 			break;

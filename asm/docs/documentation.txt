@@ -23,7 +23,7 @@ Execution Registers:
 	Speed  Register: [0xFFFB-0xFFFC]
 
 Execution Flags:
-	Unused:                   [0xFFFD]
+	Unspecified Use Run Flag: [0xFFFD]
 		#$xx = unspecified
 
 	Mask Hardware Interrupts: [0xFFFE]
