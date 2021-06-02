@@ -3,9 +3,7 @@
     "Data": {
         "Source": "c:\\users\\connor\\desktop\\cpu-explorer\\asm\\src\\literals.hpp",
         "ProvidedModule": "",
-        "ImportedModules": [
-            "std.core"
-        ],
+        "ImportedModules": [],
         "ImportedHeaderUnits": []
     }
 }

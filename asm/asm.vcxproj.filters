@@ -33,9 +33,6 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\common.ixx">
-      <Filter>Module Files\ixx</Filter>
-    </ClCompile>
     <ClCompile Include="src\assert.cpp">
       <Filter>Header Files\cpp</Filter>
     </ClCompile>

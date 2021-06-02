@@ -1,4 +1,5 @@
-import common;
+#include "assert.hpp"
+import std.core;
 
 //function that performs a debug assertion exit
 void ::_assert(const char* message, const char* function, const char* filename, unsigned line)

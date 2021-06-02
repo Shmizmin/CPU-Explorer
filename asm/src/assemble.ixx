@@ -1,6 +1,8 @@
 export module assemble;
 
-export import common;
+export import std.core;
+export import std.regex;
+export import "literals.hpp";
 
 export namespace cpu
 {

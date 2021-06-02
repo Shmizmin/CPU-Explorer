@@ -4,8 +4,11 @@
         "Source": "c:\\users\\connor\\desktop\\cpu-explorer\\asm\\src\\assemble.ixx",
         "ProvidedModule": "assemble",
         "ImportedModules": [
-            "common"
+            "std.core",
+            "std.regex"
         ],
-        "ImportedHeaderUnits": []
+        "ImportedHeaderUnits": [
+            "C:\\Users\\Connor\\Desktop\\cpu-explorer\\asm\\src\\literals.hpp"
+        ]
     }
 }

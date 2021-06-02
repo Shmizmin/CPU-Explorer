@@ -1,13 +1,12 @@
-import common;
 import filerator;
-import assemble;
 import save;
+import assemble;
 
 #if !defined _M_X64
 static_assert(false, "This program can only be compiled for 64-bit machines");
 #endif
 
-int __cdecl main(int argc, [[maybe_unused]] char** argv) noexcept
+int __cdecl main([[maybe_unused]]int argc, [[maybe_unused]] char** argv) noexcept
 {
 	//determine what do based on the number of arguments passed in
 	switch (argc)

@@ -4,7 +4,7 @@
         "Source": "c:\\users\\connor\\desktop\\cpu-explorer\\asm\\src\\save.ixx",
         "ProvidedModule": "save",
         "ImportedModules": [
-            "common"
+            "std.core"
         ],
         "ImportedHeaderUnits": []
     }

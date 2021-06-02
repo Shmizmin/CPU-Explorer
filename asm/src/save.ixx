@@ -1,7 +1,6 @@
 export module save;
 
-export import common;
-
+export import std.core;
 
 export namespace cpu
 {

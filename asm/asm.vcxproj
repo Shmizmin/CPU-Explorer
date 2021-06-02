@@ -133,6 +133,7 @@
       <CallingConvention>VectorCall</CallingConvention>
       <DisableSpecificWarnings>5050;</DisableSpecificWarnings>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -179,7 +180,6 @@
     <ClCompile Include="src\assemble.cpp" />
     <ClCompile Include="src\assemble.ixx" />
     <ClCompile Include="src\assert.cpp" />
-    <ClCompile Include="src\common.ixx" />
     <ClCompile Include="src\filerator.cpp" />
     <ClCompile Include="src\filerator.ixx" />
     <ClCompile Include="src\main.cpp" />

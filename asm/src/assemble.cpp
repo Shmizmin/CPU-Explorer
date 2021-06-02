@@ -3,6 +3,12 @@ import assemble;
 //internally linked functions
 namespace
 {
+	//specialized std::byte integer literal
+	inline constexpr std::byte operator"" _byte(std::size_t n) noexcept
+	{
+		return std::byte{ static_cast<std::underlying_type_t<std::byte>>(n) };
+	}
+
 	//splits a string into a vector of strings over a delimiter character or string
 	//compress flag suppresses duplicate empty strings when multiple delimiters are stacked
 	std::vector<std::string> split(std::string text, std::string delim, bool compress)
@@ -79,6 +85,7 @@ namespace
 		SP_MEM,
 
 		DISCARD,
+		LABEL,
 		NONE,
 	};
 	using enum Operands;
@@ -86,10 +93,14 @@ namespace
 	//extract operand from a line into a 3 size array of string
 	auto find_operands(const auto& line) noexcept
 	{
-		//https://regex101.com/r/uhtAvu/1
-		std::regex insn(R"((?:([a-z]*) ((?:r[0-9])|(?:(?:#|%)[0-9]+))?(?:, )?((?:r[0-9])|(?:(?:#|%)[0-9]+))(?: )*(?:;(?:.*))?)$)");
-		std::smatch matches;
-		if (!std::regex_match(line, matches, insn))
+		//https://regex101.com/r/JVIYVc/1
+		std::regex insn(R"(^\s*(?:([a-z]*) ?((?:[a-z]\w*)|(?:r[0-9])|(?:(?:#|%)\$?\w+))?(?:, (r[0-9]|(?:(?:#|%)\$?\w+)))?(?: )*(?:;(?:.*))?)$)");
+
+		std::smatch insn_matches;
+
+
+		//a line can only be an instruction or a label
+		if (!std::regex_match(line, insn_matches, insn))
 		{
 			std::cerr << "Assembly Syntax Error";
 			std::exit(12);
@@ -98,36 +109,78 @@ namespace
 		//assembly is likely valid so return the matches we made
 		else
 		{
-			return std::array{ matches[1], matches[2], matches[3] };
+			return std::array{ insn_matches[1], insn_matches[2], insn_matches.size() == 4 ? insn_matches[3] : std::ssub_match{} };
 		}
 	}
 
 	//extract numeric operands
 	template<std::size_t index>
-	auto get_numeric_operand(const auto& operands) noexcept
+	std::uint16_t get_numeric_operand(const auto& operands) noexcept
 	{
-		const auto& [instruction, op1, op2] = operands;
+		//const auto& [instruction, op1, op2] = operands;
+		//const auto& instruction = operands[0];
+		const auto& op1 = operands[1];
+		const auto& op2 = operands[2];
+		
 
-			 if constexpr (index == 1_uz) return static_cast<std::uint16_t>(std::stoi(op1.str().substr(1_uz)));
-		else if constexpr (index == 2_uz) return static_cast<std::uint16_t>(std::stoi(op2.str().substr(1_uz)));
+		std::string header = "0x";
 
-		else static_assert(false, "get_numeric_index requires an index of 1 or 2");
+		if constexpr (index == 1_uz)
+		{
+			if (op1.str()[1] == '$')
+			{
+				return static_cast<std::uint16_t>(std::stoul(header + op1.str().substr(2_uz), 0, 16));
+			}
+
+			else
+			{
+				return static_cast<std::uint16_t>(std::stoul(op1.str().substr(1_uz), 0, 10));
+			}
+		}
+
+		else if constexpr (index == 2_uz)
+		{
+			if (op1.str()[1] == '$')
+			{
+				return static_cast<std::uint16_t>(std::stoul(header + op2.str().substr(2_uz), 0, 16));
+			}
+
+			else
+			{
+				return static_cast<std::uint16_t>(std::stoul(op1.str().substr(1_uz), 0, 10));
+			}
+		}
+
+		else
+		{
+			static_assert(false, "get_numeric_index requires an index of 1 or 2");
+			return 0_u16;
+		}
+
 	}
 
-	template<std::size_t index>
-	auto embed_numeric(auto& code, const auto& operands) noexcept
+	auto extract_bits(auto& code, auto whole) noexcept
 	{
-		auto whole = get_numeric_operand<index>(operands);
 		auto upper = static_cast<std::uint8_t>((whole & 0xFF00) >> 8);
 		auto lower = static_cast<std::uint8_t>((whole & 0x00FF) >> 0);
 		code.emplace_back(std::byte{ lower });
 		code.emplace_back(std::byte{ upper });
 	}
 	
+	template<std::size_t index>
+	auto embed_numeric(auto& code, const auto& operands) noexcept
+	{
+		auto whole = get_numeric_operand<index>(operands);
+		extract_bits(code, whole);
+	}
+	
 	//extract operand encoding type
 	auto get_encoding_type(auto operands) noexcept
 	{
-		const auto& [instruction, op1, op2] = operands;
+		//const auto& [instruction, op1, op2] = std::tie(operands[0], operands[1], operands[2]);
+		//const auto& instruction = operands[0];
+		const auto& op1 = operands[1];
+		const auto& op2 = operands[2];
 		auto encoding = ::Operands::NONE;
 
 		if (op1.matched)
@@ -261,8 +314,7 @@ namespace
 		return encoding;
 	}
 
-#pragma warning(push)
-#pragma warning(disable: 4100)
+#pragma region INSNS
 
 #ifndef DEFAULT_CASE
 #define DEFAULT_CASE default:                                             \
@@ -323,13 +375,12 @@ namespace
 		}
 	}
 
-	auto do_call(auto& code, auto type, const auto& operands) noexcept
+	auto do_call(auto& code, const auto& labels, const auto& operands) noexcept
 	{
-		switch (type)
-		{
-			case MEM: code.emplace_back(0x47_byte); embed_numeric<1_uz>(code, operands); break;
-			DEFAULT_CASE
-		}
+		code.emplace_back(0x47_byte);
+		auto name = operands[1];
+		auto val = labels.at(name);
+		extract_bits(code, val);
 	}
 
 	auto do_move(auto& code, auto type, const auto& operands) noexcept
@@ -807,9 +858,8 @@ namespace
 			case MEM:     code.emplace_back(0x49_byte); embed_numeric<1_uz>(code, operands); break;
 		}
 	}
-#undef DEFAULT_CASE
 #endif
-#pragma warning(pop)
+#pragma endregion
 }
 
 //takes in assembly source and returns raw binary
@@ -818,227 +868,256 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 	//retrieve the contents of each line of source code
 	const std::vector<std::string> lines = ::split(source, "\n", true);
 
+	std::map<std::string, std::size_t> labelMap;
+	
 	//create a dynamically allocated array for storing machine code
 	std::vector<std::byte> code;
 
+	//https://regex101.com/r/APnEKf/1
+	std::regex blank(R"(^(\s*(?:;.*)?)$)");
+
+	//https://regex101.com/r/NsOSMw/1
+	std::regex labelRegex(R"(^(?:([A-z]\w*):\s*(?:;(?:.*))?))");
+
 	//iterate over each line of source code
-	for (auto&& line : lines)
+	for (auto&& lmod : lines)
 	{
-		auto f = find_operands(line);
-		auto o = get_encoding_type(f);
-
-		switch (line[0])
+		auto my_isspace = [](char ch) noexcept
 		{
-		case 'e':
-			//ei
-			code.emplace_back(0xFE_byte);
-			break;
+			return std::isspace(static_cast<unsigned char>(ch));
+		};
 
-		case 'd':
-			switch (line[1])
+		auto i = 0_uz;
+		while (my_isspace(lmod[i])) ++i;
+		auto line = lmod.substr(i);
+
+		if (std::regex_match(line, blank))
+			continue;
+
+		std::smatch matches;
+		if (std::regex_match(line, matches, labelRegex))
+		{
+			labelMap.insert({ matches[1].str(), code.size() });
+		}
+
+		else
+		{
+			auto f = find_operands(line);
+			auto o = get_encoding_type(f);
+
+			switch (line[0])
 			{
-				case 'i':
-					//di
-					code.emplace_back(0xFF_byte);
-					break;
-
 				case 'e':
-					do_decrement(code, o, f);
+					//ei
+					code.emplace_back(0xFE_byte);
 					break;
-			}
-			break;
 
-		case 'c':
-			switch (line[1])
-			{
+				case 'd':
+					switch (line[1])
+					{
+						case 'i':
+							//di
+							code.emplace_back(0xFF_byte);
+							break;
+
+						case 'e':
+							do_decrement(code, o, f);
+							break;
+					}
+					break;
+
+				case 'c':
+					switch (line[1])
+					{
+						case 'm':
+							do_cmp(code, o, f);
+							break;
+
+						case 'a':
+							do_call(code, labelMap, f);
+							break;
+					}
+					break;
+
+				case 'n':
+					do_not(code, o, f);
+					break;
+
 				case 'm':
-					do_cmp(code, o, f);
+					do_move(code, o, f);
+					break;
+
+				case 'x':
+					do_xor(code, o, f);
+					break;
+
+				case 'o':
+					do_or(code, o, f);
 					break;
 
 				case 'a':
-					do_call(code, o, f);
-					break;
-			}
-			break;
-			
-		case 'n':
-			do_not(code, o, f);
-			break;
+					switch (line[1])
+					{
+						case 'd':
+							do_add(code, o, f);
+							break;
 
-		case 'm':
-			do_move(code, o, f);
-			break;
-
-		case 'x':
-			do_xor(code, o, f);
-			break;
-
-		case 'o':
-			do_or(code, o, f);
-			break;
-
-		case 'a':
-			switch (line[1])
-			{
-				case 'd':
-					do_add(code, o, f);
+						case 'n':
+							do_and(code, o, f);
+							break;
+					}
 					break;
 
-				case 'n':
-					do_and(code, o, f);
-					break;
-			}
-			break;
+				case 'r':
+					switch (line[1])
+					{
+						case 'e':
+							switch (line[2])
+							{
+								case 's':
+									//reset
+									code.emplace_back(0xF5_byte);
+									break;
 
-		case 'r':
-			switch (line[1])
-			{
-				case 'e':
+								case 't':
+									//return
+									code.emplace_back(0x57_byte);
+									break;
+							}
+							break;
+
+
+						case 'o':
+							switch (line[2])
+							{
+								case 'l':
+									do_rotate_left(code, o, f);
+									break;
+
+								case 'r':
+									do_rotate_right(code, o, f);
+									break;
+							}
+							break;
+					}
+					break;
+
+				case 's':
+					switch (line[1])
+					{
+						case 'w':
+							//swint
+							code.emplace_back(0xF3_byte);
+							break;
+
+						case 'u':
+							do_sub(code, o, f);
+							break;
+
+						case 'h':
+							switch (line[2])
+							{
+								case 'l':
+									do_shift_left(code, o, f);
+									break;
+
+								case 'r':
+									do_shift_right(code, o, f);
+									break;
+							}
+							break;
+					}
+					break;
+
+				case 'i':
 					switch (line[2])
 					{
-						case 's':
-							//reset
-							code.emplace_back(0xF5_byte);
+						case 'c':
+							do_increment(code, o, f);
+							break;
+
+						case 't':
+							//intret
+							code.emplace_back(0xF4_byte);
+							break;
+					}
+					break;
+
+				case 'j':
+					switch (line[1])
+					{
+						case 'm':
+							do_jmp(code, o, f);
 							break;
 
 						case 'e':
-							//return
-							code.emplace_back(0x57_byte);
-							break;
-					}
-					break;
-					
-
-				case 'o':
-					switch (line[2])
-					{
-						case 'l':
-							do_rotate_left(code, o, f);
-							break;
-
-						case 'r':
-							do_rotate_right(code, o, f);
-							break;
-					}
-					break;
-			}
-			break;
-
-		case 's':
-			switch (line[1])
-			{
-				case 'w':
-					//swint
-					code.emplace_back(0xF3_byte);
-					break;
-
-				case 'u':
-					do_sub(code, o, f);
-					break;
-
-				case 'h':
-					switch (line[2])
-					{
-						case 'l':
-							do_shift_left(code, o, f);
-							break;
-
-						case 'r':
-							do_shift_right(code, o, f);
-							break;
-					}
-					break;
-			}
-			break;
-
-		case 'i':
-			switch (line[2])
-			{
-				case 'c':
-					do_increment(code, o, f);
-					break;
-
-				case 't':
-					//intret
-					code.emplace_back(0xF4_byte);
-					break;
-			}
-			break;
-
-		case 'j':
-			switch (line[1])
-			{
-				case 'm':
-					do_jmp(code, o, f);
-					break;
-
-				case 'e':
-					do_je(code, o, f);
-					break;
-
-				case 'o':
-					do_jo(code, o, f);
-					break;
-
-				case 'c':
-					do_jc(code, o, f);
-					break;
-
-				case 'l':
-					if (line[2] == 'e') do_jle(code, o, f);
-					else do_jl(code, o, f);
-					break;
-
-				case 'g':
-					if (line[2] == 'e') do_jge(code, o, f);
-					else do_jg(code, o, f);
-					break;
-
-				case 'n':
-					switch (line[2])
-					{
-						case 'e':
-							do_jne(code, o, f);
+							do_je(code, o, f);
 							break;
 
 						case 'o':
-							do_jno(code, o, f);
+							do_jo(code, o, f);
 							break;
 
 						case 'c':
-							do_jnc(code, o, f);
+							do_jc(code, o, f);
+							break;
+
+						case 'l':
+							if (line[2] == 'e') do_jle(code, o, f);
+							else do_jl(code, o, f);
+							break;
+
+						case 'g':
+							if (line[2] == 'e') do_jge(code, o, f);
+							else do_jg(code, o, f);
+							break;
+
+						case 'n':
+							switch (line[2])
+							{
+								case 'e':
+									do_jne(code, o, f);
+									break;
+
+								case 'o':
+									do_jno(code, o, f);
+									break;
+
+								case 'c':
+									do_jnc(code, o, f);
+									break;
+							}
+							break;
+					}
+					break;
+
+				case 'p':
+					switch (line[1])
+					{
+						case 'u':
+							if (line[4] == 'a')
+							{
+								//pushall
+								code.emplace_back(0xFC_byte);
+								break;
+							}
+
+							do_push(code, o, f);
+							break;
+
+						case 'o':
+							if (line[3] == 'a')
+							{
+								//popall
+								code.emplace_back(0xFD_byte);
+								break;
+							}
+
+							do_pop(code, o, f);
 							break;
 					}
 					break;
 			}
-			break;
-
-		case 'p':
-			switch (line[1])
-			{
-				case 'u':
-					if (line[4] == 'a')
-					{
-						//pushall
-						code.emplace_back(0xFC_byte);
-						break;
-					}
-
-					do_push(code, o, f);
-					break;
-
-				case 'o':
-					if (line[3] == 'a')
-					{
-						//popall
-						code.emplace_back(0xFD_byte);
-						break;
-					}
-
-					do_pop(code, o, f);
-					break;
-			}
-			break;
 		}
 	}
 	
