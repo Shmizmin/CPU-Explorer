@@ -33,8 +33,10 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
-asm/build
-emu/build
+asm/build/
+emu/build/
+Executables-Debug/
+Executables-Release/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/

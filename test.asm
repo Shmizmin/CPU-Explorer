@@ -1,7 +1,6 @@
 mem:
 	inc %$0043
 	dec %$FF0D
-	return
 
 test:
 	xor r1, r1
