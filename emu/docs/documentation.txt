@@ -1,0 +1,26 @@
+Flags Register:
+	0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+	ZF CF OF u  u  u  u  u  u  u  u  u  u  u  u  u
+
+Execution Vectors:
+	Reset Vector: [0xFFF1-0xFFF2]
+	SfInt Vector: [0xFFF3-0xFFF4]
+	HwInt Vector: [0xFFF5-0xFFF6]
+	
+Execution Registers:
+	Output Register: [0xFFF7-0xFFF8]
+	Input  Register: [0xFFF9-0xFFFA]
+
+	Speed  Register: [0xFFFB-0xFFFC]
+
+Execution Flags:
+	Unspecified Use Run Flag: [0xFFFD]
+		#$xx = unspecified
+
+	Mask Hardware Interrupts: [0xFFFE]
+		#$FF = enabled
+		#$xx = disabled
+
+	Enhanced Instruction Set: [0xFFFF]
+		#$FF = enabled
+		#$xx = disabled

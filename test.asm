@@ -1,13 +1,10 @@
-mem:
-	inc %$0043
-	dec %$FF0D
-
-test:
-	xor r1, r1
-	inc r1
-
 ; this is a test program
-	call mem      ; jsr test
-	call test
-	inc r0        ; register literal test
-	add r1, #$100 ; immediate value test
+	xor r0,r0
+	xor r0,r0
+	call mem      ; jsr test1
+	xor r0,r0
+	inc %$FF
+
+mem:
+	xor r0,r0 ; xor test
+	ret

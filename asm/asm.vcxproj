@@ -192,7 +192,6 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="docs\documentation.txt" />
-    <Text Include="docs\licensing.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\test.asm" />

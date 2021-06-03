@@ -1,6 +1,8 @@
 #ifndef cpu_literals_hpp
 #define cpu_literals_hpp
 
+#include <stdlib.h>
+
 //create an operator literal of a specified type and signedness
 #define OPERATOR_V(n, x)                                            \
 inline constexpr n operator"" _##x(unsigned long long i) noexcept \
