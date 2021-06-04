@@ -1,10 +1,10 @@
 Flags Register:
-	0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-	ZF CF OF u  u  u  u  u  u  u  u  u  u  u  u  u
+	Bits - 0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15
+	Uses - ZF CF OF IF u  u  u  u  u  u  u  u  u  u  u  u
 
 Execution Vectors:
 	Reset Vector: [0xFFF1-0xFFF2]
-	SfInt Vector: [0xFFF3-0xFFF4]
+	SwInt Vector: [0xFFF3-0xFFF4]
 	HwInt Vector: [0xFFF5-0xFFF6]
 	
 Execution Registers:
@@ -14,7 +14,7 @@ Execution Registers:
 	Speed  Register: [0xFFFB-0xFFFC]
 
 Execution Flags:
-	Unspecified Use Run Flag: [0xFFFD]
+	Undefined Execution Flag: [0xFFFD]
 		#$xx = unspecified
 
 	Mask Hardware Interrupts: [0xFFFE]

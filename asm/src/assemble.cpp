@@ -354,8 +354,8 @@ namespace
 #pragma region INSNS
 
 #ifndef DEFAULT_CASE
-#define DEFAULT_CASE default:                                             \
-	std::cerr << "Invalid operand types for the specified instruction\n"; \
+#define DEFAULT_CASE(x) default:                                          \
+	std::cerr << "Incorrect argument type passed to instruction " << #x;  \
 	std::exit(13);                                                        \
 	break;
 
@@ -367,7 +367,7 @@ namespace
 			case ::Operand::R1:  code.emplace_back(0xF9_byte); break;
 			case ::Operand::R2:  code.emplace_back(0xFA_byte); break;
 			case ::Operand::MEM: code.emplace_back(0xFB_byte); embed_numeric<1_uz>(code, operands); break;
-			DEFAULT_CASE
+			DEFAULT_CASE(dec)
 		}
 	}
 
@@ -379,7 +379,7 @@ namespace
 			case ::Operand::R1:  code.emplace_back(0xE9_byte); break;
 			case ::Operand::R2:  code.emplace_back(0xEA_byte); break;
 			case ::Operand::MEM: code.emplace_back(0xEB_byte); embed_numeric<1_uz>(code, operands); break;
-			DEFAULT_CASE
+			DEFAULT_CASE(inc)
 		}
 	}
 
@@ -408,7 +408,7 @@ namespace
 			case ::Operand::MEM_R1: code.emplace_back(0xD6_byte); embed_numeric<1_uz>(code, operands); break;
 			case ::Operand::MEM_R2: code.emplace_back(0xE6_byte); embed_numeric<1_uz>(code, operands); break;
 
-			DEFAULT_CASE
+			DEFAULT_CASE(cmp)
 		}
 	}
 
@@ -437,7 +437,7 @@ namespace
 			case ::Operand::MEM_R1: code.emplace_back(0xD0_byte); embed_numeric<1_uz>(code, operands); break;
 			case ::Operand::MEM_R2: code.emplace_back(0xE0_byte); embed_numeric<1_uz>(code, operands); break;
 
-			DEFAULT_CASE
+			DEFAULT_CASE(mov)
 		}
 	}
 
@@ -449,7 +449,7 @@ namespace
 			case ::Operand::R1:  code.emplace_back(0x59_byte); break;
 			case ::Operand::R2:  code.emplace_back(0x5A_byte); break;
 			case ::Operand::MEM: code.emplace_back(0x5B_byte); embed_numeric<1_uz>(code, operands); break;
-			DEFAULT_CASE
+			DEFAULT_CASE(not)
 		}
 	}
 
@@ -478,7 +478,7 @@ namespace
 			case ::Operand::MEM_R1: code.emplace_back(0xD5_byte); embed_numeric<1_uz>(code, operands); break;
 			case ::Operand::MEM_R2: code.emplace_back(0xE5_byte); embed_numeric<1_uz>(code, operands); break;
 
-			DEFAULT_CASE
+			DEFAULT_CASE(and)
 		}
 	}
 
@@ -511,7 +511,7 @@ namespace
 			case ::Operand::MEM_R1: code.emplace_back(0xD3_byte); embed_numeric<1_uz>(code, operands); break;
 			case ::Operand::MEM_R2: code.emplace_back(0xE3_byte); embed_numeric<1_uz>(code, operands); break;
 
-			DEFAULT_CASE
+			DEFAULT_CASE(xor)
 		}
 	}
 
@@ -540,7 +540,7 @@ namespace
 			case ::Operand::MEM_R1: code.emplace_back(0xD4_byte); embed_numeric<1_uz>(code, operands); break;
 			case ::Operand::MEM_R2: code.emplace_back(0xE4_byte); embed_numeric<1_uz>(code, operands); break;
 
-			DEFAULT_CASE
+			DEFAULT_CASE(or)
 		}
 	}
 
@@ -575,7 +575,7 @@ namespace
 			case ::Operand::SP_IMM: code.emplace_back(0x3A_byte); embed_numeric<2_uz>(code, operands); break;
 			case ::Operand::SP_MEM: code.emplace_back(0x4A_byte); embed_numeric<2_uz>(code, operands); break;
 
-			DEFAULT_CASE
+			DEFAULT_CASE(add)
 		}
 	}
 
@@ -610,7 +610,7 @@ namespace
 			case ::Operand::SP_IMM: code.emplace_back(0x3B_byte); embed_numeric<2_uz>(code, operands); break;
 			case ::Operand::SP_MEM: code.emplace_back(0x4B_byte); embed_numeric<2_uz>(code, operands); break;
 
-			DEFAULT_CASE
+			DEFAULT_CASE(sub)
 		}
 	}
 
@@ -639,7 +639,7 @@ namespace
 			case ::Operand::MEM_R1: code.emplace_back(0xDD_byte); embed_numeric<1_uz>(code, operands); break;
 			case ::Operand::MEM_R2: code.emplace_back(0xED_byte); embed_numeric<1_uz>(code, operands); break;
 
-			DEFAULT_CASE
+			DEFAULT_CASE(rol)
 		}
 	}
 
@@ -668,7 +668,7 @@ namespace
 			case ::Operand::MEM_R1: code.emplace_back(0xDC_byte); embed_numeric<1_uz>(code, operands); break;
 			case ::Operand::MEM_R2: code.emplace_back(0xEC_byte); embed_numeric<1_uz>(code, operands); break;
 
-			DEFAULT_CASE
+			DEFAULT_CASE(ror)
 		}
 	}
 
@@ -697,7 +697,7 @@ namespace
 			case ::Operand::MEM_R1: code.emplace_back(0xDF_byte); embed_numeric<1_uz>(code, operands); break;
 			case ::Operand::MEM_R2: code.emplace_back(0xEF_byte); embed_numeric<1_uz>(code, operands); break;
 
-			DEFAULT_CASE
+			DEFAULT_CASE(shl)
 		}
 	}
 
@@ -726,7 +726,7 @@ namespace
 			case ::Operand::MEM_R1: code.emplace_back(0xDE_byte); embed_numeric<1_uz>(code, operands); break;
 			case ::Operand::MEM_R2: code.emplace_back(0xEE_byte); embed_numeric<1_uz>(code, operands); break;
 
-			DEFAULT_CASE
+			DEFAULT_CASE(shr)
 		}
 	}
 
@@ -746,7 +746,7 @@ namespace
 		
 		else
 		{
-			std::cerr << "Control instructions require a single label operand";
+			std::cerr << "Incorrect argument type passed to instruction call";
 			std::exit(13);
 		}
 	}
@@ -761,7 +761,7 @@ namespace
 
 		else
 		{
-			std::cerr << "Control instructions require a single label operand";
+			std::cerr << "Incorrect argument type passed to instruction jmp";
 			std::exit(13);
 		}
 	}
@@ -776,7 +776,7 @@ namespace
 
 		else
 		{
-			std::cerr << "Control instructions require a single label operand";
+			std::cerr << "Incorrect argument type passed to instruction je";
 			std::exit(13);
 		}
 	}
@@ -791,7 +791,7 @@ namespace
 
 		else
 		{
-			std::cerr << "Control instructions require a single label operand";
+			std::cerr << "Incorrect argument type passed to instruction jo";
 			std::exit(13);
 		}
 	}
@@ -806,7 +806,7 @@ namespace
 
 		else
 		{
-			std::cerr << "Control instructions require a single label operand";
+			std::cerr << "Incorrect argument type passed to instruction jc";
 			std::exit(13);
 		}
 	}
@@ -821,7 +821,7 @@ namespace
 
 		else
 		{
-			std::cerr << "Control instructions require a single label operand";
+			std::cerr << "Incorrect argument type passed to instruction jl";
 			std::exit(13);
 		}
 	}
@@ -836,7 +836,7 @@ namespace
 
 		else
 		{
-			std::cerr << "Control instructions require a single label operand";
+			std::cerr << "Incorrect argument type passed to instruction jg";
 			std::exit(13);
 		}
 	}
@@ -851,7 +851,7 @@ namespace
 
 		else
 		{
-			std::cerr << "Control instructions require a single label operand";
+			std::cerr << "Incorrect argument type passed to instruction jle";
 			std::exit(13);
 		}
 	}
@@ -866,7 +866,7 @@ namespace
 
 		else
 		{
-			std::cerr << "Control instructions require a single label operand";
+			std::cerr << "Incorrect argument type passed to instruction jge";
 			std::exit(13);
 		}
 	}
@@ -881,7 +881,7 @@ namespace
 
 		else
 		{
-			std::cerr << "Control instructions require a single label operand";
+			std::cerr << "Incorrect argument type passed to instruction jne";
 			std::exit(13);
 		}
 	}
@@ -896,7 +896,7 @@ namespace
 
 		else
 		{
-			std::cerr << "Control instructions require a single label operand";
+			std::cerr << "Incorrect argument type passed to instruction jno";
 			std::exit(13);
 		}
 	}
@@ -911,7 +911,7 @@ namespace
 
 		else
 		{
-			std::cerr << "Control instructions require a single label operand";
+			std::cerr << "Incorrect argument type passed to instruction jnc";
 			std::exit(13);
 		}
 	}
@@ -926,6 +926,7 @@ namespace
 			case ::Operand::IMM:   code.emplace_back(0x38_byte); embed_numeric<1_uz>(code, operands); break;
 			case ::Operand::MEM:   code.emplace_back(0x48_byte); embed_numeric<1_uz>(code, operands); break;
 			case ::Operand::FLAGS: code.emplace_back(0xF6_byte); break;
+			DEFAULT_CASE(push)
 		}
 	}
 
@@ -939,6 +940,7 @@ namespace
 			case ::Operand::DISCARD: code.emplace_back(0x39_byte); break;
 			case ::Operand::FLAGS:   code.emplace_back(0xF7_byte); break;
 			case ::Operand::MEM:     code.emplace_back(0x49_byte); embed_numeric<1_uz>(code, operands); break;
+				DEFAULT_CASE(pop)
 		}
 	}
 #endif
@@ -986,9 +988,9 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 		std::smatch matches;
 		if (std::regex_match(line, matches, labelRegex)) [[unlikely]]
 		{
-			if (labels.contains(line))
+			if (labels.contains(matches[1].str()))
 			{
-				std::cerr << "Duplicate Labels are not permitted";
+				std::cerr << "Label resolution was ambiguous for duplicate label " << matches[1].str();
 				std::exit(14);
 			}
 

@@ -13,5 +13,47 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\cpp">
+      <UniqueIdentifier>{68b80a2d-f10a-4174-8485-cafe6aa3dc95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\hpp">
+      <UniqueIdentifier>{1186466c-2a0a-415f-8c21-48c0c0586f57}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="docs\documentation.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\processor.cpp">
+      <Filter>Header Files\cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\filerator.cpp">
+      <Filter>Header Files\cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assert.cpp">
+      <Filter>Header Files\cpp</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\assert.hpp">
+      <Filter>Header Files\hpp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\processor.hpp">
+      <Filter>Header Files\hpp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filerator.hpp">
+      <Filter>Header Files\hpp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\instructions.hpp">
+      <Filter>Header Files\hpp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\literals.hpp">
+      <Filter>Header Files\hpp</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
