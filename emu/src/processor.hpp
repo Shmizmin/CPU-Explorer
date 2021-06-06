@@ -44,11 +44,38 @@ namespace cpu
 		}
 
 	public:
-		//halts execution and resets state
-		void reset(void) noexcept;
+		//read 8 bits of information from memory
+		auto read8(void) noexcept;
+		
+		//write 8 bits of information to memory
+		auto write8(std::uint8_t, std::uint16_t) noexcept;
 
-		//run for each clock cycle of the system
-		void clock(void) noexcept;
+		//read 16 bits of information from memory
+		auto read16(void) noexcept;
+
+		//write 16 bits of information to memory
+		auto write16(std::uint16_t, std::uint16_t) noexcept;
+
+		//push 8 bits of information to the stack
+		auto push8(std::uint8_t) noexcept;
+
+		//pop 8 bits of information from the stack
+		auto pop8(void) noexcept;
+
+		//push 16 bits of information to the stack
+		auto push16(std::uint16_t) noexcept;
+
+		//pop 16 bits of information from the stack
+		auto pop16(void) noexcept;
+
+		//runs the instruction pointed to by the instruction pointer
+		auto execute(std::uint8_t, const std::bitset<8_uz>&) noexcept;
+
+		//runs an entire instruction sequence
+		auto run(void) noexcept;
+
+		//runs for each clock cycle of the system
+		auto clock(void) noexcept;
 	};
 }
 

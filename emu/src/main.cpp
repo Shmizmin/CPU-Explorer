@@ -3,7 +3,7 @@
 
 #include "filerator.hpp"
 
-#if !defined _M_X64
+#if not defined(_M_X64)
 static_assert(false, "This program can only be compiled for 64-bit machines");
 #endif
 

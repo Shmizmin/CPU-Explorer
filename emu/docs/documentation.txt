@@ -5,7 +5,7 @@ Flags Register:
 Execution Vectors:
 	Reset Vector: [0xFFF1-0xFFF2]
 	SwInt Vector: [0xFFF3-0xFFF4]
-	HwInt Vector: [0xFFF5-0xFFF6]
+	Excpt Vector: [0xFFF5-0xFFF6]
 	
 Execution Registers:
 	Output Register: [0xFFF7-0xFFF8]
@@ -17,9 +17,8 @@ Execution Flags:
 	Undefined Execution Flag: [0xFFFD]
 		#$xx = unspecified
 
-	Mask Hardware Interrupts: [0xFFFE]
-		#$FF = enabled
-		#$xx = disabled
+	Undefined Execution Flag: [0xFFFE]
+		#$xx = unspecified
 
 	Enhanced Instruction Set: [0xFFFF]
 		#$FF = enabled

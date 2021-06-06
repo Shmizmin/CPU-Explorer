@@ -80,13 +80,13 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\Executables-Debug\</OutDir>
     <IntDir>.\build\</IntDir>
-    <TargetName>asm</TargetName>
+    <TargetName>assemble</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\Executables-Release\</OutDir>
     <IntDir>.\build\</IntDir>
-    <TargetName>asm</TargetName>
+    <TargetName>assemble</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
