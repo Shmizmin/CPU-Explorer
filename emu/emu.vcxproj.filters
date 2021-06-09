@@ -19,6 +19,18 @@
     <Filter Include="Header Files\hpp">
       <UniqueIdentifier>{1186466c-2a0a-415f-8c21-48c0c0586f57}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Application Files">
+      <UniqueIdentifier>{79fb9779-ddba-4c06-974d-2d8a86ea2921}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Application Files\hpp">
+      <UniqueIdentifier>{b2b59887-691e-4ab3-aa53-992a04767f76}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Application Files\cpp">
+      <UniqueIdentifier>{28f691aa-b694-461c-ad31-b15c08699d30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Application Files\res">
+      <UniqueIdentifier>{341dec3d-4fdb-424d-bc37-c7d7d0d75c5b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="docs\documentation.txt">
@@ -38,6 +50,9 @@
     <ClCompile Include="src\assert.cpp">
       <Filter>Header Files\cpp</Filter>
     </ClCompile>
+    <ClCompile Include="src\emulator.cpp">
+      <Filter>Header Files\cpp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\assert.hpp">
@@ -53,6 +68,9 @@
       <Filter>Header Files\hpp</Filter>
     </ClInclude>
     <ClInclude Include="src\literals.hpp">
+      <Filter>Header Files\hpp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\emulator.hpp">
       <Filter>Header Files\hpp</Filter>
     </ClInclude>
   </ItemGroup>

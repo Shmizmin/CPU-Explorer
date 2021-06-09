@@ -1,6 +1,10 @@
 #ifndef emu_processor_hpp
 #define emu_processor_hpp
 
+//disable the nonstandard extension used: anonymous struct
+#pragma warning(push)
+#pragma warning(disable: 4201)
+
 #include <cstdint>
 #include <bitset>
 #include <limits>
@@ -38,9 +42,6 @@
 namespace cpu
 {
 #if (defined(_MSC_VER) and defined(_MSC_EXTENSIONS) and defined(_M_X64) and defined(_WIN64)) or defined(__GNUG__)
-//disable the nonstandard extension used: warning for msvc at the very least
-#pragma warning(push)
-#pragma warning(disable: 4201)
 	union Register
 	{
 	public:
@@ -67,7 +68,6 @@ namespace cpu
 		{
 		}
 	};
-#pragma warning(pop)
 #else
 static_assert(false, "This project may or may not be compatible with your platform. Inspect the code snippet above and verify"
 					 " that your compiler extensions support safe reading of inactive union members and anonymous structs");
@@ -138,13 +138,13 @@ static_assert(false, "This project may or may not be compatible with your platfo
 		auto& read8(void) noexcept;
 		
 		//write 8 bits of information to memory
-		auto write8(std::uint8_t, std::uint16_t) noexcept;
+		auto write8(void) noexcept;
 
 		//read 16 bits of information from memory
 		auto& read16(void) noexcept;
 
 		//write 16 bits of information to memory
-		auto write16(std::uint16_t, std::uint16_t) noexcept;
+		auto write16(void) noexcept;
 
 		//push 8 bits of information to the stack
 		auto push8(std::uint8_t) noexcept;
@@ -188,4 +188,5 @@ static_assert(false, "This project may or may not be compatible with your platfo
 	};
 }
 
+#pragma warning(pop)
 #endif

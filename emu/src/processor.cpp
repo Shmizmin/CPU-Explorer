@@ -17,151 +17,6 @@
 //internally linked (private) functions
 namespace
 {
-	/*
-	auto do_move(std::uint16_t& val1, const std::uint16_t& val2, const std::bitset<8>& flags, cpu::Processor& cpu) noexcept
-	{
-		if (!is_eight_size) [[likely]] //is 16-bit
-		{
-			val1 = val2;
-
-			//3 bytes, 3 cycles
-			return std::make_pair(3_u16, 3_u16);
-		}
-
-		else [[unlikely]] //is 8-bit
-		{
-			if (is_upper_word and is_upper_byte)
-			{
-				if (is_zero_extra) [[unlikely]] //zero contents
-				{
-					val1 = upper2;
-				}
-
-				else [[likely]] //preserve contents
-				{
-					val1 = (upper2 | lower1);
-				}
-			}
-
-			else if (is_upper_word and not is_upper_byte)
-			{
-				if (is_zero_extra) [[unlikely]] //zero contents
-				{
-					val1 = 0_u16;
-					val1 |= (val2 << 8);
-				}
-
-				else [[likely]] //preserve contents
-				{
-					val1 &= 0x00FF_u16;
-					val1 = (val21)
-					val1 |= (val2 << 8);
-				}
-			}
-
-			else if (not is_upper_word and is_upper_byte)
-			{
-				if (is_zero_extra) [[unlikely]] //zero contents
-				{
-					val1 = 0_uz;
-					val1 |= (val2 >> 8);
-				}
-
-				else [[likely]] //preserve contents
-				{
-					val1 &= 0xFF00_u16;
-					val1 |= (val2 >> 8);
-				}
-			}
-
-			else if (not is_upper_word and not is_upper_byte)
-			{
-				if (is_zero_extra) [[unlikely]] //zero contents
-				{
-					val1 = val2;
-					val1 &= 0x00FF_u16;
-				}
-
-				else [[likely]] //preserve contents
-				{
-					val1 &= 0xFF00_u16;
-					val1 |= (val2 & 0x00FF_u16);
-				}
-			}
-
-			//2 bytes, 2 cycles
-			return std::make_pair(2_u16, 2_u16);
-		}
-	}
-	*/
-
-	/*
-	auto do_add(std::uint16_t& val1, const std::uint16_t& val2, const std::bitset<8>& flags) noexcept
-	{
-		UNPACK_FLAGS
-
-		if (!is_eight_size) [[likely]] //is 16-bit
-		{
-			val1 += val2;
-
-			//3 bytes, 3 cycles
-			return std::make_pair(3_u16, 3_u16);
-		}
-
-		else [[unlikely]] //is 8-bit
-		{
-			if (is_upper_word and is_upper_byte)
-			{
-				if (is_zero_extra) [[unlikely]]
-				{
-					//val1 &= 0xFF00_u16;
-					//val1 += (val2 & 0xFF00_u16);
-
-					val1 >>= 8_u16;
-					val1 += ((val2 & 0xFF00_u16) >> 8_u16);
-					if (val1 == 0_u16) FLAGS[::Flag::ZERO] = true;
-					val1 <<= 8_u16;
-				}
-
-				else [[likely]]
-				{
-					auto top =  ((val1 & 0xFF00_u16) >> 8_u16);
-						 top += ((val2 & 0xFF00_u16) >> 8_u16);
-					val1 &= 0x00FF_u16;
-					val1 |= (top << 8);
-				}
-			}
-
-			else if (is_upper_word and not is_upper_byte)
-			{
-				if (is_zero_extra) [[unlikely]]
-				{
-					val1 &= 0xFF00_u16;
-					val1 +=
-				}
-
-				else [[likely]]
-				{
-
-				}
-			}
-
-			else if (not is_upper_word and is_upper_byte)
-			{
-
-			}
-
-			else if (not is_upper_word and not is_upper_byte)
-			{
-
-			}
-
-			//2 bytes, 2 cycles
-			return std::make_pair(2_u16, 3_u16);
-		}
-	}
-	*/
-
 	//composes two bytes into a word
 	auto compose(std::uint8_t lower, std::uint8_t upper) noexcept
 	{
@@ -185,10 +40,8 @@ auto& cpu::Processor::read8(void) noexcept
 }
 
 //write 8 bits of information to memory
-auto cpu::Processor::write8(std::uint8_t val, std::uint16_t addr) noexcept
+auto cpu::Processor::write8(void) noexcept
 {
-	AB = addr;
-	DB = val;
 	MEM[AB] = static_cast<std::uint8_t>(DB);
 }
 
@@ -206,14 +59,19 @@ auto& cpu::Processor::read16(void) noexcept
 }
 
 //write 16 bits of information to memory
-auto cpu::Processor::write16(std::uint16_t val, std::uint16_t addr) noexcept
+auto cpu::Processor::write16(void) noexcept
 {
 	//get the upper and lower halves of the value
-	auto [upper, lower] = ::decompose(val);
+	auto [upper, lower] = ::decompose(DB);
 
 	//write out each byte
-	write8(upper, addr);
-	write8(lower, addr);
+	DB = upper;
+	write8();
+
+	++AB;
+
+	DB = lower;
+	write8();
 }
 
 //push 8 bits of information to the stack
@@ -381,108 +239,27 @@ auto cpu::Processor::execute(std::uint8_t opcode) noexcept
 		case ::Opcode::w##_##x##_##y:   \
 			return do_##z##_insn(x, y); \
 
-	   GNRL_REG_REG_INSN(R0, R1, move, MOV)
-	   GNRL_REG_REG_INSN(R0, R2, move, MOV)
-	   GNRL_REG_REG_INSN(R1, R0, move, MOV)
-	   GNRL_REG_REG_INSN(R1, R2, move, MOV)
-	   GNRL_REG_REG_INSN(R2, R0, move, MOV)
-	   GNRL_REG_REG_INSN(R2, R1, move, MOV)
+#define FOR_EACH_REG(x, y)              \
+		GNRL_REG_REG_INSN(R0, R1, x, y) \
+		GNRL_REG_REG_INSN(R0, R2, x, y) \
+		GNRL_REG_REG_INSN(R1, R0, x, y) \
+		GNRL_REG_REG_INSN(R1, R2, x, y) \
+		GNRL_REG_REG_INSN(R2, R0, x, y) \
+		GNRL_REG_REG_INSN(R2, R1, x, y) \
 
-	   GNRL_REG_REG_INSN(R0, R1, add, ADD)
-	   GNRL_REG_REG_INSN(R0, R2, add, ADD)
-	   GNRL_REG_REG_INSN(R1, R0, add, ADD)
-	   GNRL_REG_REG_INSN(R1, R2, add, ADD)
-	   GNRL_REG_REG_INSN(R2, R0, add, ADD)
-	   GNRL_REG_REG_INSN(R2, R1, add, ADD)
-
-	   GNRL_REG_REG_INSN(R0, R1, sub, SUB)
-	   GNRL_REG_REG_INSN(R0, R2, sub, SUB)
-	   GNRL_REG_REG_INSN(R1, R0, sub, SUB)
-	   GNRL_REG_REG_INSN(R1, R2, sub, SUB)
-	   GNRL_REG_REG_INSN(R2, R0, sub, SUB)
-	   GNRL_REG_REG_INSN(R2, R1, sub, SUB)
+		FOR_EACH_REG(move, MOV)
+		FOR_EACH_REG(add, ADD)
+		FOR_EACH_REG(sub, SUB)
+		FOR_EACH_REG(xor, XOR)
+		FOR_EACH_REG(or, OR)
+		FOR_EACH_REG(and, AND)
+#undef FOR_EACH_REG
 #undef GNRL_REG_REG_INSN
-
-//#ifndef PUSH_INSN
-//#define PUSH_INSN(x, y)                                          \
-//		case ::Opcode::PUSH_R##x:                                \
-//		{                                                        \
-//			if (!EF.SIZE_OVERRIDE) [[likely]]                    \
-//			{                                                    \
-//				push16(R##x##y);                                 \
-//                                                                 \
-//				/*1 push, 2 cycles*/                             \
-//				return std::make_pair(1_u16, 2_u16);             \
-//			}                                                    \
-//                                                                 \
-//			else [[unlikely]]                                    \
-//			{                                                    \
-//				push8(static_cast<std::uint8_t>(R##x & 0x00FF)); \
-//                                                                 \
-//				/*1 push, 1 cycle*/                              \
-//				return std::make_pair(2_u16, 1_u16);             \
-//			}                                                    \
-//		}                                                        \
-//
-//	   PUSH_INSN(0, .ALL)
-//	   PUSH_INSN(1, .ALL)
-//	   PUSH_INSN(2, .ALL)
-//#undef PUSH_INSN
-//#else
-//static_assert(false, "Redefinition of PUSH_INSN");
-//#endif
-//
-//#ifndef POP_INSN
-//#define POP_INSN(x)                                  \
-//		case ::Opcode::POP_R##x:                     \
-//		{                                            \
-//			if (!EF.SIZE_OVERRIDE) [[likely]]        \
-//			{                                        \
-//				R##x = pop16();                      \
-//													 \
-//				/*1 pop, 2 cycles*/                  \
-//				return std::make_pair(1_u16, 2_u16); \
-//			}                                        \
-//													 \
-//			else [[unlikely]]                        \
-//			{                                        \
-//				R##x = pop8();                       \
-//													 \
-//				/*1 pop, 1 cycle*/                   \
-//				return std::make_pair(2_u16, 1_u16); \
-//			}                                        \
-//		}                                            \
-//
-//	   POP_INSN(0)
-//	   POP_INSN(1)
-//	   POP_INSN(2)
-//#undef POP_INSN
-//#else
-//static_assert(false, "Redefinition of POP_INSN");
-//#endif
-//
-//#ifndef POP_JUMP
-//#define POP_JUMP(x)                              \
-//		case ::Opcode::x:                        \
-//		{                                        \
-//			IP = pop16();                        \
-//                                                 \
-//			/*1 pop, 1 jump, 3 cycles*/          \
-//			return std::make_pair(1_u16, 3_u16); \
-//		}                                        \
-//
-//	   POP_JUMP(INTRET)
-//	   POP_JUMP(RETURN)
-//#undef POP_JUMP
-//#else
-//static_assert(false, "Redefinition of POP_JUMP");
-//#endif
 
 #ifndef SET_INTERRUPT
 #define SET_INTERRUPT(x, y)                      \
 		case ::Opcode::x:                        \
 		{                                        \
-			/*set and clear the interrupt flag*/ \
 			SF.IF = y;                           \
 			return std::make_pair(1_u16, 1_u16); \
 		}                                        \
@@ -590,8 +367,8 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 			R2 = 0x0000,
 			SP = 0xFFF0;
 
-			//set the instruction pointer to the reset vector
-			IP = 0xFFF1;
+			//put the reset vector out on the address bus
+			AB = 0xFFF1;
 
 			//jump to the address pointed to by the reset vector
 			IP = read16();
@@ -600,8 +377,6 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 			return std::make_pair(1_u16, 4_u16);
 		}
 	}
-
-	
 }
 
 //runs an entire instruction sequence
