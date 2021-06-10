@@ -35,6 +35,7 @@ bld/
 
 asm/build/
 emu/build/
+app/build/
 Executables-Debug/
 Executables-Release/
 
