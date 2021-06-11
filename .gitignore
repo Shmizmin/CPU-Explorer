@@ -33,6 +33,7 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
+dbg/build/
 asm/build/
 emu/build/
 app/build/
