@@ -12,7 +12,7 @@ App::~App() noexcept
 
 bool App::OnInit() noexcept
 {
-	frame = new Main;
+	frame = new mainFrame(nullptr);
 	frame->Show();
 
 	return true;

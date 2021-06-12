@@ -13,7 +13,7 @@ public:
 	~App() noexcept;
 
 private:
-	Main* frame = nullptr;
+	mainFrame* frame = nullptr;
 
 public:
 	virtual bool OnInit() noexcept;
