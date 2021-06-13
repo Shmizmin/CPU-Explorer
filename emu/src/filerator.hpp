@@ -1,12 +1,13 @@
 #ifndef emu_filerator_hpp
 #define emu_filerator_hpp
 
-#include <string>
+#include <vector>
+#include <cstdint>
 
 namespace cpu
 {
 	//loads the contents of a specified file into a string
-	std::string filerator(const char* path) noexcept;
+	std::vector<std::uint8_t> filerator(const char* path) noexcept;
 }
 
 #endif

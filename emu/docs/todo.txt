@@ -1,0 +1,6 @@
+todo list:
+	-implement all instructions
+	-implement processor exceptions
+	-implement non-UB registers (GP, SF, EF)
+	-implement processor extensions?
+	-improve emulator performance

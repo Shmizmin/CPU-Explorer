@@ -3,24 +3,25 @@
 #include <fstream>
 
 //loads the contents of a specified file into a string
-std::string cpu::filerator(const char* path) noexcept
+std::vector<std::uint8_t> cpu::filerator(const char* path) noexcept
 {
+	//alias the vector of bytes type
+	using byte_vec = std::vector<std::uint8_t>;
+
 	//open the stream to load the file
-	std::ifstream f(path);
+	std::basic_ifstream<std::uint8_t> f(path, std::ios::binary);
 
-	//retrieve the size of the file
-	f.ignore(std::numeric_limits<std::streamsize>::max());
-	auto bytes = f.gcount();
-	f.seekg(0, std::ios::beg);
+	//retrieve the file size
+	f.seekg(0, std::ios::end);
+	auto size = f.tellg();
+	f.seekg(0, std::ios::end);
 
-	//create a copy buffer
-	std::string result;
-	result.resize(bytes);
+	//reserve memory buffer on the heap
+	byte_vec results(size);
 
 	//read the file into the buffer
-	result.assign(std::istreambuf_iterator<char>(f),
-				  std::istreambuf_iterator<char>());
+	f.read(results.data(), size);
 
 	//return the newly created buffer
-	return result;
+	return results;
 }

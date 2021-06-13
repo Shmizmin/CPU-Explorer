@@ -3,10 +3,12 @@
 	xor r0,r0
 	call mem      ; jsr test1
 	xor r0,r0
-	xor r0, %$0100
+	mov r0, %$0100
 	inc %$FF
 
 mem:
 	;xor r1, r1
 	;inc %$FF, r0
 	ret
+
+	movp r0h,r1l ;

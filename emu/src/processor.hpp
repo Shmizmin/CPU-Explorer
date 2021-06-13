@@ -6,7 +6,7 @@
 #pragma warning(disable: 4201)
 
 #include <cstdint>
-#include <bitset>
+#include <vector>
 #include <limits>
 #include <array>
 
@@ -21,7 +21,7 @@
   union members themselves and/or strict or relaxed aliases to them, and that these bytes can be determined statically to be of non-trap
   representation. In one embodiment this behavior specifies non-structure-heading structure padding for one or more nonstatic bitfield
   structure members, and asserts that non-byte aligned nonstatic bitfield structure members will be padded by the user such that the
-  compiler itself can sequester control over one or more bytes of an complete, but uninstantiated structure and/or the bytes that would
+  compiler itself can sequester control over one or more bytes of a complete, but uninstantiated structure and/or the bytes that would
   immediately follow it were they to be mapped to physical and/or logical processor address space to conform to user specified structure
   memory boundary alignment. In another embodiment, this behavior asserts that non-byte aligned nonstatic bitself structure members will
   be aligned to byte and/or user specified structure memory boundaries. In one embodiment these include the assurance that the compiler
@@ -41,7 +41,7 @@
 
 namespace cpu
 {
-#if (defined(_MSC_VER) and defined(_MSC_EXTENSIONS) and defined(_M_X64) and defined(_WIN64)) or defined(__GNUG__)
+#if defined(_MSC_VER) and defined(_MSC_EXTENSIONS) and defined(_M_X64)
 	union Register
 	{
 	public:
@@ -54,19 +54,9 @@ namespace cpu
 		};
 
 	public:
-		constexpr Register(std::uint16_t ALL) noexcept
-			: ALL(ALL)
-		{
-		}
-
-		constexpr Register(std::uint8_t LO, std::uint8_t HI) noexcept
-			: LO(LO), HI(HI)
-		{
-		}
-
-		constexpr ~Register() noexcept
-		{
-		}
+		constexpr Register(std::uint16_t ALL) noexcept : ALL(ALL) {}
+		constexpr Register(std::uint8_t LO, std::uint8_t HI) noexcept : LO(LO), HI(HI) {}
+		constexpr ~Register() noexcept {}
 	};
 #else
 static_assert(false, "This project may or may not be compatible with your platform. Inspect the code snippet above and verify"
@@ -77,14 +67,19 @@ static_assert(false, "This project may or may not be compatible with your platfo
 	{
 	public:
 		//flags register
-		struct
+		union
 		{
-			//this only struct-ized so all fields can be aggregate initialized
-			std::uint16_t ZF : 1,  //zero flag
-						  CF : 1,  //carry flag
-						  OF : 1,  //overflow flag
-						  IF : 1,  //interrupt flag
-						     : 12; //padding
+			struct
+			{
+				//this only struct-ized so all fields can be aggregate initialized
+				std::uint16_t ZF : 1,  //zero flag
+							  CF : 1,  //carry flag
+							  OF : 1,  //overflow flag
+							  IF : 1,  //interrupt flag
+							     : 12; //padding
+			};
+
+			std::uint16_t ALL;
 		} SF;
 
 		//verify that we can pun this into an integer when needed
@@ -106,32 +101,23 @@ static_assert(false, "This project may or may not be compatible with your platfo
 					  AB = 0x0000_u16;
 
 		//temporary execution flags
-		union
+		struct
 		{
-			struct
-			{
-				//this only struct-ized so all fields can be aggregate initialized
-				std::uint8_t IS_UPPER_SRCE : 1, //source is upper byte
-							 IS_UPPER_DEST : 1, //destination is upper byte
-							 ZERO_EXTENDED : 1, //should zero extend byte operations
-							 SIZE_OVERRIDE : 1, //operands are both 8 bits
-							               : 4; //padding
-			};
-
-			std::uint8_t ALL;
+			//this only struct-ized so all fields can be aggregate initialized
+			std::uint8_t IS_UPPER_SRCE : 1, //source is upper byte
+						 IS_UPPER_DEST : 1, //destination is upper byte
+						 ZERO_EXTENDED : 1, //should zero extend byte operations
+						 SIZE_OVERRIDE : 1, //operands are both 8 bits
+						               : 4; //padding
 		} EF;
 
 		//entire address space
 		std::array<std::uint8_t, std::numeric_limits<std::uint16_t>::max()> MEM{};
 
 	public:
-		constexpr Processor() noexcept
-		{
-		}
-
-		constexpr ~Processor() noexcept
-		{
-		}
+		//custom c'tor
+		constexpr Processor(const std::vector<std::uint8_t>& bin) noexcept;
+		constexpr ~Processor(void) noexcept;
 
 	private:
 		//read 8 bits of information from memory
@@ -178,10 +164,13 @@ static_assert(false, "This project may or may not be compatible with your platfo
 
 	public:
 		//runs the instruction pointed to by the instruction pointer
-		auto execute(std::uint8_t) noexcept;
+		auto run(std::uint8_t) noexcept;
 
-		//runs an entire instruction sequence
-		auto run(void) noexcept;
+		//begins instruction sequence execution
+		auto execute(void) noexcept;
+
+		//resets the processor state
+		void reset(void) noexcept;
 
 		//runs for each clock cycle of the system
 		auto clock(void) noexcept;

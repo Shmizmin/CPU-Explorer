@@ -130,40 +130,60 @@ namespace
 		//if op1 should be decoded
 		if constexpr (index == 1_uz)
 		{
+			//obtain the stringized operand
+			auto str = op1.str();
+
+			//verify that our number constant has at least a number
+			if (str.length() == 0_uz)
+			{
+				std::cerr << "A numeric constant must contain at least one number";
+				std::exit(16);
+			}
+
 			//determine how the number is encoded in source
-			switch (op1.str()[1])
+			switch (str[1])
 			{
 			case '$':
 				//number was encoded in hex
-				return static_cast<std::uint16_t>(std::stoul(op1.str().substr(2_uz), 0, 16));
+				return static_cast<std::uint16_t>(std::stoul(str.substr(2_uz), 0, 16));
 
 			case '@':
 				//number was encoded in binary
-				return static_cast<std::uint16_t>(std::stoul(op1.str().substr(2_uz), 0, 2));
+				return static_cast<std::uint16_t>(std::stoul(str.substr(2_uz), 0, 2));
 
 			default:
 				//number was encoded in decimal
-				return static_cast<std::uint16_t>(std::stoul(op1.str().substr(1_uz), 0, 10));
+				return static_cast<std::uint16_t>(std::stoul(str.substr(1_uz), 0, 10));
 			}
 		}
 
 		//if op2 should be decoded
 		else if constexpr (index == 2_uz)
 		{
+			//obtain the stringized operand
+			auto str = op2.str();
+
+			//verify that our number constant has at least a number
+			if (str.length() == 0_uz)
+			{
+				std::cerr << "A numeric constant must contain at least one number";
+				std::exit(16);
+			}
+
 			//determine how the number is encoded in source
-			switch (op2.str()[1])
+			switch (str[1])
 			{
 			case '$':
 				//number was encoded in hex
-				return static_cast<std::uint16_t>(std::stoul(op2.str().substr(2_uz), 0, 16));
+				return static_cast<std::uint16_t>(std::stoul(str.substr(2_uz), 0, 16));
 
 			case '@':
 				//number was encoded in binary
-				return static_cast<std::uint16_t>(std::stoul(op2.str().substr(2_uz), 0, 2));
+				return static_cast<std::uint16_t>(std::stoul(str.substr(2_uz), 0, 2));
 
 			default:
 				//number was encoded in decimal
-				return static_cast<std::uint16_t>(std::stoul(op2.str().substr(1_uz), 0, 10));
+				return static_cast<std::uint16_t>(std::stoul(str.substr(1_uz), 0, 10));
 			}
 		}
 
@@ -177,6 +197,7 @@ namespace
 
 	}
 
+	//embeds a 16 bit integer in binary
 	auto extract_bits(auto& code, auto whole) noexcept
 	{
 		//extract the 8-bit upper and lower halves
@@ -188,6 +209,7 @@ namespace
 		code.emplace_back(std::byte{ upper });
 	}
 	
+	//decodes and embeds an operand in binary
 	template<std::size_t index>
 	auto embed_numeric(auto& code, const auto& operands) noexcept
 	{
@@ -198,6 +220,33 @@ namespace
 		extract_bits(code, whole);
 	}
 	
+	//determines if instruciton references 8 bit quantities
+	auto eight_bit_data(const std::array<std::ssub_match, 3_uz>& operands) noexcept
+	{
+		//untie the operands array
+		const auto& [instruction, op1, op2] = operands;
+
+		//determine whether we can check the 4th character
+		if (instruction.length() == 4)
+		{
+			//Postfix 'p': preserve extra
+			//Postfix 'z': zero extend extra
+			switch (instruction[3])
+			{
+				case 'p': [[fallthrough]];
+				case 'z': return true;
+
+				default: return false;
+			}
+		}
+
+		//instruction must be 16 bits if not 4 characters long
+		else
+		{
+			return false;
+		}
+	}
+
 	//extract operand encoding type
 	auto get_encoding_type(const std::array<std::ssub_match, 3_uz>& operands) noexcept
 	{
@@ -354,9 +403,9 @@ namespace
 #pragma region INSNS
 
 #ifndef DEFAULT_CASE
-#define DEFAULT_CASE(x) default:                                          \
-	std::cerr << "Incorrect argument type passed to instruction " << #x;  \
-	std::exit(13);                                                        \
+#define DEFAULT_CASE(x) default:                                         \
+	std::cerr << "Incorrect argument type passed to instruction " << #x; \
+	std::exit(13);                                                       \
 	break;
 
 	void do_decrement(std::vector<std::byte>& code, ::Operand type, const std::array<std::ssub_match, 3_uz>& operands) noexcept
@@ -1259,11 +1308,8 @@ std::vector<std::byte> cpu::assemble(std::string source) noexcept
 		}
 	}
 
-	for (const auto& pendee : pending)
+	for (const auto&[label, addr] : pending)
 	{
-		//extract the patch-pending information
-		const auto& [label, addr] = pendee;
-
 		//verify that the referenced label actually exists
 		if (labels.contains(label)) [[likely]]
 		{

@@ -67,6 +67,9 @@
     <Text Include="docs\documentation.txt">
       <Filter>Resource Files</Filter>
     </Text>
+    <Text Include="docs\todo.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\test.asm">

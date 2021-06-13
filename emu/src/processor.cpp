@@ -9,11 +9,6 @@
 #include <utility>
 #include <bit>
 
-#ifdef OVERFLOW
-#undef OVERFLOW
-#endif
-
-
 //internally linked (private) functions
 namespace
 {
@@ -49,9 +44,9 @@ auto cpu::Processor::write8(void) noexcept
 auto& cpu::Processor::read16(void) noexcept
 {
 	//read in the upper and lower halves
-	auto upper = read8();
-	++AB;
 	auto lower = read8();
+	++AB;
+	auto upper = read8();
 
 	//compose them into a single value and return
 	DB = ::compose(lower, upper);
@@ -230,7 +225,7 @@ auto cpu::Processor::do_and_insn(cpu::Register& dst, const cpu::Register& src) n
 
 
 //runs the instruction pointed to by the instruction pointer
-auto cpu::Processor::execute(std::uint8_t opcode) noexcept
+auto cpu::Processor::run(std::uint8_t opcode) noexcept
 {
 	//determine what to do based on that byte
 	switch (opcode)
@@ -274,7 +269,7 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 
 		case ::Opcode::POP_DISCARD:
 		{
-			if (EF.SIZE_OVERRIDE) [[likely]]
+			if (!EF.SIZE_OVERRIDE) [[likely]]
 			{
 				static_cast<void>(pop16());
 
@@ -293,10 +288,8 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 
 		case ::Opcode::PUSH_FLAGS:
 		{
-			//push the flags register
-			std::uint16_t reg;
-			std::memcpy(&reg, &SF, sizeof(std::uint16_t));
-			push16(reg);
+			//push the status flags register
+			push16(SF.ALL);
 
 			//1 push, 2 cycles
 			return std::make_pair(1_u16, 2_u16);
@@ -304,9 +297,8 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 
 		case ::Opcode::POP_FLAGS:
 		{
-			//pop the flags register
-			std::uint16_t flags = pop16();
-			std::memcpy(&SF, &flags, sizeof(std::uint16_t));
+			//pop the status flags register
+			SF.ALL = pop16();
 
 			//1 pop, 2 cycles
 			return std::make_pair(1_u16, 2_u16);
@@ -320,9 +312,7 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 			push16(R2.ALL);
 
 			//save the status flags register
-			std::uint16_t reg;
-			std::memcpy(&reg, &SF, sizeof(std::uint16_t));
-			push16(reg);
+			push16(SF.ALL);
 
 			//4 pushes, 8 cycles
 			return std::make_pair(1_u16, 8_u16);
@@ -331,13 +321,12 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 		case ::Opcode::POPALL:
 		{
 			//pop the status flags register
-			std::uint16_t flags = pop16();
-			std::memcpy(&SF, &flags, sizeof(std::uint16_t));
+			SF.ALL = pop16();
 
 			//pop the general purpose registers
-			R2 = pop16();
-			R1 = pop16();
-			R0 = pop16();
+			R2.ALL = pop16();
+			R1.ALL = pop16();
+			R0.ALL = pop16();
 
 			//4 pops, 8 cycles
 			return std::make_pair(1_u16, 8_u16);
@@ -350,10 +339,9 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 
 			//jump to the software interrupt vector and read it
 			AB = 0xFFF3;
-			auto target = read16();
 
 			//jump to the specified interrupt handler
-			IP = target;
+			IP = read16();
 
 			//1 push, 1 read, 2 jumps, 6 cycles
 			return std::make_pair(1_u16, 6_u16);
@@ -361,17 +349,8 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 
 		case ::Opcode::RESET:
 		{
-			//put known good values in each register
-			R0 = 0x0000,
-			R1 = 0x0000,
-			R2 = 0x0000,
-			SP = 0xFFF0;
-
-			//put the reset vector out on the address bus
-			AB = 0xFFF1;
-
-			//jump to the address pointed to by the reset vector
-			IP = read16();
+			//do the reset operation
+			reset();
 
 			//1 read, 2 jumps, 4 cycles
 			return std::make_pair(1_u16, 4_u16);
@@ -379,8 +358,24 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 	}
 }
 
+//resets the cpu and begins instruction sequence execution
+void cpu::Processor::reset(void) noexcept
+{
+	//put known good values in each register
+	R0.ALL = 0x0000,
+	R1.ALL = 0x0000,
+	R2.ALL = 0x0000,
+	SP = 0xFFF0;
+
+	//put the reset vector out on the address bus
+	AB = 0xFFF1;
+
+	//jump to the address pointed to by the reset vector
+	IP = read16();
+}
+
 //runs an entire instruction sequence
-auto cpu::Processor::run(void) noexcept
+auto cpu::Processor::execute(void) noexcept
 {
 	//save a local, modifiable copy of the instruction pointer
 	auto IP_COPY = this->IP;
@@ -420,7 +415,7 @@ auto cpu::Processor::clock(void) noexcept
 		case 0xB9: EF = { 1, 1, 0, 1 }; break;
 		case 0xBA: EF = { 1, 1, 1, 1 }; break;
 
-		default:                                     break;
+		default:                        break;
 	}
 
 	//execute the instruction with the specified flags
@@ -447,6 +442,19 @@ auto cpu::Processor::clock(void) noexcept
 		/*The speed register indicates approximate execution frequency,
 		so to wait for the correct amount of time, we must take the inverse*/
 		std::this_thread::sleep_for(std::chrono::duration<double, std::milli>
-			{ (1.0 / static_cast<double>(speed * inc.second)) });
+			{ (1.0 / static_cast<double>
+				(static_cast<std::uint64_t>(speed) *
+				 static_cast<std::uint64_t>(inc.second)))
+			});
 	}
+}
+
+constexpr cpu::Processor::Processor(const std::vector<std::uint8_t>& bin) noexcept
+{
+	//copy binary contents to memory starting at 8000h
+	std::copy(bin.begin(), bin.end(), (MEM.begin() + 0x8000_uz));
+}
+
+constexpr cpu::Processor::~Processor(void) noexcept
+{
 }

@@ -8,3 +8,4 @@ Exit Codes:
 	Code 13: an operand type was passed to an instruction that doesn't accept that type
 	Code 14: a duplicate jump label name was encountered
 	Code 15: a reference to a label could not be resolved
+	Code 16: a numeric constant did not contain at least one number

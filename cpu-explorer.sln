@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "emu", "emu\emu.vcxproj", "{
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dbg", "dbg\dbg.vcxproj", "{F66EEEDB-AD61-448F-A87B-A0D38F179E0C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "disasm", "disasm\disasm.vcxproj", "{8E7DDA42-7099-4FBF-940F-93954DBDBFD4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|arm64 = Debug|arm64
@@ -49,6 +51,16 @@ Global
 		{F66EEEDB-AD61-448F-A87B-A0D38F179E0C}.Release|x64.Build.0 = Release|x64
 		{F66EEEDB-AD61-448F-A87B-A0D38F179E0C}.Release|x86.ActiveCfg = Release|Win32
 		{F66EEEDB-AD61-448F-A87B-A0D38F179E0C}.Release|x86.Build.0 = Release|Win32
+		{8E7DDA42-7099-4FBF-940F-93954DBDBFD4}.Debug|arm64.ActiveCfg = Debug|Win32
+		{8E7DDA42-7099-4FBF-940F-93954DBDBFD4}.Debug|x64.ActiveCfg = Debug|x64
+		{8E7DDA42-7099-4FBF-940F-93954DBDBFD4}.Debug|x64.Build.0 = Debug|x64
+		{8E7DDA42-7099-4FBF-940F-93954DBDBFD4}.Debug|x86.ActiveCfg = Debug|Win32
+		{8E7DDA42-7099-4FBF-940F-93954DBDBFD4}.Debug|x86.Build.0 = Debug|Win32
+		{8E7DDA42-7099-4FBF-940F-93954DBDBFD4}.Release|arm64.ActiveCfg = Release|Win32
+		{8E7DDA42-7099-4FBF-940F-93954DBDBFD4}.Release|x64.ActiveCfg = Release|x64
+		{8E7DDA42-7099-4FBF-940F-93954DBDBFD4}.Release|x64.Build.0 = Release|x64
+		{8E7DDA42-7099-4FBF-940F-93954DBDBFD4}.Release|x86.ActiveCfg = Release|Win32
+		{8E7DDA42-7099-4FBF-940F-93954DBDBFD4}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
