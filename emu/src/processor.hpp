@@ -71,7 +71,7 @@ static_assert(false, "This project may or may not be compatible with your platfo
 		{
 			struct
 			{
-				//this only struct-ized so all fields can be aggregate initialized
+				//this only struct-ized fields don't collapse in the surrounding union
 				std::uint16_t ZF : 1,  //zero flag
 							  CF : 1,  //carry flag
 							  OF : 1,  //overflow flag
@@ -111,15 +111,27 @@ static_assert(false, "This project may or may not be compatible with your platfo
 						               : 4; //padding
 		} EF;
 
-		//entire address space
+		//memory that corresponds to the entire processor address space
 		std::array<std::uint8_t, std::numeric_limits<std::uint16_t>::max()> MEM{};
+
+		/*This flag is set if and only if the current program was invoked by the debugger*/
+		/*      executable, and requires the output of processor status information      */
+		bool debugging = false;
 
 	public:
 		//custom c'tor
-		constexpr Processor(const std::vector<std::uint8_t>& bin) noexcept;
-		constexpr ~Processor(void) noexcept;
+		constexpr Processor(const std::vector<std::uint8_t>& bin) noexcept
+		{
+			//copy binary contents to memory starting at 8000h
+			std::copy(bin.cbegin(), bin.cend(), (MEM.begin() + 0x8000));
+		}
+
+		constexpr ~Processor(void) noexcept
+		{
+		}
 
 	private:
+#pragma region MemoryOperations
 		//read 8 bits of information from memory
 		auto& read8(void) noexcept;
 		
@@ -143,7 +155,9 @@ static_assert(false, "This project may or may not be compatible with your platfo
 
 		//pop 16 bits of information from the stack
 		auto pop16(void) noexcept;
+#pragma endregion
 
+#pragma region InstructionDeclarations
 		//move instruction implementaton
 		auto do_move_insn(cpu::Register&, const cpu::Register&) noexcept;
 
@@ -161,19 +175,20 @@ static_assert(false, "This project may or may not be compatible with your platfo
 
 		//and instruction implementation
 		auto do_and_insn(cpu::Register&, const cpu::Register&) noexcept;
+#pragma endregion
 
 	public:
 		//runs the instruction pointed to by the instruction pointer
 		auto run(std::uint8_t) noexcept;
 
 		//begins instruction sequence execution
-		auto execute(void) noexcept;
+		void execute(void) noexcept;
 
 		//resets the processor state
 		void reset(void) noexcept;
 
 		//runs for each clock cycle of the system
-		auto clock(void) noexcept;
+		void clock(void) noexcept;
 	};
 }
 

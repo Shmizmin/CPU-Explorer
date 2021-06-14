@@ -4,3 +4,5 @@ todo list:
 	-implement non-UB registers (GP, SF, EF)
 	-implement processor extensions?
 	-improve emulator performance
+	-implement processor interrupts
+	-refactor

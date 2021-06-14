@@ -9,6 +9,7 @@
 #include <utility>
 #include <bit>
 
+#pragma region InternalFunction
 //internally linked (private) functions
 namespace
 {
@@ -25,12 +26,21 @@ namespace
 		return std::make_pair(static_cast<std::uint8_t>((word & 0xFF00) >> 8),
 							  static_cast<std::uint8_t>((word & 0x00FF) >> 0));
 	}
-}
 
+	//outputs the necessary processor status information so it can be debugged externally
+	auto debug(cpu::Processor* cpu) noexcept
+	{
+
+	}
+}
+#pragma endregion
+
+#pragma region MemoryOperations
 //read 8 bits of information from memory
 auto& cpu::Processor::read8(void) noexcept
 {
 	DB = static_cast<std::uint16_t>(MEM[AB]);
+	clock();
 	return MEM[AB];
 }
 
@@ -38,6 +48,7 @@ auto& cpu::Processor::read8(void) noexcept
 auto cpu::Processor::write8(void) noexcept
 {
 	MEM[AB] = static_cast<std::uint8_t>(DB);
+	clock();
 }
 
 //read 16 bits of information from memory
@@ -79,6 +90,7 @@ auto cpu::Processor::push8(std::uint8_t val) noexcept
 	AB = SP;
 	DB = val;
 	MEM[AB] = static_cast<std::uint8_t>(DB);
+	clock();
 }
 
 //pop 8 bits of information from the stack
@@ -90,6 +102,7 @@ auto cpu::Processor::pop8(void) noexcept
 	//read the data
 	AB = SP - 1_u16;
 	DB = MEM[AB];
+	clock();
 	return static_cast<std::uint8_t>(DB);
 }
 
@@ -114,78 +127,82 @@ auto cpu::Processor::pop16(void) noexcept
 	//compose those into a single word
 	return ::compose(lower, upper);
 }
+#pragma endregion
 
+#pragma region InstructionDefinition
 //general instruction implementation
-#define GNRL_INSN_IMPL(x, y, z)                                                                  \
-	if (!EF.SIZE_OVERRIDE) [[likely]]                                                            \
-	{                                                                                            \
-		dst.ALL x src.ALL;                                                                       \
-                                                                                                 \
-		/*1 cycle*/                                                                              \
-		return std::make_pair(1_u16, y##_u16);                                                   \
-	}                                                                                            \
-                                                                                                 \
-	else [[unlikely]]                                                                            \
-	{                                                                                            \
-		if (EF.IS_UPPER_DEST and EF.IS_UPPER_SRCE) [[unlikely]] /*high src, high dest*/          \
-		{                                                                                        \
-			if (EF.ZERO_EXTENDED) [[unlikely]]                                                   \
-			{                                                                                    \
-				dst.ALL = 0_u16;                                                                 \
-				dst.HI x src.HI;                                                                 \
-			}                                                                                    \
-                                                                                                 \
-			else [[likely]]                                                                      \
-			{                                                                                    \
-				dst.HI x src.HI;                                                                 \
-			}                                                                                    \
-		}                                                                                        \
-                                                                                                 \
-		else if (EF.IS_UPPER_DEST and not EF.IS_UPPER_SRCE) [[unlikely]] /*low src, high dest*/  \
-		{                                                                                        \
-			if (EF.ZERO_EXTENDED) [[unlikely]]                                                   \
-			{                                                                                    \
-				dst.ALL = 0_u16;                                                                 \
-				dst.HI x src.LO;                                                                 \
-			}                                                                                    \
-                                                                                                 \
-			else [[likely]]                                                                      \
-			{                                                                                    \
-				dst.HI x src.LO;                                                                 \
-			}                                                                                    \
-		}                                                                                        \
-                                                                                                 \
-		else if (not EF.IS_UPPER_DEST and EF.IS_UPPER_SRCE) [[unlikely]] /*high src, low dest*/  \
-		{                                                                                        \
-			if (EF.ZERO_EXTENDED) [[unlikely]]                                                   \
-			{                                                                                    \
-				dst.ALL = 0_u16;                                                                 \
-				dst.LO x src.HI;                                                                 \
-			}                                                                                    \
-                                                                                                 \
-			else [[likely]]                                                                      \
-			{                                                                                    \
-				dst.LO x src.HI;                                                                 \
-			}                                                                                    \
-		}                                                                                        \
-                                                                                                 \
-		else if (not EF.IS_UPPER_DEST and not EF.IS_UPPER_SRCE) [[likely]] /*low src, low dest*/ \
-		{                                                                                        \
-			if (EF.ZERO_EXTENDED) [[unlikely]]                                                   \
-			{                                                                                    \
-				dst.ALL = 0_u16;                                                                 \
-				dst.LO x src.LO;                                                                 \
-			}                                                                                    \
-                                                                                                 \
-			else [[likely]]                                                                      \
-			{                                                                                    \
-				dst.LO x src.LO;                                                                 \
-			}                                                                                    \
-		}                                                                                        \
-                                                                                                 \
-		/*1 cycle*/                                                                              \
-		return std::make_pair(2_u16, z##_u16);                                                   \
-	}                                                                                            \
+
+//x: applied operator
+//y: 16bit cycle count
+//z: 8bit  cycle count
+//u: 16bit insn byte count
+//v: 8bit  insn byte count
+#define GNRL_INSN_IMPL(x, y, z, u, v)                                      \
+	if (!EF.SIZE_OVERRIDE) [[likely]]                                      \
+	{                                                                      \
+		dst.ALL x src.ALL;                                                 \
+		for (auto i = 0_uz; i < y; ++i) clock();                           \
+		return u;                                                          \
+	}                                                                      \
+	else [[unlikely]]                                                      \
+	{                                                                      \
+		if (EF.IS_UPPER_DEST and EF.IS_UPPER_SRCE) [[unlikely]]            \
+		{                                                                  \
+			if (EF.ZERO_EXTENDED) [[unlikely]]                             \
+			{                                                              \
+				dst.ALL = 0_u16;                                           \
+				dst.HI x src.HI;                                           \
+			}                                                              \
+			else [[likely]]                                                \
+			{                                                              \
+				dst.HI x src.HI;                                           \
+			}                                                              \
+		}                                                                  \
+		else if (EF.IS_UPPER_DEST and not EF.IS_UPPER_SRCE) [[unlikely]]   \
+		{                                                                  \
+			if (EF.ZERO_EXTENDED) [[unlikely]]                             \
+			{                                                              \
+				dst.ALL = 0_u16;                                           \
+				dst.HI x src.LO;                                           \
+			}                                                              \
+			else [[likely]]                                                \
+			{                                                              \
+				dst.HI x src.LO;                                           \
+			}                                                              \
+		}                                                                  \
+		else if (not EF.IS_UPPER_DEST and EF.IS_UPPER_SRCE) [[unlikely]]   \
+		{                                                                  \
+			if (EF.ZERO_EXTENDED) [[unlikely]]                             \
+			{                                                              \
+				dst.ALL = 0_u16;                                           \
+				dst.LO x src.HI;                                           \
+			}                                                              \
+			else [[likely]]                                                \
+			{                                                              \
+				dst.LO x src.HI;                                           \
+			}                                                              \
+		}                                                                  \
+		else if (not EF.IS_UPPER_DEST and not EF.IS_UPPER_SRCE) [[likely]] \
+		{                                                                  \
+			if (EF.ZERO_EXTENDED) [[unlikely]]                             \
+			{                                                              \
+				dst.ALL = 0_u16;                                           \
+				dst.LO x src.LO;                                           \
+			}                                                              \
+			else [[likely]]                                                \
+			{                                                              \
+				dst.LO x src.LO;                                           \
+			}                                                              \
+		}                                                                  \
+		for (auto i = 0_uz; i < z; ++i) clock();                           \
+		return v;                                                          \
+	}                                                                      \
+
+//x: applied operator
+//y: 16bit cycle count
+//z: 8bit  cycle count
+//u: 16bit insn byte count
+//v: 8bit  insn byte count
 
 //move instruction implementaton
 auto cpu::Processor::do_move_insn(cpu::Register& dst, const cpu::Register& src) noexcept
@@ -222,7 +239,7 @@ auto cpu::Processor::do_and_insn(cpu::Register& dst, const cpu::Register& src) n
 {
 	GNRL_INSN_IMPL(&=, 3, 2)
 }
-
+#pragma endregion
 
 //runs the instruction pointed to by the instruction pointer
 auto cpu::Processor::run(std::uint8_t opcode) noexcept
@@ -256,7 +273,8 @@ auto cpu::Processor::run(std::uint8_t opcode) noexcept
 		case ::Opcode::x:                        \
 		{                                        \
 			SF.IF = y;                           \
-			return std::make_pair(1_u16, 1_u16); \
+			clock();                             \
+			return 1_u16;                        \
 		}                                        \
 
 	   SET_INTERRUPT(EI, true)
@@ -266,23 +284,22 @@ auto cpu::Processor::run(std::uint8_t opcode) noexcept
 static_assert(false, "Redefinition of SET_INTERRUPT");
 #endif
 
-
 		case ::Opcode::POP_DISCARD:
 		{
 			if (!EF.SIZE_OVERRIDE) [[likely]]
 			{
 				static_cast<void>(pop16());
 
-				//1 pop, 2 cycles
-				return std::make_pair(1_u16, 2_u16);
+				//1 byte
+				return 1_u16;
 			}
 
 			else [[unlikely]]
 			{
 				static_cast<void>(pop8());
 
-				//1 pop, 1 cycle
-				return std::make_pair(2_u16, 1_u16);
+				//2 bytes
+				return 2_u16;
 			}
 		}
 
@@ -291,8 +308,8 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 			//push the status flags register
 			push16(SF.ALL);
 
-			//1 push, 2 cycles
-			return std::make_pair(1_u16, 2_u16);
+			//1 byte
+			return 1_u16;
 		}
 
 		case ::Opcode::POP_FLAGS:
@@ -300,8 +317,8 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 			//pop the status flags register
 			SF.ALL = pop16();
 
-			//1 pop, 2 cycles
-			return std::make_pair(1_u16, 2_u16);
+			//1 byte
+			return 1_u16;
 		}
 
 		case ::Opcode::PUSHALL:
@@ -314,8 +331,8 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 			//save the status flags register
 			push16(SF.ALL);
 
-			//4 pushes, 8 cycles
-			return std::make_pair(1_u16, 8_u16);
+			//1 byte
+			return 1_u16;
 		}
 
 		case ::Opcode::POPALL:
@@ -328,8 +345,8 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 			R1.ALL = pop16();
 			R0.ALL = pop16();
 
-			//4 pops, 8 cycles
-			return std::make_pair(1_u16, 8_u16);
+			//1 byte
+			return 1_u16;
 		}
 
 		case ::Opcode::SWINT:
@@ -343,8 +360,8 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 			//jump to the specified interrupt handler
 			IP = read16();
 
-			//1 push, 1 read, 2 jumps, 6 cycles
-			return std::make_pair(1_u16, 6_u16);
+			//1 byte
+			return 1_u16;
 		}
 
 		case ::Opcode::RESET:
@@ -352,8 +369,8 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 			//do the reset operation
 			reset();
 
-			//1 read, 2 jumps, 4 cycles
-			return std::make_pair(1_u16, 4_u16);
+			//1 byte
+			return 1_u16;
 		}
 	}
 }
@@ -361,68 +378,110 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 //resets the cpu and begins instruction sequence execution
 void cpu::Processor::reset(void) noexcept
 {
+	clock();
+
 	//put known good values in each register
 	R0.ALL = 0x0000,
 	R1.ALL = 0x0000,
 	R2.ALL = 0x0000,
 	SP = 0xFFF0;
 
+	clock();
+
 	//put the reset vector out on the address bus
 	AB = 0xFFF1;
 
+	clock();
+
 	//jump to the address pointed to by the reset vector
 	IP = read16();
+
+	clock();
 }
 
 //runs an entire instruction sequence
-auto cpu::Processor::execute(void) noexcept
+void cpu::Processor::execute(void) noexcept
 {
-	//save a local, modifiable copy of the instruction pointer
-	auto IP_COPY = this->IP;
+	//configure the address bus for reading
+	AB = IP;
 
 	//read the first byte of the instruction
-	auto opcode = read8();
+	auto fetched = read8();
+
+
+	enum class State
+	{
+		Complete,
+		Prefix,
+		Instruction,
+		Operand1,
+		Operand2,
+	} state;
+
+	//loop until a break condition is hit
+	while (true)
+	{
+
+	}
+
+
+
+
+	while (true) //replace with something correct later
+	{
+		//copy the instruction pointer locally
+		auto ip_copy = IP;
+
+		while (true) //replace with something correct later
+		{
+			//determine if the fetched byte was a prefix flag byte
+			switch (fetched)
+			{
+				//aggregate initialization for bitfields order:
+				//IS_UPPER_SRCE, IS_UPPER_DEST, ZERO_EXTENDED, SIZE_OVERRIDE
+
+				//case 0x87: EF = { 0, 0, 0, 0 }; ++AB; break;
+				//case 0x88: EF = { 0, 0, 1, 0 }; ++AB; break;
+				case 0x89: EF = { 0, 0, 0, 1 }; ++AB; break;
+				case 0x8A: EF = { 0, 0, 1, 1 }; ++AB; break;
+				//case 0x97: EF = { 1, 0, 0, 0 }; ++AB; break;
+				//case 0x98: EF = { 1, 0, 1, 0 }; ++AB; break;
+				case 0x99: EF = { 1, 0, 0, 1 }; ++AB; break;
+				case 0x9A: EF = { 1, 0, 1, 1 }; ++AB; break;
+				//case 0xA7: EF = { 0, 1, 0, 0 }; ++AB; break;
+				//case 0xA8: EF = { 0, 1, 1, 0 }; ++AB; break;
+				case 0xA9: EF = { 0, 1, 0, 1 }; ++AB; break;
+				case 0xAA: EF = { 0, 1, 1, 1 }; ++AB; break;
+				//case 0xB7: EF = { 1, 1, 0, 0 }; ++AB; break;
+				//case 0xB8: EF = { 1, 1, 1, 0 }; ++AB; break;
+				case 0xB9: EF = { 1, 1, 0, 1 }; ++AB; break;
+				case 0xBA: EF = { 1, 1, 1, 1 }; ++AB; break;
+
+				default:   EF = { 0, 0, 0, 0 }; break;
+			}
+
+			//execute the instruction with the specified flags
+			auto inc = run(read8());
+
+			//increment the instruction pointer based on the instruction length
+			IP += inc;
+		}
+	}
+
+	
+
+	
 }
 
 //run for each clock cycle of the system
-auto cpu::Processor::clock(void) noexcept
+void cpu::Processor::clock(void) noexcept
 {
-	//run the instruction pointed to by the instruction pointer
-	auto fetched = read8();
-
-	//determine if the fetched byte was a prefix flag byte
-	switch (fetched)
+	//check whether status information should be printed out
+	if (debugging)
 	{
-		//aggregate initialization for bitfields order:
-		//IS_UPPER_SRCE, IS_UPPER_DEST, ZERO_EXTENDED, SIZE_OVERRIDE
-		case 0x87: EF = { 0, 0, 0, 0 }; break;
-		case 0x88: EF = { 0, 0, 1, 0 }; break;
-		case 0x89: EF = { 0, 0, 0, 1 }; break;
-		case 0x8A: EF = { 0, 0, 1, 1 }; break;
-
-		case 0x97: EF = { 1, 0, 0, 0 }; break;
-		case 0x98: EF = { 1, 0, 1, 0 }; break;
-		case 0x99: EF = { 1, 0, 0, 1 }; break;
-		case 0x9A: EF = { 1, 0, 1, 1 }; break;
-
-		case 0xA7: EF = { 0, 1, 0, 0 }; break;
-		case 0xA8: EF = { 0, 1, 1, 0 }; break;
-		case 0xA9: EF = { 0, 1, 0, 1 }; break;
-		case 0xAA: EF = { 0, 1, 1, 1 }; break;
-
-		case 0xB7: EF = { 1, 1, 0, 0 }; break;
-		case 0xB8: EF = { 1, 1, 1, 0 }; break;
-		case 0xB9: EF = { 1, 1, 0, 1 }; break;
-		case 0xBA: EF = { 1, 1, 1, 1 }; break;
-
-		default:                        break;
+		//invoke the printing function
+		::debug(this);
 	}
-
-	//execute the instruction with the specified flags
-	auto inc = execute(read8());
-
-	//increment the instruction pointer
-	IP += inc.first;
 
 	//retrieve the requested execution speed
 	auto speed = ::compose(MEM[0xFFFC], MEM[0xFFFB]);
@@ -433,6 +492,7 @@ auto cpu::Processor::clock(void) noexcept
 	if (speed == 0) [[unlikely]]
 	{
 		//something about single step mode
+		//enter key hack for now is ok
 		std::cin.get();
 	}
 
@@ -442,19 +502,8 @@ auto cpu::Processor::clock(void) noexcept
 		/*The speed register indicates approximate execution frequency,
 		so to wait for the correct amount of time, we must take the inverse*/
 		std::this_thread::sleep_for(std::chrono::duration<double, std::milli>
-			{ (1.0 / static_cast<double>
-				(static_cast<std::uint64_t>(speed) *
-				 static_cast<std::uint64_t>(inc.second)))
-			});
+		{
+			(1.0 / static_cast<double>(static_cast<std::uint64_t>(speed)))
+		});
 	}
-}
-
-constexpr cpu::Processor::Processor(const std::vector<std::uint8_t>& bin) noexcept
-{
-	//copy binary contents to memory starting at 8000h
-	std::copy(bin.begin(), bin.end(), (MEM.begin() + 0x8000_uz));
-}
-
-constexpr cpu::Processor::~Processor(void) noexcept
-{
 }
