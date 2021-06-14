@@ -96,6 +96,10 @@ static_assert(false, "This project may or may not be compatible with your platfo
 					  R1 = { 0x0000_u16 },
 					  R2 = { 0x0000_u16 };
 
+		//instruction target cache registers
+		cpu::Register C0 = { 0x0000_u16 },
+					  C1 = { 0x0000_u16 };
+
 		//data and address 'buses'
 		std::uint16_t DB = 0x0000_u16,
 					  AB = 0x0000_u16;

@@ -2,11 +2,12 @@
 #include "instructions.hpp"
 #include "assert.hpp"
 
+#include <unordered_map>
 #include <type_traits>
-#include <thread>
-#include <chrono>
 #include <iostream>
 #include <utility>
+#include <thread>
+#include <chrono>
 #include <bit>
 
 #pragma region InternalFunction
@@ -32,6 +33,105 @@ namespace
 	{
 
 	}
+
+	enum class Addressing
+	{
+		//all register 0 on register operations
+		R0_R0,
+		R0_R1,
+		R0_R2,
+
+		//all register 1 on register operations
+		R1_R0,
+		R1_R1,
+		R1_R2,
+
+		//all register 2 on register operations
+		R2_R0,
+		R2_R1,
+		R2_R2,
+
+		//all register on immediate data operations
+		R0_IMM,
+		R1_IMM,
+		R2_IMM,
+
+		//all register on memory operations
+		R0_MEM,
+		R1_MEM,
+		R2_MEM,
+
+		//all memory on register operations
+		MEM_R0,
+		MEM_R1,
+		MEM_R2,
+
+		//basic unary operations
+		R0,
+		R1,
+		R2,
+		IMM,
+		MEM,
+
+		//special unary operations
+		SP,
+		IP,
+		FLAGS,
+
+		//all stack pointer operations
+		SP_R0,
+		SP_R1,
+		SP_R2,
+		SP_IMM,
+		SP_MEM,
+
+		//other special cases
+		DISC,
+		LABEL,
+		NONE,
+	};
+
+#define O(x, y, z, u, v)                                                                                         \
+	{ x##_##y, { static_cast<std::uint8_t>(z), static_cast<std::uint8_t>(u), static_cast<std::uint8_t>(v), y } } \
+
+	//map: { opcode } -> tuple{ operand count, byte count 16size, byte count 8size }
+	std::unordered_map<std::uint8_t, std::tuple<std::uint8_t, std::uint8_t, std::uint8_t, ::Addressing>> opcodes
+	{
+		O(MOV, R0_R1,  2, 1, 2), O(ADD, R0_R1,  2, 1, 2), O(SUB, R0_R1,  2, 1, 2), O(XOR, R0_R1,  2, 1, 2), O(OR,   R0_R1,  2, 1, 2), O(AND,   R0_R1,  2, 1, 2), O(CMP,  R0_R1,  2, 1, 2),                          O(PUSH, R0,    1, 1, 1), O(POP, R0,    1, 1, 1), O(ADD, SP_R0,  2, 1, 1), O(SUB, SP_R0,  2, 1, 1), O(ROR,     R0_R1,  2, 1, 2), O(ROL,    R0_R1,  2, 1, 2), O(SHR, R0_R1,  2, 1, 2), O(SHL, R0_R1,  2, 1, 2),
+		O(MOV, R0_R2,  2, 1, 2), O(ADD, R0_R2,  2, 1, 2), O(SUB, R0_R2,  2, 1, 2), O(XOR, R0_R2,  2, 1, 2), O(OR,   R0_R2,  2, 1, 2), O(AND,   R0_R2,  2, 1, 2), O(CMP,  R0_R2,  2, 1, 2),                          O(PUSH, R1,    1, 1, 1), O(POP, R1,    1, 1, 1), O(ADD, SP_R1,  2, 1, 1), O(SUB, SP_R1,  2, 1, 1), O(ROR,     R0_R2,  2, 1, 2), O(ROL,    R0_R2,  2, 1, 2), O(SHR, R0_R2,  2, 1, 2), O(SHL, R0_R2,  2, 1, 2),
+		O(MOV, R1_R0,  2, 1, 2), O(ADD, R1_R0,  2, 1, 2), O(SUB, R1_R0,  2, 1, 2), O(XOR, R1_R0,  2, 1, 2), O(OR,   R1_R0,  2, 1, 2), O(AND,   R1_R0,  2, 1, 2), O(CMP,  R1_R0,  2, 1, 2),                          O(PUSH, R2,    1, 1, 1), O(POP, R2,    1, 1, 1), O(ADD, SP_R2,  2, 1, 1), O(SUB, SP_R2,  2, 1, 1), O(ROR,     R1_R0,  2, 1, 2), O(ROL,    R1_R0,  2, 1, 2), O(SHR, R1_R0,  2, 1, 2), O(SHL, R1_R0,  2, 1, 2),
+		O(MOV, R1_R2,  2, 1, 2), O(ADD, R1_R2,  2, 1, 2), O(SUB, R1_R2,  2, 1, 2), O(XOR, R1_R2,  2, 1, 2), O(OR,   R1_R2,  2, 1, 2), O(AND,   R1_R2,  2, 1, 2), O(CMP,  R1_R2,  2, 1, 2), O(JMP,  LABEL, 1, 3, 3), O(PUSH, IMM,   1, 3, 3), O(POP, DISC,  1, 1, 1), O(ADD, SP_IMM, 2, 3, 3), O(SUB, SP_IMM, 2, 3, 3), O(ROR,     R1_R2,  2, 1, 2), O(ROL,    R1_R2,  2, 1, 2), O(SHR, R1_R2,  2, 1, 2), O(SHL, R1_R2,  2, 1, 2),
+		O(MOV, R2_R0,  2, 1, 2), O(ADD, R2_R0,  2, 1, 2), O(SUB, R2_R0,  2, 1, 2), O(XOR, R2_R0,  2, 1, 2), O(OR,   R2_R0,  2, 1, 2), O(AND,   R2_R0,  2, 1, 2), O(CMP,  R2_R0,  2, 1, 2), O(CALL, LABEL, 1, 3, 3), O(PUSH, MEM,   1, 3, 3), O(POP, MEM,   1, 3, 3), O(ADD, SP_MEM, 2, 3, 3), O(SUB, SP_MEM, 2, 3, 3), O(ROR,     R2_R0,  2, 1, 2), O(ROL,    R2_R0,  2, 1, 2), O(SHR, R2_R0,  2, 1, 2), O(SHL, R2_R0,  2, 1, 2),
+		O(MOV, R2_R1,  2, 1, 2), O(ADD, R2_R1,  2, 1, 2), O(SUB, R2_R1,  2, 1, 2), O(XOR, R2_R1,  2, 1, 2), O(OR,   R2_R1,  2, 1, 2), O(AND,   R2_R1,  2, 1, 2), O(CMP,  R2_R1,  2, 1, 2), O(RET,  NONE,  0, 1, 1), O(NOT,  R0,    1, 1, 1), O(NOT, R1,    1, 1, 1), O(NOT, R2,     1, 1, 1), O(NOT, MEM,    1, 3, 3), O(ROR,     R2_R1,  2, 1, 2), O(ROL,    R2_R1,  2, 1, 2), O(SHR, R2_R1,  2, 1, 2), O(SHL, R2_R1,  2, 1, 2),
+		O(MOV, R0_IMM, 2, 3, 3), O(ADD, R0_IMM, 2, 3, 3), O(SUB, R0_IMM, 2, 3, 3), O(XOR, R0_IMM, 2, 3, 3), O(OR,   R0_IMM, 2, 3, 3), O(AND,   R0_IMM, 2, 3, 3), O(CMP,  R0_IMM, 2, 3, 3), O(JL,   LABEL, 1, 3, 3), O(JG,   LABEL, 1, 3, 3), O(JE,  LABEL, 1, 3, 3), O(JO,  LABEL,  1, 3, 3), O(JNO, LABEL,  1, 3, 3), O(ROR,     R0_IMM, 2, 3, 3), O(ROL,    R0_IMM, 2, 3, 3), O(SHR, R0_IMM, 2, 3, 3), O(SHL, R0_IMM, 2, 3, 3),
+		O(MOV, R1_IMM, 2, 3, 3), O(ADD, R1_IMM, 2, 3, 3), O(SUB, R1_IMM, 2, 3, 3), O(XOR, R1_IMM, 2, 3, 3), O(OR,   R1_IMM, 2, 3, 3), O(AND,   R1_IMM, 2, 3, 3), O(CMP,  R1_IMM, 2, 3, 3), O(JLE,  LABEL, 1, 3, 3), O(JGE,  LABEL, 1, 3, 3), O(JNE, LABEL, 1, 3, 3), O(JC,  LABEL,  1, 3, 3), O(JNC, LABEL,  1, 3, 3), O(ROR,     R1_IMM, 2, 3, 3), O(ROL,    R1_IMM, 2, 3, 3), O(SHR, R1_IMM, 2, 3, 3), O(SHL, R1_IMM, 2, 3, 3),
+		O(MOV, R2_IMM, 2, 3, 3), O(ADD, R2_IMM, 2, 3, 3), O(SUB, R2_IMM, 2, 3, 3), O(XOR, R2_IMM, 2, 3, 3), O(OR,   R2_IMM, 2, 3, 3), O(AND,   R2_IMM, 2, 3, 3), O(CMP,  R2_IMM, 2, 3, 3),                                                                                                                             O(ROR,     R2_IMM, 2, 3, 3), O(ROL,    R2_IMM, 2, 3, 3), O(SHR, R2_IMM, 2, 3, 3), O(SHL, R2_IMM, 2, 3, 3),
+		O(MOV, R0_MEM, 2, 3, 4), O(ADD, R0_MEM, 2, 3, 4), O(SUB, R0_MEM, 2, 3, 4), O(XOR, R0_MEM, 2, 3, 4), O(OR,   R0_MEM, 2, 3, 4), O(AND,   R0_MEM, 2, 3, 4), O(CMP,  R0_MEM, 2, 3, 4),                                                                                                                             O(ROR,     R0_MEM, 2, 3, 4), O(ROL,    R0_MEM, 2, 3, 4), O(SHR, R0_MEM, 2, 3, 4), O(SHL, R0_MEM, 2, 3, 4),
+		O(MOV, R1_MEM, 2, 3, 4), O(ADD, R1_MEM, 2, 3, 4), O(SUB, R1_MEM, 2, 3, 4), O(XOR, R1_MEM, 2, 3, 4), O(OR,   R1_MEM, 2, 3, 4), O(AND,   R1_MEM, 2, 3, 4), O(CMP,  R1_MEM, 2, 3, 4),                                                                                                                             O(ROR,     R1_MEM, 2, 3, 4), O(ROL,    R1_MEM, 2, 3, 4), O(SHR, R1_MEM, 2, 3, 4), O(SHL, R1_MEM, 2, 3, 4),
+		O(MOV, R2_MEM, 2, 3, 4), O(ADD, R2_MEM, 2, 3, 4), O(SUB, R2_MEM, 2, 3, 4), O(XOR, R2_MEM, 2, 3, 4), O(OR,   R2_MEM, 2, 3, 4), O(AND,   R2_MEM, 2, 3, 4), O(CMP,  R2_MEM, 2, 3, 4),                                                                                                                             O(ROR,     R2_MEM, 2, 3, 4), O(ROL,    R2_MEM, 2, 3, 4), O(SHR, R2_MEM, 2, 3, 4), O(SHL, R2_MEM, 2, 3, 4),
+		O(MOV, MEM_R0, 2, 3, 4), O(ADD, MEM_R0, 2, 3, 4), O(SUB, MEM_R0, 2, 3, 4), O(XOR, MEM_R0, 2, 3, 4), O(OR,   MEM_R0, 2, 3, 4), O(AND,   MEM_R0, 2, 3, 4), O(CMP,  MEM_R0, 2, 3, 4),                                                                                                                             O(ROR,     MEM_R0, 2, 3, 4), O(ROL,    MEM_R0, 2, 3, 4), O(SHR, MEM_R0, 2, 3, 4), O(SHL, MEM_R0, 2, 3, 4),
+		O(MOV, MEM_R1, 2, 3, 4), O(ADD, MEM_R1, 2, 3, 4), O(SUB, MEM_R1, 2, 3, 4), O(XOR, MEM_R1, 2, 3, 4), O(OR,   MEM_R1, 2, 3, 4), O(AND,   MEM_R1, 2, 3, 4), O(CMP,  MEM_R1, 2, 3, 4),                                                                                                                             O(ROR,     MEM_R1, 2, 3, 4), O(ROL,    MEM_R1, 2, 3, 4), O(SHR, MEM_R1, 2, 3, 4), O(SHL, MEM_R1, 2, 3, 4),
+		O(MOV, MEM_R2, 2, 3, 4), O(ADD, MEM_R2, 2, 3, 4), O(SUB, MEM_R2, 2, 3, 4), O(XOR, MEM_R2, 2, 3, 4), O(OR,   MEM_R2, 2, 3, 4), O(AND,   MEM_R2, 2, 3, 4), O(CMP,  MEM_R2, 2, 3, 4),                          O(INC,  R0,    1, 1, 1), O(INC,  R1,   1, 1, 1), O(INC, R2,     1, 1, 1), O(INC, MEM,    1, 3, 3), O(ROR,     MEM_R2, 2, 3, 4), O(ROL,    MEM_R2, 2, 3, 4), O(SHR, MEM_R2, 2, 3, 4), O(SHL, MEM_R2, 2, 3, 4),
+		O(XOR, R0_R0,  2, 1, 2), O(XOR, R1_R1,  2, 1, 2), O(XOR, R2_R2,  2, 1, 2), O(SWI, NONE,   0, 1, 1), O(IRET, NONE,   0, 1, 1), O(RESET, NONE,   0, 1, 1), O(PUSH, FLAGS,  1, 1, 1), O(POP,  FLAGS, 1, 1, 1), O(DEC,  R0,    1, 1, 1), O(DEC,  R1,   1, 1, 1), O(DEC, R2,     1, 1, 1), O(DEC, MEM,    1, 3, 3), O(PUSHALL, NONE,   0, 1, 1), O(POPALL, NONE,   0, 1, 1), O(EI,  NONE,   0, 1, 1), O(DI,  NONE,   0, 1, 1),
+
+		/*{ MOV_R0_R1,  { 2_u8, 1_u8, 2_u8 } }, { ADD_R0_R1,  { 2_u8, 1_u8, 2_u8 } }, { SUB_R0_R1,  { 2_u8, 1_u8, 2_u8 } },
+		{ MOV_R0_R2,  { 2_u8, 1_u8, 2_u8 } }, { ADD_R0_R2,  { 2_u8, 1_u8, 2_u8 } },	{ SUB_R0_R2,  { 2_u8, 1_u8, 2_u8 } },
+		{ MOV_R1_R0,  { 2_u8, 1_u8, 2_u8 } }, { ADD_R1_R0,  { 2_u8, 1_u8, 2_u8 } },	{ SUB_R1_R0,  { 2_u8, 1_u8, 2_u8 } },
+		{ MOV_R1_R2,  { 2_u8, 1_u8, 2_u8 } }, { ADD_R1_R2,  { 2_u8, 1_u8, 2_u8 } },	{ SUB_R1_R2,  { 2_u8, 1_u8, 2_u8 } },
+		{ MOV_R2_R0,  { 2_u8, 1_u8, 2_u8 } }, { ADD_R2_R0,  { 2_u8, 1_u8, 2_u8 } },	{ SUB_R2_R0,  { 2_u8, 1_u8, 2_u8 } },
+		{ MOV_R2_R1,  { 2_u8, 1_u8, 2_u8 } }, { ADD_R2_R1,  { 2_u8, 1_u8, 2_u8 } },	{ SUB_R2_R1,  { 2_u8, 1_u8, 2_u8 } },
+		{ MOV_R0_IMM, { 2_u8, 3_u8, 3_u8 } }, { ADD_R0_IMM, { 2_u8, 3_u8, 3_u8 } },	{ SUB_R0_IMM, { 2_u8, 3_u8, 3_u8 } },
+		{ MOV_R1_IMM, { 2_u8, 3_u8, 3_u8 } }, { ADD_R1_IMM, { 2_u8, 3_u8, 3_u8 } },	{ SUB_R1_IMM, { 2_u8, 3_u8, 3_u8 } },
+		{ MOV_R2_IMM, { 2_u8, 3_u8, 3_u8 } }, { ADD_R2_IMM, { 2_u8, 3_u8, 3_u8 } },	{ SUB_R2_IMM, { 2_u8, 3_u8, 3_u8 } },
+		{ MOV_R0_MEM, { 2_u8, 3_u8, 4_u8 } }, { ADD_R0_MEM, { 2_u8, 3_u8, 4_u8 } },	{ SUB_R0_MEM, { 2_u8, 3_u8, 4_u8 } },
+		{ MOV_R1_MEM, { 2_u8, 3_u8, 4_u8 } }, { ADD_R1_MEM, { 2_u8, 3_u8, 4_u8 } },	{ SUB_R1_MEM, { 2_u8, 3_u8, 4_u8 } },
+		{ MOV_R2_MEM, { 2_u8, 3_u8, 4_u8 } }, { ADD_R2_MEM, { 2_u8, 3_u8, 4_u8 } },	{ SUB_R2_MEM, { 2_u8, 3_u8, 4_u8 } },
+		{ MOV_MEM_R0, { 2_u8, 3_u8, 4_u8 } }, { ADD_MEM_R0, { 2_u8, 3_u8, 4_u8 } },	{ SUB_MEM_R0, { 2_u8, 3_u8, 4_u8 } },
+		{ MOV_MEM_R1, { 2_u8, 3_u8, 4_u8 } }, { ADD_MEM_R1, { 2_u8, 3_u8, 4_u8 } },	{ SUB_MEM_R1, { 2_u8, 3_u8, 4_u8 } },
+		{ MOV_MEM_R2, { 2_u8, 3_u8, 4_u8 } }, { ADD_MEM_R2, { 2_u8, 3_u8, 4_u8 } },	{ SUB_MEM_R2, { 2_u8, 3_u8, 4_u8 } },
+		{ XOR_R0_R0,  { 2_u8, 1_u8, 2_u8 } }, { XOR_R1_R1,  { 2_u8, 1_u8, 2_u8 } }, { XOR_R2_R2,  { 2_u8, 1_u8, 2_u8 } },*/
+	};
+#undef O
 }
 #pragma endregion
 
@@ -135,14 +235,11 @@ auto cpu::Processor::pop16(void) noexcept
 //x: applied operator
 //y: 16bit cycle count
 //z: 8bit  cycle count
-//u: 16bit insn byte count
-//v: 8bit  insn byte count
-#define GNRL_INSN_IMPL(x, y, z, u, v)                                      \
+#define GNRL_INSN_IMPL(x, y, z)                                            \
 	if (!EF.SIZE_OVERRIDE) [[likely]]                                      \
 	{                                                                      \
 		dst.ALL x src.ALL;                                                 \
 		for (auto i = 0_uz; i < y; ++i) clock();                           \
-		return u;                                                          \
 	}                                                                      \
 	else [[unlikely]]                                                      \
 	{                                                                      \
@@ -195,7 +292,6 @@ auto cpu::Processor::pop16(void) noexcept
 			}                                                              \
 		}                                                                  \
 		for (auto i = 0_uz; i < z; ++i) clock();                           \
-		return v;                                                          \
 	}                                                                      \
 
 //x: applied operator
@@ -399,16 +495,22 @@ void cpu::Processor::reset(void) noexcept
 	clock();
 }
 
+//case 0x87: EF = { 0, 0, 0, 0 }; ++AB; break;
+//case 0x88: EF = { 0, 0, 1, 0 }; ++AB; break;
+//case 0x97: EF = { 1, 0, 0, 0 }; ++AB; break;
+//case 0x98: EF = { 1, 0, 1, 0 }; ++AB; break;
+//case 0xA7: EF = { 0, 1, 0, 0 }; ++AB; break;
+//case 0xA8: EF = { 0, 1, 1, 0 }; ++AB; break;
+//case 0xB7: EF = { 1, 1, 0, 0 }; ++AB; break;
+//case 0xB8: EF = { 1, 1, 1, 0 }; ++AB; break;
+
 //runs an entire instruction sequence
 void cpu::Processor::execute(void) noexcept
 {
-	//configure the address bus for reading
-	AB = IP;
+	//save a local copy of the instruction pointer
+	auto ip_copy = IP;
 
-	//read the first byte of the instruction
-	auto fetched = read8();
-
-
+	//defines each state of the execution state machine
 	enum class State
 	{
 		Complete,
@@ -416,12 +518,91 @@ void cpu::Processor::execute(void) noexcept
 		Instruction,
 		Operand1,
 		Operand2,
-	} state;
+	} state = State::Prefix;
+
+	//map: { opcode } -> tuple{ operand count, byte count 16size, byte count 8size }
+	std::uint8_t operand_count = 0_u8,
+				 byte_count_16 = 0_u8,
+				 byte_count_8  = 0_u8;
+
+	//stores the decoded opcode
+	std::uint8_t opcode = 0_u8;
+
+	//stores the decoded operand 1 and 2
+	cpu::Register *operand1 = nullptr,
+				  *operand2 = nullptr;
 
 	//loop until a break condition is hit
 	while (true)
 	{
+		//configure the address bus for reading data
+		AB = ip_copy;
 
+		//read the first byte of the instruction
+		auto& fetched = read8();
+
+		//state machine code
+		switch (state)
+		{
+		case State::Prefix:
+			switch (fetched)
+			{
+				//aggregate initialization for bitfields order:
+				//IS_UPPER_SRCE, IS_UPPER_DEST, ZERO_EXTENDED, SIZE_OVERRIDE
+
+				case 0x89: EF = { .IS_UPPER_SRCE{ 0 }, .IS_UPPER_DEST{ 0 }, .ZERO_EXTENDED{ 0 }, .SIZE_OVERRIDE{ 1 } }; ++AB; fetched = read8(); break;
+				case 0x8A: EF = { .IS_UPPER_SRCE{ 0 }, .IS_UPPER_DEST{ 0 }, .ZERO_EXTENDED{ 1 }, .SIZE_OVERRIDE{ 1 } }; ++AB; fetched = read8(); break;
+
+				case 0x99: EF = { .IS_UPPER_SRCE{ 1 }, .IS_UPPER_DEST{ 0 }, .ZERO_EXTENDED{ 0 }, .SIZE_OVERRIDE{ 1 } }; ++AB; fetched = read8(); break;
+				case 0x9A: EF = { .IS_UPPER_SRCE{ 1 }, .IS_UPPER_DEST{ 0 }, .ZERO_EXTENDED{ 1 }, .SIZE_OVERRIDE{ 1 } }; ++AB; fetched = read8(); break;
+
+				case 0xA9: EF = { .IS_UPPER_SRCE{ 0 }, .IS_UPPER_DEST{ 1 }, .ZERO_EXTENDED{ 0 }, .SIZE_OVERRIDE{ 1 } }; ++AB; fetched = read8(); break;
+				case 0xAA: EF = { .IS_UPPER_SRCE{ 0 }, .IS_UPPER_DEST{ 1 }, .ZERO_EXTENDED{ 1 }, .SIZE_OVERRIDE{ 1 } }; ++AB; fetched = read8(); break;
+
+				case 0xB9: EF = { .IS_UPPER_SRCE{ 1 }, .IS_UPPER_DEST{ 1 }, .ZERO_EXTENDED{ 0 }, .SIZE_OVERRIDE{ 1 } }; ++AB; fetched = read8(); break;
+				case 0xBA: EF = { .IS_UPPER_SRCE{ 1 }, .IS_UPPER_DEST{ 1 }, .ZERO_EXTENDED{ 1 }, .SIZE_OVERRIDE{ 1 } }; ++AB; fetched = read8(); break;
+
+				default:   EF = { .IS_UPPER_SRCE{ 0 }, .IS_UPPER_DEST{ 0 }, .ZERO_EXTENDED{ 0 }, .SIZE_OVERRIDE{ 0 } };                          break;
+			}
+			//switch to a instruction reading context
+			state = State::Instruction;
+			[[fallthrough]];
+
+		case State::Instruction:
+			//decode the current instruction and extract information about it
+			std::tie(operand_count, byte_count_16, byte_count_8) = opcodes[fetched];
+
+
+			//update the state machine
+			switch (operand_count)
+			{
+				case 0: state = State::Complete;
+				case 1: state = State::Operand1;
+				case 2: state = State::Operand1;
+			}
+			break;
+
+		case State::Operand1:
+			switch (operand_count)
+			{
+				case 1: state = State::Complete;
+				case 2: state = State::Operand2;
+			}
+			break;
+
+		case State::Operand2:
+			
+			state = State::Complete;
+			break;
+
+		case State::Complete:
+			//execute the instruction--execution prefix flags are already configured correctly
+			
+			
+
+
+			break;
+		}
 	}
 
 
