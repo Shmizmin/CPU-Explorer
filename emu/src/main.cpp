@@ -51,13 +51,18 @@ int __cdecl main(int argc, const char** argv) noexcept
 		const auto& filepath = argv[2],
 					runflags = argv[1];
 
+		//if the debug flag was specified
 		if (std::strcmp(runflags, "-d") == 0)
+		{
 			::basic_exec<true>(filepath);
+			return 0;
+		}
 
+		//if the debug flag was not specified
 		else
 		{
 			std::cerr << "" << std::endl;
-			std::exit(17);
+			return 17;
 		}
 	}
 
@@ -65,10 +70,6 @@ int __cdecl main(int argc, const char** argv) noexcept
 	default:
 		//since an incorrect argument count was passed, throw an error
 		std::cerr << "Usage: emulate [flags] [filepath]\n";
-		std::exit(11);
-		break;
+		return 11;
 	}
-
-	//gracefully exit the program after successful assembling
-	return 0;
 }

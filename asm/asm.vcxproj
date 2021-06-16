@@ -18,6 +18,17 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <Flex Include="src\calc.l">
+      <Cpp Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</Cpp>
+      <CppClassName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Assembler</CppClassName>
+      <Cpp Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</Cpp>
+      <CppClassName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Assembler</CppClassName>
+    </Flex>
+  </ItemGroup>
+  <ItemGroup>
+    <Bison Include="src\calc.y" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -54,6 +65,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="..\..\..\winflexbison\bin\Release\custom_build_rules\win_flex_bison\win_flex_bison_custom_build.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -78,13 +90,13 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\Executables-Debug\</OutDir>
+    <OutDir>..\exe\Debug\</OutDir>
     <IntDir>.\build\</IntDir>
     <TargetName>assemble</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\Executables-Release\</OutDir>
+    <OutDir>..\exe\Release\</OutDir>
     <IntDir>.\build\</IntDir>
     <TargetName>assemble</TargetName>
   </PropertyGroup>
@@ -131,9 +143,11 @@
       <OpenMPSupport>true</OpenMPSupport>
       <EnableModules>true</EnableModules>
       <CallingConvention>VectorCall</CallingConvention>
-      <DisableSpecificWarnings>5050;</DisableSpecificWarnings>
+      <DisableSpecificWarnings>5050;4541</DisableSpecificWarnings>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -144,21 +158,21 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <DisableLanguageExtensions>true</DisableLanguageExtensions>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
       <OpenMPSupport>true</OpenMPSupport>
       <EnableModules>true</EnableModules>
       <CallingConvention>VectorCall</CallingConvention>
-      <DisableSpecificWarnings>5050;</DisableSpecificWarnings>
+      <DisableSpecificWarnings>5050;4541</DisableSpecificWarnings>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
@@ -176,28 +190,8 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="src\assemble.cpp" />
-    <ClCompile Include="src\assemble.ixx" />
-    <ClCompile Include="src\assert.cpp" />
-    <ClCompile Include="src\filerator.cpp" />
-    <ClCompile Include="src\filerator.ixx" />
-    <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\save.cpp" />
-    <ClCompile Include="src\save.ixx" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\assert.hpp" />
-    <ClInclude Include="src\literals.hpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="docs\documentation.txt" />
-    <Text Include="docs\todo.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\test.asm" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\..\..\winflexbison\bin\Release\custom_build_rules\win_flex_bison\win_flex_bison_custom_build.targets" />
   </ImportGroup>
 </Project>

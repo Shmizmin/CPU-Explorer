@@ -29,12 +29,12 @@ namespace
 	}
 
 	//outputs the necessary processor status information so it can be debugged externally
-	auto debug(cpu::Processor* cpu) noexcept
+	auto debug([[maybe_unused]]cpu::Processor* cpu) noexcept
 	{
 
 	}
 
-	enum class Addressing
+	enum Addressing
 	{
 		//all register 0 on register operations
 		R0_R0,
@@ -113,23 +113,6 @@ namespace
 		O(MOV, MEM_R1, 2, 3, 4), O(ADD, MEM_R1, 2, 3, 4), O(SUB, MEM_R1, 2, 3, 4), O(XOR, MEM_R1, 2, 3, 4), O(OR,   MEM_R1, 2, 3, 4), O(AND,   MEM_R1, 2, 3, 4), O(CMP,  MEM_R1, 2, 3, 4),                                                                                                                             O(ROR,     MEM_R1, 2, 3, 4), O(ROL,    MEM_R1, 2, 3, 4), O(SHR, MEM_R1, 2, 3, 4), O(SHL, MEM_R1, 2, 3, 4),
 		O(MOV, MEM_R2, 2, 3, 4), O(ADD, MEM_R2, 2, 3, 4), O(SUB, MEM_R2, 2, 3, 4), O(XOR, MEM_R2, 2, 3, 4), O(OR,   MEM_R2, 2, 3, 4), O(AND,   MEM_R2, 2, 3, 4), O(CMP,  MEM_R2, 2, 3, 4),                          O(INC,  R0,    1, 1, 1), O(INC,  R1,   1, 1, 1), O(INC, R2,     1, 1, 1), O(INC, MEM,    1, 3, 3), O(ROR,     MEM_R2, 2, 3, 4), O(ROL,    MEM_R2, 2, 3, 4), O(SHR, MEM_R2, 2, 3, 4), O(SHL, MEM_R2, 2, 3, 4),
 		O(XOR, R0_R0,  2, 1, 2), O(XOR, R1_R1,  2, 1, 2), O(XOR, R2_R2,  2, 1, 2), O(SWI, NONE,   0, 1, 1), O(IRET, NONE,   0, 1, 1), O(RESET, NONE,   0, 1, 1), O(PUSH, FLAGS,  1, 1, 1), O(POP,  FLAGS, 1, 1, 1), O(DEC,  R0,    1, 1, 1), O(DEC,  R1,   1, 1, 1), O(DEC, R2,     1, 1, 1), O(DEC, MEM,    1, 3, 3), O(PUSHALL, NONE,   0, 1, 1), O(POPALL, NONE,   0, 1, 1), O(EI,  NONE,   0, 1, 1), O(DI,  NONE,   0, 1, 1),
-
-		/*{ MOV_R0_R1,  { 2_u8, 1_u8, 2_u8 } }, { ADD_R0_R1,  { 2_u8, 1_u8, 2_u8 } }, { SUB_R0_R1,  { 2_u8, 1_u8, 2_u8 } },
-		{ MOV_R0_R2,  { 2_u8, 1_u8, 2_u8 } }, { ADD_R0_R2,  { 2_u8, 1_u8, 2_u8 } },	{ SUB_R0_R2,  { 2_u8, 1_u8, 2_u8 } },
-		{ MOV_R1_R0,  { 2_u8, 1_u8, 2_u8 } }, { ADD_R1_R0,  { 2_u8, 1_u8, 2_u8 } },	{ SUB_R1_R0,  { 2_u8, 1_u8, 2_u8 } },
-		{ MOV_R1_R2,  { 2_u8, 1_u8, 2_u8 } }, { ADD_R1_R2,  { 2_u8, 1_u8, 2_u8 } },	{ SUB_R1_R2,  { 2_u8, 1_u8, 2_u8 } },
-		{ MOV_R2_R0,  { 2_u8, 1_u8, 2_u8 } }, { ADD_R2_R0,  { 2_u8, 1_u8, 2_u8 } },	{ SUB_R2_R0,  { 2_u8, 1_u8, 2_u8 } },
-		{ MOV_R2_R1,  { 2_u8, 1_u8, 2_u8 } }, { ADD_R2_R1,  { 2_u8, 1_u8, 2_u8 } },	{ SUB_R2_R1,  { 2_u8, 1_u8, 2_u8 } },
-		{ MOV_R0_IMM, { 2_u8, 3_u8, 3_u8 } }, { ADD_R0_IMM, { 2_u8, 3_u8, 3_u8 } },	{ SUB_R0_IMM, { 2_u8, 3_u8, 3_u8 } },
-		{ MOV_R1_IMM, { 2_u8, 3_u8, 3_u8 } }, { ADD_R1_IMM, { 2_u8, 3_u8, 3_u8 } },	{ SUB_R1_IMM, { 2_u8, 3_u8, 3_u8 } },
-		{ MOV_R2_IMM, { 2_u8, 3_u8, 3_u8 } }, { ADD_R2_IMM, { 2_u8, 3_u8, 3_u8 } },	{ SUB_R2_IMM, { 2_u8, 3_u8, 3_u8 } },
-		{ MOV_R0_MEM, { 2_u8, 3_u8, 4_u8 } }, { ADD_R0_MEM, { 2_u8, 3_u8, 4_u8 } },	{ SUB_R0_MEM, { 2_u8, 3_u8, 4_u8 } },
-		{ MOV_R1_MEM, { 2_u8, 3_u8, 4_u8 } }, { ADD_R1_MEM, { 2_u8, 3_u8, 4_u8 } },	{ SUB_R1_MEM, { 2_u8, 3_u8, 4_u8 } },
-		{ MOV_R2_MEM, { 2_u8, 3_u8, 4_u8 } }, { ADD_R2_MEM, { 2_u8, 3_u8, 4_u8 } },	{ SUB_R2_MEM, { 2_u8, 3_u8, 4_u8 } },
-		{ MOV_MEM_R0, { 2_u8, 3_u8, 4_u8 } }, { ADD_MEM_R0, { 2_u8, 3_u8, 4_u8 } },	{ SUB_MEM_R0, { 2_u8, 3_u8, 4_u8 } },
-		{ MOV_MEM_R1, { 2_u8, 3_u8, 4_u8 } }, { ADD_MEM_R1, { 2_u8, 3_u8, 4_u8 } },	{ SUB_MEM_R1, { 2_u8, 3_u8, 4_u8 } },
-		{ MOV_MEM_R2, { 2_u8, 3_u8, 4_u8 } }, { ADD_MEM_R2, { 2_u8, 3_u8, 4_u8 } },	{ SUB_MEM_R2, { 2_u8, 3_u8, 4_u8 } },
-		{ XOR_R0_R0,  { 2_u8, 1_u8, 2_u8 } }, { XOR_R1_R1,  { 2_u8, 1_u8, 2_u8 } }, { XOR_R2_R2,  { 2_u8, 1_u8, 2_u8 } },*/
 	};
 #undef O
 }
@@ -301,44 +284,44 @@ auto cpu::Processor::pop16(void) noexcept
 //v: 8bit  insn byte count
 
 //move instruction implementaton
-auto cpu::Processor::do_move_insn(cpu::Register& dst, const cpu::Register& src) noexcept
+std::uint16_t cpu::Processor::do_move_insn(cpu::Register& dst, const cpu::Register& src) noexcept
 {
 	GNRL_INSN_IMPL(=, 2, 1)
 }
 
 //add instruction implementaton
-auto cpu::Processor::do_add_insn(cpu::Register& dst, const cpu::Register& src) noexcept
+std::uint16_t cpu::Processor::do_add_insn(cpu::Register& dst, const cpu::Register& src) noexcept
 {
 	GNRL_INSN_IMPL(+=, 3, 2)
 }
 
 //sub instruction implementation
-auto cpu::Processor::do_sub_insn(cpu::Register& dst, const cpu::Register& src) noexcept
+std::uint16_t cpu::Processor::do_sub_insn(cpu::Register& dst, const cpu::Register& src) noexcept
 {
 	GNRL_INSN_IMPL(-=, 3, 2)
 }
 
 //xor instruction implementation
-auto cpu::Processor::do_xor_insn(cpu::Register& dst, const cpu::Register& src) noexcept
+std::uint16_t cpu::Processor::do_xor_insn(cpu::Register& dst, const cpu::Register& src) noexcept
 {
 	GNRL_INSN_IMPL(^=, 3, 2)
 }
 
 //or instruction implementation
-auto cpu::Processor::do_or_insn(cpu::Register& dst, const cpu::Register& src) noexcept
+std::uint16_t cpu::Processor::do_or_insn(cpu::Register& dst, const cpu::Register& src) noexcept
 {
 	GNRL_INSN_IMPL(|=, 3, 2)
 }
 
-//and instruction implementation 
-auto cpu::Processor::do_and_insn(cpu::Register& dst, const cpu::Register& src) noexcept
+//and instruction implementation
+std::uint16_t cpu::Processor::do_and_insn(cpu::Register& dst, const cpu::Register& src) noexcept
 {
 	GNRL_INSN_IMPL(&=, 3, 2)
 }
 #pragma endregion
 
 //runs the instruction pointed to by the instruction pointer
-auto cpu::Processor::run(std::uint8_t opcode) noexcept
+std::uint16_t cpu::Processor::run(std::uint8_t opcode) noexcept
 {
 	//determine what to do based on that byte
 	switch (opcode)
@@ -373,14 +356,14 @@ auto cpu::Processor::run(std::uint8_t opcode) noexcept
 			return 1_u16;                        \
 		}                                        \
 
-	   SET_INTERRUPT(EI, true)
-	   SET_INTERRUPT(DI, false)
+	   SET_INTERRUPT(EI_NONE, true)
+	   SET_INTERRUPT(DI_NONE, false)
 #undef SET_INTERRUPT
 #else
 static_assert(false, "Redefinition of SET_INTERRUPT");
 #endif
 
-		case ::Opcode::POP_DISCARD:
+		case ::Opcode::POP_DISC:
 		{
 			if (!EF.SIZE_OVERRIDE) [[likely]]
 			{
@@ -417,7 +400,7 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 			return 1_u16;
 		}
 
-		case ::Opcode::PUSHALL:
+		case ::Opcode::PUSHALL_NONE:
 		{
 			//save the general purpose registers
 			push16(R0.ALL);
@@ -431,7 +414,7 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 			return 1_u16;
 		}
 
-		case ::Opcode::POPALL:
+		case ::Opcode::POPALL_NONE:
 		{
 			//pop the status flags register
 			SF.ALL = pop16();
@@ -445,7 +428,7 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 			return 1_u16;
 		}
 
-		case ::Opcode::SWINT:
+		case ::Opcode::SWI_NONE:
 		{
 			//save the current instruction pointer
 			push16(IP);
@@ -460,7 +443,7 @@ static_assert(false, "Redefinition of SET_INTERRUPT");
 			return 1_u16;
 		}
 
-		case ::Opcode::RESET:
+		case ::Opcode::RESET_NONE:
 		{
 			//do the reset operation
 			reset();
@@ -521,16 +504,19 @@ void cpu::Processor::execute(void) noexcept
 	} state = State::Prefix;
 
 	//map: { opcode } -> tuple{ operand count, byte count 16size, byte count 8size }
-	std::uint8_t operand_count = 0_u8,
-				 byte_count_16 = 0_u8,
-				 byte_count_8  = 0_u8;
+	auto operand_count = 0_u8,
+		 byte_count_16 = 0_u8,
+		 byte_count_8  = 0_u8;
 
 	//stores the decoded opcode
-	std::uint8_t opcode = 0_u8;
+	auto opcode = 0_u8;
 
 	//stores the decoded operand 1 and 2
 	cpu::Register *operand1 = nullptr,
 				  *operand2 = nullptr;
+
+	//stores the decoded addressing mode
+	auto addressing = ::Addressing::NONE;
 
 	//loop until a break condition is hit
 	while (true)
@@ -570,8 +556,14 @@ void cpu::Processor::execute(void) noexcept
 
 		case State::Instruction:
 			//decode the current instruction and extract information about it
-			std::tie(operand_count, byte_count_16, byte_count_8) = opcodes[fetched];
+			std::tie(operand_count, byte_count_16, byte_count_8, addressing) = opcodes[fetched];
 
+			opcode = fetched;
+
+			switch (opcode)
+			{
+			case HALT_NONE: return;
+			}
 
 			//update the state machine
 			switch (operand_count)
@@ -604,54 +596,6 @@ void cpu::Processor::execute(void) noexcept
 			break;
 		}
 	}
-
-
-
-
-	while (true) //replace with something correct later
-	{
-		//copy the instruction pointer locally
-		auto ip_copy = IP;
-
-		while (true) //replace with something correct later
-		{
-			//determine if the fetched byte was a prefix flag byte
-			switch (fetched)
-			{
-				//aggregate initialization for bitfields order:
-				//IS_UPPER_SRCE, IS_UPPER_DEST, ZERO_EXTENDED, SIZE_OVERRIDE
-
-				//case 0x87: EF = { 0, 0, 0, 0 }; ++AB; break;
-				//case 0x88: EF = { 0, 0, 1, 0 }; ++AB; break;
-				case 0x89: EF = { 0, 0, 0, 1 }; ++AB; break;
-				case 0x8A: EF = { 0, 0, 1, 1 }; ++AB; break;
-				//case 0x97: EF = { 1, 0, 0, 0 }; ++AB; break;
-				//case 0x98: EF = { 1, 0, 1, 0 }; ++AB; break;
-				case 0x99: EF = { 1, 0, 0, 1 }; ++AB; break;
-				case 0x9A: EF = { 1, 0, 1, 1 }; ++AB; break;
-				//case 0xA7: EF = { 0, 1, 0, 0 }; ++AB; break;
-				//case 0xA8: EF = { 0, 1, 1, 0 }; ++AB; break;
-				case 0xA9: EF = { 0, 1, 0, 1 }; ++AB; break;
-				case 0xAA: EF = { 0, 1, 1, 1 }; ++AB; break;
-				//case 0xB7: EF = { 1, 1, 0, 0 }; ++AB; break;
-				//case 0xB8: EF = { 1, 1, 1, 0 }; ++AB; break;
-				case 0xB9: EF = { 1, 1, 0, 1 }; ++AB; break;
-				case 0xBA: EF = { 1, 1, 1, 1 }; ++AB; break;
-
-				default:   EF = { 0, 0, 0, 0 }; break;
-			}
-
-			//execute the instruction with the specified flags
-			auto inc = run(read8());
-
-			//increment the instruction pointer based on the instruction length
-			IP += inc;
-		}
-	}
-
-	
-
-	
 }
 
 //run for each clock cycle of the system

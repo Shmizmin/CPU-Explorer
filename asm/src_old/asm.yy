@@ -1,0 +1,56 @@
+%{
+#include <cmath>
+#include <cstdio>
+#define YYSTYPE double
+int yyerror(const char* s) noexcept;
+extern int yylex(void);
+}%
+
+%token NUMBER
+%token PLUS MINUS TIMES DIVIDE POWER
+%token LEFT RIGHT
+%token END
+
+%left PLUS MINUS
+%left TIMES DIVIDE
+%left NEG
+%left POWER
+
+%define parse.error verbose
+%start Input
+%%
+
+Input: %empty
+Input: Input Line;
+
+Line: END
+Line: Expression END { std::printf("Result: %f\n", $1); }
+
+Expression: NUMBER { $$=$1; };
+Expression: Expression PLUS   Expression { $$ = $1 + $3; std::printf("%f + $f\n", $1, $3); };
+Expression: Expression MINUS  Expression { $$ = $1 - $3; std::printf("%f - $f\n", $1, $3); };
+Expression: Expression TIMES  Expression { $$ = $1 * $3; std::printf("%f * $f\n", $1, $3); };
+Expression: Expression DIVIDE Expression { $$ = $1 / $3; std::printf("%f / $f\n", $1, $3); };
+Expression: MINUS Expression %prec NEG   { $$ = -$2;                    std::printf("- %f\n", $2); };
+Expression: PLUS  Expression %prec NEG   { $$ = $2 * (($2>0) - ($2<0)); std::printf("+ %f\n", $2); };
+Expression: Expression POWER Expression  { $$ = std::powf($1, $3); std::printf("%f ^ %f\n", $1, $3); };
+Expression: LEFT Expression RIGHT        { $$ = $2; };
+
+%%
+
+int yyerror(const char* s) noexcept
+{
+	std::printf("%s\n", s);
+}
+
+int main(void) noexcept
+{
+	int ret = yyparse();
+
+	if (ret)
+	{
+		std::fprintf(stderr, "%d error found.\n", ret);
+	}
+
+	return 0;
+}

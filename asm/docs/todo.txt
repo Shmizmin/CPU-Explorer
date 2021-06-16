@@ -5,3 +5,7 @@ todo list:
 	-improve invalid code detection
 	-performance optimizations
 	-single line compilation support?
+
+#INSTRUCTION <-  (MNEMONIC                     ~COMMENT?) /
+#                (MNEMONIC OPERAND             ~COMMENT?) /
+#                (MNEMONIC OPERAND ',' OPERAND ~COMMENT?)

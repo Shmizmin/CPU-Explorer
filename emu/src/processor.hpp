@@ -71,7 +71,7 @@ static_assert(false, "This project may or may not be compatible with your platfo
 		{
 			struct
 			{
-				//this only struct-ized fields don't collapse in the surrounding union
+				//this only struct-ized so the fields don't collapse in the surrounding union
 				std::uint16_t ZF : 1,  //zero flag
 							  CF : 1,  //carry flag
 							  OF : 1,  //overflow flag
@@ -96,10 +96,6 @@ static_assert(false, "This project may or may not be compatible with your platfo
 					  R1 = { 0x0000_u16 },
 					  R2 = { 0x0000_u16 };
 
-		//instruction target cache registers
-		cpu::Register C0 = { 0x0000_u16 },
-					  C1 = { 0x0000_u16 };
-
 		//data and address 'buses'
 		std::uint16_t DB = 0x0000_u16,
 					  AB = 0x0000_u16;
@@ -107,7 +103,7 @@ static_assert(false, "This project may or may not be compatible with your platfo
 		//temporary execution flags
 		struct
 		{
-			//this only struct-ized so all fields can be aggregate initialized
+			//this only struct-ized so the fields don't collapse in the surrounding union
 			std::uint8_t IS_UPPER_SRCE : 1, //source is upper byte
 						 IS_UPPER_DEST : 1, //destination is upper byte
 						 ZERO_EXTENDED : 1, //should zero extend byte operations
@@ -163,27 +159,28 @@ static_assert(false, "This project may or may not be compatible with your platfo
 
 #pragma region InstructionDeclarations
 		//move instruction implementaton
-		auto do_move_insn(cpu::Register&, const cpu::Register&) noexcept;
+		std::uint16_t do_move_insn(cpu::Register&, const cpu::Register&) noexcept;
 
 		//add instruction implementaton
-		auto do_add_insn(cpu::Register&, const cpu::Register&) noexcept;
+		std::uint16_t do_add_insn(cpu::Register&, const cpu::Register&) noexcept;
 
 		//sub instruction implementation
-		auto do_sub_insn(cpu::Register&, const cpu::Register&) noexcept;
+		std::uint16_t do_sub_insn(cpu::Register&, const cpu::Register&) noexcept;
 
 		//xor instruction implementation
-		auto do_xor_insn(cpu::Register&, const cpu::Register&) noexcept;
+		std::uint16_t do_xor_insn(cpu::Register&, const cpu::Register&) noexcept;
 
 		//or instruction implementation
-		auto do_or_insn(cpu::Register&, const cpu::Register&) noexcept;
+		std::uint16_t do_or_insn(cpu::Register&, const cpu::Register&) noexcept;
 
 		//and instruction implementation
-		auto do_and_insn(cpu::Register&, const cpu::Register&) noexcept;
+		std::uint16_t do_and_insn(cpu::Register&, const cpu::Register&) noexcept;
 #pragma endregion
 
 	public:
+#pragma region ProcessorOperations
 		//runs the instruction pointed to by the instruction pointer
-		auto run(std::uint8_t) noexcept;
+		std::uint16_t run(std::uint8_t) noexcept;
 
 		//begins instruction sequence execution
 		void execute(void) noexcept;
@@ -193,6 +190,7 @@ static_assert(false, "This project may or may not be compatible with your platfo
 
 		//runs for each clock cycle of the system
 		void clock(void) noexcept;
+#pragma endregion
 	};
 }
 
