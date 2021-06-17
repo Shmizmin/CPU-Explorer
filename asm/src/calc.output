@@ -1,0 +1,708 @@
+Grammar
+
+    0 $accept: program END
+
+    1 program: statements
+
+    2 statements: statements statement
+    3           | %empty
+
+    4 expression: INT
+    5           | mem
+    6           | imm
+    7           | paren_expr
+    8           | expression PLUS expression
+    9           | expression MINUS expression
+   10           | expression TIMES expression
+   11           | expression DIVIDE expression
+   12           | expression LSHIFT expression
+   13           | expression RSHIFT expression
+
+   14 paren_expr: LPAREN expression RPAREN
+
+   15 label: IDENTIFIER COLON
+
+   16 operand: REGISTER
+   17        | imm
+   18        | mem
+
+   19 instruction: IDENTIFIER
+   20            | IDENTIFIER operand
+   21            | IDENTIFIER operand COMMA operand
+
+   22 statement: instruction
+   23          | label
+
+   24 imm: HASH INT
+   25    | HASH paren_expr
+
+   26 mem: PERCENT INT
+   27    | PERCENT paren_expr
+
+
+Terminals, with rules where they appear
+
+    END (0) 0
+    error (256)
+    INT (258) 4 24 26
+    IDENTIFIER (259) 15 19 20 21
+    REGISTER (260) 16
+    PLUS (261) 8
+    MINUS (262) 9
+    TIMES (263) 10
+    DIVIDE (264) 11
+    LSHIFT (265) 12
+    RSHIFT (266) 13
+    COMMA (267) 21
+    COLON (268) 15
+    LPAREN (269) 14
+    RPAREN (270) 14
+    HASH (271) 24 25
+    PERCENT (272) 26 27
+
+
+Nonterminals, with rules where they appear
+
+    $accept (18)
+        on left: 0
+    program (19)
+        on left: 1
+        on right: 0
+    statements (20)
+        on left: 2 3
+        on right: 1 2
+    expression (21)
+        on left: 4 5 6 7 8 9 10 11 12 13
+        on right: 8 9 10 11 12 13 14
+    paren_expr (22)
+        on left: 14
+        on right: 7 25 27
+    label (23)
+        on left: 15
+        on right: 23
+    operand (24)
+        on left: 16 17 18
+        on right: 20 21
+    instruction (25)
+        on left: 19 20 21
+        on right: 22
+    statement (26)
+        on left: 22 23
+        on right: 2
+    imm (27)
+        on left: 24 25
+        on right: 6 17
+    mem (28)
+        on left: 26 27
+        on right: 5 18
+
+
+State 0
+
+    0 $accept: . program END
+    1 program: . statements
+    2 statements: . statements statement
+    3           | . %empty
+
+    $default  reduce using rule 3 (statements)
+
+    program     go to state 1
+    statements  go to state 2
+
+
+State 1
+
+    0 $accept: program . END
+
+    END  shift, and go to state 3
+
+
+State 2
+
+    1 program: statements .  [END]
+    2 statements: statements . statement
+   15 label: . IDENTIFIER COLON
+   19 instruction: . IDENTIFIER
+   20            | . IDENTIFIER operand
+   21            | . IDENTIFIER operand COMMA operand
+   22 statement: . instruction
+   23          | . label
+
+    IDENTIFIER  shift, and go to state 4
+
+    $default  reduce using rule 1 (program)
+
+    label        go to state 5
+    instruction  go to state 6
+    statement    go to state 7
+
+
+State 3
+
+    0 $accept: program END .
+
+    $default  accept
+
+
+State 4
+
+   15 label: IDENTIFIER . COLON
+   16 operand: . REGISTER
+   17        | . imm
+   18        | . mem
+   19 instruction: IDENTIFIER .  [END, IDENTIFIER]
+   20            | IDENTIFIER . operand
+   21            | IDENTIFIER . operand COMMA operand
+   24 imm: . HASH INT
+   25    | . HASH paren_expr
+   26 mem: . PERCENT INT
+   27    | . PERCENT paren_expr
+
+    REGISTER  shift, and go to state 8
+    COLON     shift, and go to state 9
+    HASH      shift, and go to state 10
+    PERCENT   shift, and go to state 11
+
+    $default  reduce using rule 19 (instruction)
+
+    operand  go to state 12
+    imm      go to state 13
+    mem      go to state 14
+
+
+State 5
+
+   23 statement: label .
+
+    $default  reduce using rule 23 (statement)
+
+
+State 6
+
+   22 statement: instruction .
+
+    $default  reduce using rule 22 (statement)
+
+
+State 7
+
+    2 statements: statements statement .
+
+    $default  reduce using rule 2 (statements)
+
+
+State 8
+
+   16 operand: REGISTER .
+
+    $default  reduce using rule 16 (operand)
+
+
+State 9
+
+   15 label: IDENTIFIER COLON .
+
+    $default  reduce using rule 15 (label)
+
+
+State 10
+
+   14 paren_expr: . LPAREN expression RPAREN
+   24 imm: HASH . INT
+   25    | HASH . paren_expr
+
+    INT     shift, and go to state 15
+    LPAREN  shift, and go to state 16
+
+    paren_expr  go to state 17
+
+
+State 11
+
+   14 paren_expr: . LPAREN expression RPAREN
+   26 mem: PERCENT . INT
+   27    | PERCENT . paren_expr
+
+    INT     shift, and go to state 18
+    LPAREN  shift, and go to state 16
+
+    paren_expr  go to state 19
+
+
+State 12
+
+   20 instruction: IDENTIFIER operand .  [END, IDENTIFIER]
+   21            | IDENTIFIER operand . COMMA operand
+
+    COMMA  shift, and go to state 20
+
+    $default  reduce using rule 20 (instruction)
+
+
+State 13
+
+   17 operand: imm .
+
+    $default  reduce using rule 17 (operand)
+
+
+State 14
+
+   18 operand: mem .
+
+    $default  reduce using rule 18 (operand)
+
+
+State 15
+
+   24 imm: HASH INT .
+
+    $default  reduce using rule 24 (imm)
+
+
+State 16
+
+    4 expression: . INT
+    5           | . mem
+    6           | . imm
+    7           | . paren_expr
+    8           | . expression PLUS expression
+    9           | . expression MINUS expression
+   10           | . expression TIMES expression
+   11           | . expression DIVIDE expression
+   12           | . expression LSHIFT expression
+   13           | . expression RSHIFT expression
+   14 paren_expr: . LPAREN expression RPAREN
+   14           | LPAREN . expression RPAREN
+   24 imm: . HASH INT
+   25    | . HASH paren_expr
+   26 mem: . PERCENT INT
+   27    | . PERCENT paren_expr
+
+    INT      shift, and go to state 21
+    LPAREN   shift, and go to state 16
+    HASH     shift, and go to state 10
+    PERCENT  shift, and go to state 11
+
+    expression  go to state 22
+    paren_expr  go to state 23
+    imm         go to state 24
+    mem         go to state 25
+
+
+State 17
+
+   25 imm: HASH paren_expr .
+
+    $default  reduce using rule 25 (imm)
+
+
+State 18
+
+   26 mem: PERCENT INT .
+
+    $default  reduce using rule 26 (mem)
+
+
+State 19
+
+   27 mem: PERCENT paren_expr .
+
+    $default  reduce using rule 27 (mem)
+
+
+State 20
+
+   16 operand: . REGISTER
+   17        | . imm
+   18        | . mem
+   21 instruction: IDENTIFIER operand COMMA . operand
+   24 imm: . HASH INT
+   25    | . HASH paren_expr
+   26 mem: . PERCENT INT
+   27    | . PERCENT paren_expr
+
+    REGISTER  shift, and go to state 8
+    HASH      shift, and go to state 10
+    PERCENT   shift, and go to state 11
+
+    operand  go to state 26
+    imm      go to state 13
+    mem      go to state 14
+
+
+State 21
+
+    4 expression: INT .
+
+    $default  reduce using rule 4 (expression)
+
+
+State 22
+
+    8 expression: expression . PLUS expression
+    9           | expression . MINUS expression
+   10           | expression . TIMES expression
+   11           | expression . DIVIDE expression
+   12           | expression . LSHIFT expression
+   13           | expression . RSHIFT expression
+   14 paren_expr: LPAREN expression . RPAREN
+
+    PLUS    shift, and go to state 27
+    MINUS   shift, and go to state 28
+    TIMES   shift, and go to state 29
+    DIVIDE  shift, and go to state 30
+    LSHIFT  shift, and go to state 31
+    RSHIFT  shift, and go to state 32
+    RPAREN  shift, and go to state 33
+
+
+State 23
+
+    7 expression: paren_expr .
+
+    $default  reduce using rule 7 (expression)
+
+
+State 24
+
+    6 expression: imm .
+
+    $default  reduce using rule 6 (expression)
+
+
+State 25
+
+    5 expression: mem .
+
+    $default  reduce using rule 5 (expression)
+
+
+State 26
+
+   21 instruction: IDENTIFIER operand COMMA operand .
+
+    $default  reduce using rule 21 (instruction)
+
+
+State 27
+
+    4 expression: . INT
+    5           | . mem
+    6           | . imm
+    7           | . paren_expr
+    8           | . expression PLUS expression
+    8           | expression PLUS . expression
+    9           | . expression MINUS expression
+   10           | . expression TIMES expression
+   11           | . expression DIVIDE expression
+   12           | . expression LSHIFT expression
+   13           | . expression RSHIFT expression
+   14 paren_expr: . LPAREN expression RPAREN
+   24 imm: . HASH INT
+   25    | . HASH paren_expr
+   26 mem: . PERCENT INT
+   27    | . PERCENT paren_expr
+
+    INT      shift, and go to state 21
+    LPAREN   shift, and go to state 16
+    HASH     shift, and go to state 10
+    PERCENT  shift, and go to state 11
+
+    expression  go to state 34
+    paren_expr  go to state 23
+    imm         go to state 24
+    mem         go to state 25
+
+
+State 28
+
+    4 expression: . INT
+    5           | . mem
+    6           | . imm
+    7           | . paren_expr
+    8           | . expression PLUS expression
+    9           | . expression MINUS expression
+    9           | expression MINUS . expression
+   10           | . expression TIMES expression
+   11           | . expression DIVIDE expression
+   12           | . expression LSHIFT expression
+   13           | . expression RSHIFT expression
+   14 paren_expr: . LPAREN expression RPAREN
+   24 imm: . HASH INT
+   25    | . HASH paren_expr
+   26 mem: . PERCENT INT
+   27    | . PERCENT paren_expr
+
+    INT      shift, and go to state 21
+    LPAREN   shift, and go to state 16
+    HASH     shift, and go to state 10
+    PERCENT  shift, and go to state 11
+
+    expression  go to state 35
+    paren_expr  go to state 23
+    imm         go to state 24
+    mem         go to state 25
+
+
+State 29
+
+    4 expression: . INT
+    5           | . mem
+    6           | . imm
+    7           | . paren_expr
+    8           | . expression PLUS expression
+    9           | . expression MINUS expression
+   10           | . expression TIMES expression
+   10           | expression TIMES . expression
+   11           | . expression DIVIDE expression
+   12           | . expression LSHIFT expression
+   13           | . expression RSHIFT expression
+   14 paren_expr: . LPAREN expression RPAREN
+   24 imm: . HASH INT
+   25    | . HASH paren_expr
+   26 mem: . PERCENT INT
+   27    | . PERCENT paren_expr
+
+    INT      shift, and go to state 21
+    LPAREN   shift, and go to state 16
+    HASH     shift, and go to state 10
+    PERCENT  shift, and go to state 11
+
+    expression  go to state 36
+    paren_expr  go to state 23
+    imm         go to state 24
+    mem         go to state 25
+
+
+State 30
+
+    4 expression: . INT
+    5           | . mem
+    6           | . imm
+    7           | . paren_expr
+    8           | . expression PLUS expression
+    9           | . expression MINUS expression
+   10           | . expression TIMES expression
+   11           | . expression DIVIDE expression
+   11           | expression DIVIDE . expression
+   12           | . expression LSHIFT expression
+   13           | . expression RSHIFT expression
+   14 paren_expr: . LPAREN expression RPAREN
+   24 imm: . HASH INT
+   25    | . HASH paren_expr
+   26 mem: . PERCENT INT
+   27    | . PERCENT paren_expr
+
+    INT      shift, and go to state 21
+    LPAREN   shift, and go to state 16
+    HASH     shift, and go to state 10
+    PERCENT  shift, and go to state 11
+
+    expression  go to state 37
+    paren_expr  go to state 23
+    imm         go to state 24
+    mem         go to state 25
+
+
+State 31
+
+    4 expression: . INT
+    5           | . mem
+    6           | . imm
+    7           | . paren_expr
+    8           | . expression PLUS expression
+    9           | . expression MINUS expression
+   10           | . expression TIMES expression
+   11           | . expression DIVIDE expression
+   12           | . expression LSHIFT expression
+   12           | expression LSHIFT . expression
+   13           | . expression RSHIFT expression
+   14 paren_expr: . LPAREN expression RPAREN
+   24 imm: . HASH INT
+   25    | . HASH paren_expr
+   26 mem: . PERCENT INT
+   27    | . PERCENT paren_expr
+
+    INT      shift, and go to state 21
+    LPAREN   shift, and go to state 16
+    HASH     shift, and go to state 10
+    PERCENT  shift, and go to state 11
+
+    expression  go to state 38
+    paren_expr  go to state 23
+    imm         go to state 24
+    mem         go to state 25
+
+
+State 32
+
+    4 expression: . INT
+    5           | . mem
+    6           | . imm
+    7           | . paren_expr
+    8           | . expression PLUS expression
+    9           | . expression MINUS expression
+   10           | . expression TIMES expression
+   11           | . expression DIVIDE expression
+   12           | . expression LSHIFT expression
+   13           | . expression RSHIFT expression
+   13           | expression RSHIFT . expression
+   14 paren_expr: . LPAREN expression RPAREN
+   24 imm: . HASH INT
+   25    | . HASH paren_expr
+   26 mem: . PERCENT INT
+   27    | . PERCENT paren_expr
+
+    INT      shift, and go to state 21
+    LPAREN   shift, and go to state 16
+    HASH     shift, and go to state 10
+    PERCENT  shift, and go to state 11
+
+    expression  go to state 39
+    paren_expr  go to state 23
+    imm         go to state 24
+    mem         go to state 25
+
+
+State 33
+
+   14 paren_expr: LPAREN expression RPAREN .
+
+    $default  reduce using rule 14 (paren_expr)
+
+
+State 34
+
+    8 expression: expression . PLUS expression
+    8           | expression PLUS expression .  [PLUS, MINUS, RPAREN]
+    9           | expression . MINUS expression
+   10           | expression . TIMES expression
+   11           | expression . DIVIDE expression
+   12           | expression . LSHIFT expression
+   13           | expression . RSHIFT expression
+
+    TIMES   shift, and go to state 29
+    DIVIDE  shift, and go to state 30
+    LSHIFT  shift, and go to state 31
+    RSHIFT  shift, and go to state 32
+
+    $default  reduce using rule 8 (expression)
+
+    Conflict between rule 8 and token PLUS resolved as reduce (%left PLUS).
+    Conflict between rule 8 and token MINUS resolved as reduce (%left MINUS).
+    Conflict between rule 8 and token TIMES resolved as shift (PLUS < TIMES).
+    Conflict between rule 8 and token DIVIDE resolved as shift (PLUS < DIVIDE).
+    Conflict between rule 8 and token LSHIFT resolved as shift (PLUS < LSHIFT).
+    Conflict between rule 8 and token RSHIFT resolved as shift (PLUS < RSHIFT).
+
+
+State 35
+
+    8 expression: expression . PLUS expression
+    9           | expression . MINUS expression
+    9           | expression MINUS expression .  [PLUS, MINUS, RPAREN]
+   10           | expression . TIMES expression
+   11           | expression . DIVIDE expression
+   12           | expression . LSHIFT expression
+   13           | expression . RSHIFT expression
+
+    TIMES   shift, and go to state 29
+    DIVIDE  shift, and go to state 30
+    LSHIFT  shift, and go to state 31
+    RSHIFT  shift, and go to state 32
+
+    $default  reduce using rule 9 (expression)
+
+    Conflict between rule 9 and token PLUS resolved as reduce (%left PLUS).
+    Conflict between rule 9 and token MINUS resolved as reduce (%left MINUS).
+    Conflict between rule 9 and token TIMES resolved as shift (MINUS < TIMES).
+    Conflict between rule 9 and token DIVIDE resolved as shift (MINUS < DIVIDE).
+    Conflict between rule 9 and token LSHIFT resolved as shift (MINUS < LSHIFT).
+    Conflict between rule 9 and token RSHIFT resolved as shift (MINUS < RSHIFT).
+
+
+State 36
+
+    8 expression: expression . PLUS expression
+    9           | expression . MINUS expression
+   10           | expression . TIMES expression
+   10           | expression TIMES expression .  [PLUS, MINUS, TIMES, DIVIDE, RPAREN]
+   11           | expression . DIVIDE expression
+   12           | expression . LSHIFT expression
+   13           | expression . RSHIFT expression
+
+    LSHIFT  shift, and go to state 31
+    RSHIFT  shift, and go to state 32
+
+    $default  reduce using rule 10 (expression)
+
+    Conflict between rule 10 and token PLUS resolved as reduce (PLUS < TIMES).
+    Conflict between rule 10 and token MINUS resolved as reduce (MINUS < TIMES).
+    Conflict between rule 10 and token TIMES resolved as reduce (%left TIMES).
+    Conflict between rule 10 and token DIVIDE resolved as reduce (%left DIVIDE).
+    Conflict between rule 10 and token LSHIFT resolved as shift (TIMES < LSHIFT).
+    Conflict between rule 10 and token RSHIFT resolved as shift (TIMES < RSHIFT).
+
+
+State 37
+
+    8 expression: expression . PLUS expression
+    9           | expression . MINUS expression
+   10           | expression . TIMES expression
+   11           | expression . DIVIDE expression
+   11           | expression DIVIDE expression .  [PLUS, MINUS, TIMES, DIVIDE, RPAREN]
+   12           | expression . LSHIFT expression
+   13           | expression . RSHIFT expression
+
+    LSHIFT  shift, and go to state 31
+    RSHIFT  shift, and go to state 32
+
+    $default  reduce using rule 11 (expression)
+
+    Conflict between rule 11 and token PLUS resolved as reduce (PLUS < DIVIDE).
+    Conflict between rule 11 and token MINUS resolved as reduce (MINUS < DIVIDE).
+    Conflict between rule 11 and token TIMES resolved as reduce (%left TIMES).
+    Conflict between rule 11 and token DIVIDE resolved as reduce (%left DIVIDE).
+    Conflict between rule 11 and token LSHIFT resolved as shift (DIVIDE < LSHIFT).
+    Conflict between rule 11 and token RSHIFT resolved as shift (DIVIDE < RSHIFT).
+
+
+State 38
+
+    8 expression: expression . PLUS expression
+    9           | expression . MINUS expression
+   10           | expression . TIMES expression
+   11           | expression . DIVIDE expression
+   12           | expression . LSHIFT expression
+   12           | expression LSHIFT expression .  [PLUS, MINUS, TIMES, DIVIDE, LSHIFT, RSHIFT, RPAREN]
+   13           | expression . RSHIFT expression
+
+    $default  reduce using rule 12 (expression)
+
+    Conflict between rule 12 and token PLUS resolved as reduce (PLUS < LSHIFT).
+    Conflict between rule 12 and token MINUS resolved as reduce (MINUS < LSHIFT).
+    Conflict between rule 12 and token TIMES resolved as reduce (TIMES < LSHIFT).
+    Conflict between rule 12 and token DIVIDE resolved as reduce (DIVIDE < LSHIFT).
+    Conflict between rule 12 and token LSHIFT resolved as reduce (%left LSHIFT).
+    Conflict between rule 12 and token RSHIFT resolved as reduce (%left RSHIFT).
+
+
+State 39
+
+    8 expression: expression . PLUS expression
+    9           | expression . MINUS expression
+   10           | expression . TIMES expression
+   11           | expression . DIVIDE expression
+   12           | expression . LSHIFT expression
+   13           | expression . RSHIFT expression
+   13           | expression RSHIFT expression .  [PLUS, MINUS, TIMES, DIVIDE, LSHIFT, RSHIFT, RPAREN]
+
+    $default  reduce using rule 13 (expression)
+
+    Conflict between rule 13 and token PLUS resolved as reduce (PLUS < RSHIFT).
+    Conflict between rule 13 and token MINUS resolved as reduce (MINUS < RSHIFT).
+    Conflict between rule 13 and token TIMES resolved as reduce (TIMES < RSHIFT).
+    Conflict between rule 13 and token DIVIDE resolved as reduce (DIVIDE < RSHIFT).
+    Conflict between rule 13 and token LSHIFT resolved as reduce (%left LSHIFT).
+    Conflict between rule 13 and token RSHIFT resolved as reduce (%left RSHIFT).

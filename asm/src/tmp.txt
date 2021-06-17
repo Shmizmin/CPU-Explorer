@@ -1,0 +1,6 @@
+//"@" { return AT;      }
+//"$" { return DOLLAR;  }
+
+//any whitespace is ignored
+//(#(INT_MATCHER)) { do_make(); return IMM; }
+//(%((\$[0-9a-f]+)|(@[0-1]+)|([0-9]+))) { do_make(); return MEM; }

@@ -21,4 +21,27 @@
       <Filter>Grammar Files</Filter>
     </Bison>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="src\tmp.txt">
+      <Filter>Grammar Files</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\calc.output">
+      <Filter>Grammar Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\calc.flex.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\calc.tab.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\calc.tab.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>
