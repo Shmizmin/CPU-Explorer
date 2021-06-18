@@ -38,9 +38,22 @@
 
 
 
-#include "calc.tab.hpp"
+#include "parser.tab.hpp"
 
 
+// Unqualified %code blocks.
+#line 25 "parser.yy"
+
+	#include <iostream>
+	#include <cstdlib>
+	#include <fstream>
+	
+	#include "driver.hpp"
+
+	#undef yylex
+	#define yylex scanner.yylex
+
+#line 57 "parser.tab.cpp"
 
 
 #ifndef YY_
@@ -65,6 +78,25 @@
 # endif
 #endif
 
+#define YYRHSLOC(Rhs, K) ((Rhs)[K].location)
+/* YYLLOC_DEFAULT -- Set CURRENT to span from RHS[1] to RHS[N].
+   If N is 0, then set CURRENT to the empty location which ends
+   the previous symbol: RHS[0] (always defined).  */
+
+# ifndef YYLLOC_DEFAULT
+#  define YYLLOC_DEFAULT(Current, Rhs, N)                               \
+    do                                                                  \
+      if (N)                                                            \
+        {                                                               \
+          (Current).begin  = YYRHSLOC (Rhs, 1).begin;                   \
+          (Current).end    = YYRHSLOC (Rhs, N).end;                     \
+        }                                                               \
+      else                                                              \
+        {                                                               \
+          (Current).begin = (Current).end = YYRHSLOC (Rhs, 0).end;      \
+        }                                                               \
+    while (false)
+# endif
 
 
 // Enable debugging if requested.
@@ -112,59 +144,160 @@
 #define YYERROR         goto yyerrorlab
 #define YYRECOVERING()  (!!yyerrstatus_)
 
-namespace yy {
-#line 117 "calc.tab.cpp"
+#line 5 "parser.yy"
+namespace assembler {
+#line 150 "parser.tab.cpp"
 
   /// Build a parser object.
-   asm_parser :: asm_parser  ()
+  Parser::Parser (Scanner &scanner_yyarg, Driver  &driver_yyarg)
 #if YYDEBUG
     : yydebug_ (false),
-      yycdebug_ (&std::cerr)
+      yycdebug_ (&std::cerr),
 #else
-
+    :
 #endif
+      scanner (scanner_yyarg),
+      driver (driver_yyarg)
   {}
 
-   asm_parser ::~ asm_parser  ()
+  Parser::~Parser ()
   {}
 
-   asm_parser ::syntax_error::~syntax_error () YY_NOEXCEPT YY_NOTHROW
+  Parser::syntax_error::~syntax_error () YY_NOEXCEPT YY_NOTHROW
   {}
 
   /*---------------.
   | symbol kinds.  |
   `---------------*/
 
+  // basic_symbol.
+  template <typename Base>
+  Parser::basic_symbol<Base>::basic_symbol (const basic_symbol& that)
+    : Base (that)
+    , value ()
+    , location (that.location)
+  {
+    switch (this->kind ())
+    {
+      case symbol_kind::S_WORD: // WORD
+        value.copy< std::string > (YY_MOVE (that.value));
+        break;
+
+      default:
+        break;
+    }
+
+  }
+
+
+
+  template <typename Base>
+  Parser::symbol_kind_type
+  Parser::basic_symbol<Base>::type_get () const YY_NOEXCEPT
+  {
+    return this->kind ();
+  }
+
+  template <typename Base>
+  bool
+  Parser::basic_symbol<Base>::empty () const YY_NOEXCEPT
+  {
+    return this->kind () == symbol_kind::S_YYEMPTY;
+  }
+
+  template <typename Base>
+  void
+  Parser::basic_symbol<Base>::move (basic_symbol& s)
+  {
+    super_type::move (s);
+    switch (this->kind ())
+    {
+      case symbol_kind::S_WORD: // WORD
+        value.move< std::string > (YY_MOVE (s.value));
+        break;
+
+      default:
+        break;
+    }
+
+    location = YY_MOVE (s.location);
+  }
+
+  // by_kind.
+  Parser::by_kind::by_kind ()
+    : kind_ (symbol_kind::S_YYEMPTY)
+  {}
+
+#if 201103L <= YY_CPLUSPLUS
+  Parser::by_kind::by_kind (by_kind&& that)
+    : kind_ (that.kind_)
+  {
+    that.clear ();
+  }
+#endif
+
+  Parser::by_kind::by_kind (const by_kind& that)
+    : kind_ (that.kind_)
+  {}
+
+  Parser::by_kind::by_kind (token_kind_type t)
+    : kind_ (yytranslate_ (t))
+  {}
+
+  void
+  Parser::by_kind::clear ()
+  {
+    kind_ = symbol_kind::S_YYEMPTY;
+  }
+
+  void
+  Parser::by_kind::move (by_kind& that)
+  {
+    kind_ = that.kind_;
+    that.clear ();
+  }
+
+  Parser::symbol_kind_type
+  Parser::by_kind::kind () const YY_NOEXCEPT
+  {
+    return kind_;
+  }
+
+  Parser::symbol_kind_type
+  Parser::by_kind::type_get () const YY_NOEXCEPT
+  {
+    return this->kind ();
+  }
 
 
   // by_state.
-   asm_parser ::by_state::by_state () YY_NOEXCEPT
+  Parser::by_state::by_state () YY_NOEXCEPT
     : state (empty_state)
   {}
 
-   asm_parser ::by_state::by_state (const by_state& that) YY_NOEXCEPT
+  Parser::by_state::by_state (const by_state& that) YY_NOEXCEPT
     : state (that.state)
   {}
 
   void
-   asm_parser ::by_state::clear () YY_NOEXCEPT
+  Parser::by_state::clear () YY_NOEXCEPT
   {
     state = empty_state;
   }
 
   void
-   asm_parser ::by_state::move (by_state& that)
+  Parser::by_state::move (by_state& that)
   {
     state = that.state;
     that.clear ();
   }
 
-   asm_parser ::by_state::by_state (state_type s) YY_NOEXCEPT
+  Parser::by_state::by_state (state_type s) YY_NOEXCEPT
     : state (s)
   {}
 
-   asm_parser ::symbol_kind_type
-   asm_parser ::by_state::kind () const YY_NOEXCEPT
+  Parser::symbol_kind_type
+  Parser::by_state::kind () const YY_NOEXCEPT
   {
     if (state == empty_state)
       return symbol_kind::S_YYEMPTY;
@@ -172,14 +305,18 @@ namespace yy {
       return YY_CAST (symbol_kind_type, yystos_[+state]);
   }
 
-   asm_parser ::stack_symbol_type::stack_symbol_type ()
+  Parser::stack_symbol_type::stack_symbol_type ()
   {}
 
-   asm_parser ::stack_symbol_type::stack_symbol_type (YY_RVREF (stack_symbol_type) that)
-    : super_type (YY_MOVE (that.state))
+  Parser::stack_symbol_type::stack_symbol_type (YY_RVREF (stack_symbol_type) that)
+    : super_type (YY_MOVE (that.state), YY_MOVE (that.location))
   {
     switch (that.kind ())
     {
+      case symbol_kind::S_WORD: // WORD
+        value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (that.value));
+        break;
+
       default:
         break;
     }
@@ -190,11 +327,15 @@ namespace yy {
 #endif
   }
 
-   asm_parser ::stack_symbol_type::stack_symbol_type (state_type s, YY_MOVE_REF (symbol_type) that)
-    : super_type (s)
+  Parser::stack_symbol_type::stack_symbol_type (state_type s, YY_MOVE_REF (symbol_type) that)
+    : super_type (s, YY_MOVE (that.location))
   {
     switch (that.kind ())
     {
+      case symbol_kind::S_WORD: // WORD
+        value.move< std::string > (YY_MOVE (that.value));
+        break;
+
       default:
         break;
     }
@@ -204,29 +345,39 @@ namespace yy {
   }
 
 #if YY_CPLUSPLUS < 201103L
-   asm_parser ::stack_symbol_type&
-   asm_parser ::stack_symbol_type::operator= (const stack_symbol_type& that)
+  Parser::stack_symbol_type&
+  Parser::stack_symbol_type::operator= (const stack_symbol_type& that)
   {
     state = that.state;
     switch (that.kind ())
     {
+      case symbol_kind::S_WORD: // WORD
+        value.copy< std::string > (that.value);
+        break;
+
       default:
         break;
     }
 
+    location = that.location;
     return *this;
   }
 
-   asm_parser ::stack_symbol_type&
-   asm_parser ::stack_symbol_type::operator= (stack_symbol_type& that)
+  Parser::stack_symbol_type&
+  Parser::stack_symbol_type::operator= (stack_symbol_type& that)
   {
     state = that.state;
     switch (that.kind ())
     {
+      case symbol_kind::S_WORD: // WORD
+        value.move< std::string > (that.value);
+        break;
+
       default:
         break;
     }
 
+    location = that.location;
     // that is emptied.
     that.state = empty_state;
     return *this;
@@ -235,7 +386,7 @@ namespace yy {
 
   template <typename Base>
   void
-   asm_parser ::yy_destroy_ (const char* yymsg, basic_symbol<Base>& yysym) const
+  Parser::yy_destroy_ (const char* yymsg, basic_symbol<Base>& yysym) const
   {
     if (yymsg)
       YY_SYMBOL_PRINT (yymsg, yysym);
@@ -244,7 +395,7 @@ namespace yy {
 #if YYDEBUG
   template <typename Base>
   void
-   asm_parser ::yy_print_ (std::ostream& yyo, const basic_symbol<Base>& yysym) const
+  Parser::yy_print_ (std::ostream& yyo, const basic_symbol<Base>& yysym) const
   {
     std::ostream& yyoutput = yyo;
     YYUSE (yyoutput);
@@ -254,7 +405,8 @@ namespace yy {
       {
         symbol_kind_type yykind = yysym.kind ();
         yyo << (yykind < YYNTOKENS ? "token" : "nterm")
-            << ' ' << yysym.name () << " (";
+            << ' ' << yysym.name () << " ("
+            << yysym.location << ": ";
         YYUSE (yykind);
         yyo << ')';
       }
@@ -262,7 +414,7 @@ namespace yy {
 #endif
 
   void
-   asm_parser ::yypush_ (const char* m, YY_MOVE_REF (stack_symbol_type) sym)
+  Parser::yypush_ (const char* m, YY_MOVE_REF (stack_symbol_type) sym)
   {
     if (m)
       YY_SYMBOL_PRINT (m, sym);
@@ -270,7 +422,7 @@ namespace yy {
   }
 
   void
-   asm_parser ::yypush_ (const char* m, state_type s, YY_MOVE_REF (symbol_type) sym)
+  Parser::yypush_ (const char* m, state_type s, YY_MOVE_REF (symbol_type) sym)
   {
 #if 201103L <= YY_CPLUSPLUS
     yypush_ (m, stack_symbol_type (s, std::move (sym)));
@@ -281,40 +433,40 @@ namespace yy {
   }
 
   void
-   asm_parser ::yypop_ (int n)
+  Parser::yypop_ (int n)
   {
     yystack_.pop (n);
   }
 
 #if YYDEBUG
   std::ostream&
-   asm_parser ::debug_stream () const
+  Parser::debug_stream () const
   {
     return *yycdebug_;
   }
 
   void
-   asm_parser ::set_debug_stream (std::ostream& o)
+  Parser::set_debug_stream (std::ostream& o)
   {
     yycdebug_ = &o;
   }
 
 
-   asm_parser ::debug_level_type
-   asm_parser ::debug_level () const
+  Parser::debug_level_type
+  Parser::debug_level () const
   {
     return yydebug_;
   }
 
   void
-   asm_parser ::set_debug_level (debug_level_type l)
+  Parser::set_debug_level (debug_level_type l)
   {
     yydebug_ = l;
   }
 #endif // YYDEBUG
 
-   asm_parser ::state_type
-   asm_parser ::yy_lr_goto_state_ (state_type yystate, int yysym)
+  Parser::state_type
+  Parser::yy_lr_goto_state_ (state_type yystate, int yysym)
   {
     int yyr = yypgoto_[yysym - YYNTOKENS] + yystate;
     if (0 <= yyr && yyr <= yylast_ && yycheck_[yyr] == yystate)
@@ -324,25 +476,25 @@ namespace yy {
   }
 
   bool
-   asm_parser ::yy_pact_value_is_default_ (int yyvalue)
+  Parser::yy_pact_value_is_default_ (int yyvalue)
   {
     return yyvalue == yypact_ninf_;
   }
 
   bool
-   asm_parser ::yy_table_value_is_error_ (int yyvalue)
+  Parser::yy_table_value_is_error_ (int yyvalue)
   {
     return yyvalue == yytable_ninf_;
   }
 
   int
-   asm_parser ::operator() ()
+  Parser::operator() ()
   {
     return parse ();
   }
 
   int
-   asm_parser ::parse ()
+  Parser::parse ()
   {
     int yyn;
     /// Length of the RHS of the rule being reduced.
@@ -354,6 +506,9 @@ namespace yy {
 
     /// The lookahead symbol.
     symbol_type yyla;
+
+    /// The locations where the error started and ended.
+    stack_symbol_type yyerror_range[3];
 
     /// The return value of parse ().
     int yyresult;
@@ -403,8 +558,7 @@ namespace yy {
         try
 #endif // YY_EXCEPTIONS
           {
-            symbol_type yylookahead (yylex ());
-            yyla.move (yylookahead);
+            yyla.kind_ = yytranslate_ (yylex (&yyla.value, &yyla.location));
           }
 #if YY_EXCEPTIONS
         catch (const syntax_error& yyexc)
@@ -477,11 +631,21 @@ namespace yy {
          when using variants.  */
       switch (yyr1_[yyn])
     {
+      case symbol_kind::S_WORD: // WORD
+        yylhs.value.emplace< std::string > ();
+        break;
+
       default:
         break;
     }
 
 
+      // Default location.
+      {
+        stack_type::slice range (yystack_, yylen);
+        YYLLOC_DEFAULT (yylhs.location, range, yylen);
+        yyerror_range[1].location = yylhs.location;
+      }
 
       // Perform the reduction.
       YY_REDUCE_PRINT (yyn);
@@ -491,8 +655,38 @@ namespace yy {
         {
           switch (yyn)
             {
+  case 6: // item: UPPER
+#line 58 "parser.yy"
+              { driver.add_upper();    }
+#line 662 "parser.tab.cpp"
+    break;
 
-#line 496 "calc.tab.cpp"
+  case 7: // item: LOWER
+#line 59 "parser.yy"
+                  { driver.add_lower();    }
+#line 668 "parser.tab.cpp"
+    break;
+
+  case 8: // item: WORD
+#line 60 "parser.yy"
+                  { driver.add_word( yystack_[0].value.as < std::string > () ); }
+#line 674 "parser.tab.cpp"
+    break;
+
+  case 9: // item: NEWLINE
+#line 61 "parser.yy"
+                  { driver.add_newline();  }
+#line 680 "parser.tab.cpp"
+    break;
+
+  case 10: // item: CHAR
+#line 62 "parser.yy"
+                  { driver.add_char();     }
+#line 686 "parser.tab.cpp"
+    break;
+
+
+#line 690 "parser.tab.cpp"
 
             default:
               break;
@@ -524,12 +718,12 @@ namespace yy {
     if (!yyerrstatus_)
       {
         ++yynerrs_;
-        context yyctx (*this, yyla);
-        std::string msg = yysyntax_error_ (yyctx);
-        error (YY_MOVE (msg));
+        std::string msg = YY_("syntax error");
+        error (yyla.location, YY_MOVE (msg));
       }
 
 
+    yyerror_range[1].location = yyla.location;
     if (yyerrstatus_ == 3)
       {
         /* If just tried and failed to reuse lookahead token after an
@@ -591,6 +785,7 @@ namespace yy {
         if (yystack_.size () == 1)
           YYABORT;
 
+        yyerror_range[1].location = yystack_[0].location;
         yy_destroy_ ("Error: popping", yystack_[0]);
         yypop_ ();
         YY_STACK_PRINT ();
@@ -598,6 +793,8 @@ namespace yy {
     {
       stack_symbol_type error_token;
 
+      yyerror_range[2].location = yyla.location;
+      YYLLOC_DEFAULT (error_token.location, yyerror_range, 2);
 
       // Shift the error token.
       error_token.state = state_type (yyn);
@@ -661,290 +858,111 @@ namespace yy {
   }
 
   void
-   asm_parser ::error (const syntax_error& yyexc)
+  Parser::error (const syntax_error& yyexc)
   {
-    error (yyexc.what ());
+    error (yyexc.location, yyexc.what ());
   }
 
-  /* Return YYSTR after stripping away unnecessary quotes and
-     backslashes, so that it's suitable for yyerror.  The heuristic is
-     that double-quoting is unnecessary unless the string contains an
-     apostrophe, a comma, or backslash (other than backslash-backslash).
-     YYSTR is taken from yytname.  */
-  std::string
-   asm_parser ::yytnamerr_ (const char *yystr)
+#if YYDEBUG || 0
+  const char *
+  Parser::symbol_name (symbol_kind_type yysymbol)
   {
-    if (*yystr == '"')
-      {
-        std::string yyr;
-        char const *yyp = yystr;
-
-        for (;;)
-          switch (*++yyp)
-            {
-            case '\'':
-            case ',':
-              goto do_not_strip_quotes;
-
-            case '\\':
-              if (*++yyp != '\\')
-                goto do_not_strip_quotes;
-              else
-                goto append;
-
-            append:
-            default:
-              yyr += *yyp;
-              break;
-
-            case '"':
-              return yyr;
-            }
-      do_not_strip_quotes: ;
-      }
-
-    return yystr;
+    return yytname_[yysymbol];
   }
-
-  std::string
-   asm_parser ::symbol_name (symbol_kind_type yysymbol)
-  {
-    return yytnamerr_ (yytname_[yysymbol]);
-  }
+#endif // #if YYDEBUG || 0
 
 
 
-  //  asm_parser ::context.
-   asm_parser ::context::context (const  asm_parser & yyparser, const symbol_type& yyla)
-    : yyparser_ (yyparser)
-    , yyla_ (yyla)
-  {}
-
-  int
-   asm_parser ::context::expected_tokens (symbol_kind_type yyarg[], int yyargn) const
-  {
-    // Actual number of expected tokens
-    int yycount = 0;
-
-    int yyn = yypact_[+yyparser_.yystack_[0].state];
-    if (!yy_pact_value_is_default_ (yyn))
-      {
-        /* Start YYX at -YYN if negative to avoid negative indexes in
-           YYCHECK.  In other words, skip the first -YYN actions for
-           this state because they are default actions.  */
-        int yyxbegin = yyn < 0 ? -yyn : 0;
-        // Stay within bounds of both yycheck and yytname.
-        int yychecklim = yylast_ - yyn + 1;
-        int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
-        for (int yyx = yyxbegin; yyx < yyxend; ++yyx)
-          if (yycheck_[yyx + yyn] == yyx && yyx != symbol_kind::S_YYerror
-              && !yy_table_value_is_error_ (yytable_[yyx + yyn]))
-            {
-              if (!yyarg)
-                ++yycount;
-              else if (yycount == yyargn)
-                return 0;
-              else
-                yyarg[yycount++] = YY_CAST (symbol_kind_type, yyx);
-            }
-      }
-
-    if (yyarg && yycount == 0 && 0 < yyargn)
-      yyarg[0] = symbol_kind::S_YYEMPTY;
-    return yycount;
-  }
 
 
+  const signed char Parser::yypact_ninf_ = -7;
 
-  int
-   asm_parser ::yy_syntax_error_arguments_ (const context& yyctx,
-                                                 symbol_kind_type yyarg[], int yyargn) const
-  {
-    /* There are many possibilities here to consider:
-       - If this state is a consistent state with a default action, then
-         the only way this function was invoked is if the default action
-         is an error action.  In that case, don't check for expected
-         tokens because there are none.
-       - The only way there can be no lookahead present (in yyla) is
-         if this state is a consistent state with a default action.
-         Thus, detecting the absence of a lookahead is sufficient to
-         determine that there is no unexpected or expected token to
-         report.  In that case, just report a simple "syntax error".
-       - Don't assume there isn't a lookahead just because this state is
-         a consistent state with a default action.  There might have
-         been a previous inconsistent state, consistent state with a
-         non-default action, or user semantic action that manipulated
-         yyla.  (However, yyla is currently not documented for users.)
-       - Of course, the expected token list depends on states to have
-         correct lookahead information, and it depends on the parser not
-         to perform extra reductions after fetching a lookahead from the
-         scanner and before detecting a syntax error.  Thus, state merging
-         (from LALR or IELR) and default reductions corrupt the expected
-         token list.  However, the list is correct for canonical LR with
-         one exception: it will still contain any token that will not be
-         accepted due to an error action in a later state.
-    */
-
-    if (!yyctx.lookahead ().empty ())
-      {
-        if (yyarg)
-          yyarg[0] = yyctx.token ();
-        int yyn = yyctx.expected_tokens (yyarg ? yyarg + 1 : yyarg, yyargn - 1);
-        return yyn + 1;
-      }
-    return 0;
-  }
-
-  // Generate an error message.
-  std::string
-   asm_parser ::yysyntax_error_ (const context& yyctx) const
-  {
-    // Its maximum.
-    enum { YYARGS_MAX = 5 };
-    // Arguments of yyformat.
-    symbol_kind_type yyarg[YYARGS_MAX];
-    int yycount = yy_syntax_error_arguments_ (yyctx, yyarg, YYARGS_MAX);
-
-    char const* yyformat = YY_NULLPTR;
-    switch (yycount)
-      {
-#define YYCASE_(N, S)                         \
-        case N:                               \
-          yyformat = S;                       \
-        break
-      default: // Avoid compiler warnings.
-        YYCASE_ (0, YY_("syntax error"));
-        YYCASE_ (1, YY_("syntax error, unexpected %s"));
-        YYCASE_ (2, YY_("syntax error, unexpected %s, expecting %s"));
-        YYCASE_ (3, YY_("syntax error, unexpected %s, expecting %s or %s"));
-        YYCASE_ (4, YY_("syntax error, unexpected %s, expecting %s or %s or %s"));
-        YYCASE_ (5, YY_("syntax error, unexpected %s, expecting %s or %s or %s or %s"));
-#undef YYCASE_
-      }
-
-    std::string yyres;
-    // Argument number.
-    std::ptrdiff_t yyi = 0;
-    for (char const* yyp = yyformat; *yyp; ++yyp)
-      if (yyp[0] == '%' && yyp[1] == 's' && yyi < yycount)
-        {
-          yyres += symbol_name (yyarg[yyi++]);
-          ++yyp;
-        }
-      else
-        yyres += *yyp;
-    return yyres;
-  }
-
-
-  const signed char  asm_parser ::yypact_ninf_ = -12;
-
-  const signed char  asm_parser ::yytable_ninf_ = -1;
+  const signed char Parser::yytable_ninf_ = -1;
 
   const signed char
-   asm_parser ::yypact_[] =
+  Parser::yypact_[] =
   {
-     -12,     6,    18,   -12,    -2,   -12,   -12,   -12,   -12,   -12,
-      -1,     5,    34,   -12,   -12,   -12,     4,   -12,   -12,   -12,
-       7,   -12,    19,   -12,   -12,   -12,   -12,     4,     4,     4,
-       4,     4,     4,   -12,    33,    33,    -6,    -6,   -12,   -12
+       0,    -7,    -7,    -7,    -7,    -7,    -7,     1,     8,    -7,
+      -7,    -7,    -7
   };
 
   const signed char
-   asm_parser ::yydefact_[] =
+  Parser::yydefact_[] =
   {
-       4,     0,     2,     1,    20,    24,    23,     3,    17,    16,
-       0,     0,    21,    18,    19,    25,     0,    26,    27,    28,
-       0,     5,     0,     8,     7,     6,    22,     0,     0,     0,
-       0,     0,     0,    15,     9,    10,    11,    12,    13,    14
+       0,     2,     6,     7,     8,     9,    10,     0,     0,     4,
+       1,     3,     5
   };
 
   const signed char
-   asm_parser ::yypgoto_[] =
+  Parser::yypgoto_[] =
   {
-     -12,   -12,   -12,     8,    21,   -12,   -11,   -12,   -12,    -4,
-      -3
+      -7,    -7,    -7,    -6
   };
 
   const signed char
-   asm_parser ::yydefgoto_[] =
+  Parser::yydefgoto_[] =
   {
-      -1,     1,     2,    22,    23,     5,    12,     6,     7,    24,
-      25
+      -1,     7,     8,     9
   };
 
   const signed char
-   asm_parser ::yytable_[] =
+  Parser::yytable_[] =
   {
-      13,    14,    15,     8,    31,    32,     3,    21,    18,    26,
-       0,     9,     8,    16,    10,    11,    13,    14,    16,    16,
-      10,    11,     4,    10,    11,    27,    28,    29,    30,    31,
-      32,    17,    19,     0,    33,    34,    35,    36,    37,    38,
-      39,    29,    30,    31,    32,     0,    20
+       1,    10,    12,     2,     3,     4,     5,     6,    11,     0,
+       0,     2,     3,     4,     5,     6
   };
 
   const signed char
-   asm_parser ::yycheck_[] =
+  Parser::yycheck_[] =
   {
-       4,     4,     3,     5,    10,    11,     0,     3,     3,    20,
-      -1,    13,     5,    14,    16,    17,    20,    20,    14,    14,
-      16,    17,     4,    16,    17,     6,     7,     8,     9,    10,
-      11,    10,    11,    -1,    15,    27,    28,    29,    30,    31,
-      32,     8,     9,    10,    11,    -1,    12
+       0,     0,     8,     3,     4,     5,     6,     7,     0,    -1,
+      -1,     3,     4,     5,     6,     7
   };
 
   const signed char
-   asm_parser ::yystos_[] =
+  Parser::yystos_[] =
   {
-       0,    19,    20,     0,     4,    23,    25,    26,     5,    13,
-      16,    17,    24,    27,    28,     3,    14,    22,     3,    22,
-      12,     3,    21,    22,    27,    28,    24,     6,     7,     8,
-       9,    10,    11,    15,    21,    21,    21,    21,    21,    21
+       0,     0,     3,     4,     5,     6,     7,     9,    10,    11,
+       0,     0,    11
   };
 
   const signed char
-   asm_parser ::yyr1_[] =
+  Parser::yyr1_[] =
   {
-       0,    18,    19,    20,    20,    21,    21,    21,    21,    21,
-      21,    21,    21,    21,    21,    22,    23,    24,    24,    24,
-      25,    25,    25,    26,    26,    27,    27,    28,    28
+       0,     8,     9,     9,    10,    10,    11,    11,    11,    11,
+      11
   };
 
   const signed char
-   asm_parser ::yyr2_[] =
+  Parser::yyr2_[] =
   {
-       0,     2,     1,     2,     0,     1,     1,     1,     1,     3,
-       3,     3,     3,     3,     3,     3,     2,     1,     1,     1,
-       1,     2,     4,     1,     1,     2,     2,     2,     2
+       0,     2,     1,     2,     1,     2,     1,     1,     1,     1,
+       1
   };
 
 
-#if YYDEBUG || 1
+#if YYDEBUG
   // YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
   // First, the terminals, then, starting at \a YYNTOKENS, nonterminals.
   const char*
-  const  asm_parser ::yytname_[] =
+  const Parser::yytname_[] =
   {
-  "END", "error", "\"invalid token\"", "INT", "IDENTIFIER", "REGISTER",
-  "PLUS", "MINUS", "TIMES", "DIVIDE", "LSHIFT", "RSHIFT", "COMMA", "COLON",
-  "LPAREN", "RPAREN", "HASH", "PERCENT", "$accept", "program",
-  "statements", "expression", "paren_expr", "label", "operand",
-  "instruction", "statement", "imm", "mem", YY_NULLPTR
+  "\"end of file\"", "error", "\"invalid token\"", "UPPER", "LOWER",
+  "WORD", "NEWLINE", "CHAR", "$accept", "list_option", "list", "item", YY_NULLPTR
   };
 #endif
 
 
 #if YYDEBUG
   const signed char
-   asm_parser ::yyrline_[] =
+  Parser::yyrline_[] =
   {
-       0,    33,    33,    35,    36,    38,    39,    40,    41,    42,
-      43,    44,    45,    46,    47,    49,    51,    53,    54,    55,
-      57,    58,    59,    61,    62,    64,    65,    67,    68
+       0,    50,    50,    51,    54,    55,    58,    59,    60,    61,
+      62
   };
 
   void
-   asm_parser ::yy_stack_print_ () const
+  Parser::yy_stack_print_ () const
   {
     *yycdebug_ << "Stack now";
     for (stack_type::const_iterator
@@ -956,7 +974,7 @@ namespace yy {
   }
 
   void
-   asm_parser ::yy_reduce_print_ (int yyrule) const
+  Parser::yy_reduce_print_ (int yyrule) const
   {
     int yylno = yyrline_[yyrule];
     int yynrhs = yyr2_[yyrule];
@@ -970,27 +988,63 @@ namespace yy {
   }
 #endif // YYDEBUG
 
+  Parser::symbol_kind_type
+  Parser::yytranslate_ (int t)
+  {
+    // YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to
+    // TOKEN-NUM as returned by yylex.
+    static
+    const signed char
+    translate_table[] =
+    {
+       0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
+       5,     6,     7
+    };
+    // Last valid token kind.
+    const int code_max = 262;
 
-} // yy
-#line 976 "calc.tab.cpp"
+    if (t <= 0)
+      return symbol_kind::S_YYEOF;
+    else if (t <= code_max)
+      return YY_CAST (symbol_kind_type, translate_table[t]);
+    else
+      return symbol_kind::S_YYUNDEF;
+  }
 
-#line 70 "calc.y"
+#line 5 "parser.yy"
+} // assembler
+#line 1042 "parser.tab.cpp"
+
+#line 65 "parser.yy"
 
 
-void yyerror(const char* s)
+
+void assembler::Parser::error(const location_type& l, const std::string& err_message)
 {
-	std::fprintf(stderr, "Parse error: %s\n", s);
-	std::exit(1);
-}
-
-int __cdecl main(void) noexcept
-{
-	yyin = stdin;
-
-	do
-	{
-		yyparse();
-	} while (!std::feof(yyin));
-
-	return 0;
+	std::cerr << "Error: " << err_message << " at " << l << "\n";
 }

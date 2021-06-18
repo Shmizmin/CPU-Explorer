@@ -32,8 +32,8 @@
 
 
 /**
- ** \file calc.tab.hpp
- ** Define the yy::parser class.
+ ** \file parser.tab.hpp
+ ** Define the assembler::parser class.
  */
 
 // C++ LALR(1) parser skeleton written by Akim Demaille.
@@ -42,21 +42,22 @@
 // especially those whose name start with YY_ or yy_.  They are
 // private implementation details that can be changed or removed.
 
-#ifndef YY_YY_CALC_TAB_HPP_INCLUDED
-# define YY_YY_CALC_TAB_HPP_INCLUDED
+#ifndef YY_YY_PARSER_TAB_HPP_INCLUDED
+# define YY_YY_PARSER_TAB_HPP_INCLUDED
 // "%code requires" blocks.
-#line 10 "calc.y"
+#line 9 "parser.yy"
 
-	#include <cstdio>
-	#include <cstdlib>
+	namespace assembler
+	{
+		class Driver;
+		class Scanner;
+	}
 
-	extern int yylex();
-	extern int yyparse();
-	extern std::FILE* yyin;
+#ifndef YY_NULLPTR
+#define YY_NULLPTR nullptr
+#endif
 
-	void yyerror(const char* message);
-
-#line 60 "calc.tab.hpp"
+#line 61 "parser.tab.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -101,7 +102,7 @@
 #else
 # define YY_CONSTEXPR
 #endif
-
+# include "location.hh"
 #include <typeinfo>
 #ifndef YY_ASSERT
 # include <cassert>
@@ -186,17 +187,18 @@
 
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+# define YYDEBUG 1
 #endif
 
-namespace yy {
-#line 194 "calc.tab.hpp"
+#line 5 "parser.yy"
+namespace assembler {
+#line 196 "parser.tab.hpp"
 
 
 
 
   /// A Bison parser.
-  class  asm_parser 
+  class Parser
   {
   public:
 #ifndef YYSTYPE
@@ -403,7 +405,10 @@ namespace yy {
 
     /// An auxiliary type to compute the largest semantic type.
     union union_type
-    {    };
+    {
+      // WORD
+      char dummy1[sizeof (std::string)];
+    };
 
     /// The size of the largest semantic type.
     enum { size = sizeof (union_type) };
@@ -424,19 +429,25 @@ namespace yy {
 #else
     typedef YYSTYPE semantic_type;
 #endif
+    /// Symbol locations.
+    typedef location location_type;
 
     /// Syntax errors thrown from user actions.
     struct syntax_error : std::runtime_error
     {
-      syntax_error (const std::string& m)
+      syntax_error (const location_type& l, const std::string& m)
         : std::runtime_error (m)
+        , location (l)
       {}
 
       syntax_error (const syntax_error& s)
         : std::runtime_error (s.what ())
+        , location (s.location)
       {}
 
       ~syntax_error () YY_NOEXCEPT YY_NOTHROW;
+
+      location_type location;
     };
 
     /// Token kinds.
@@ -445,24 +456,14 @@ namespace yy {
       enum token_kind_type
       {
         YYEMPTY = -2,
-    END = 0,                       // END
+    END = 0,                       // "end of file"
     YYerror = 256,                 // error
     YYUNDEF = 257,                 // "invalid token"
-    INT = 258,                     // INT
-    IDENTIFIER = 259,              // IDENTIFIER
-    REGISTER = 260,                // REGISTER
-    PLUS = 261,                    // PLUS
-    MINUS = 262,                   // MINUS
-    TIMES = 263,                   // TIMES
-    DIVIDE = 264,                  // DIVIDE
-    LSHIFT = 265,                  // LSHIFT
-    RSHIFT = 266,                  // RSHIFT
-    COMMA = 267,                   // COMMA
-    COLON = 268,                   // COLON
-    LPAREN = 269,                  // LPAREN
-    RPAREN = 270,                  // RPAREN
-    HASH = 271,                    // HASH
-    PERCENT = 272                  // PERCENT
+    UPPER = 258,                   // UPPER
+    LOWER = 259,                   // LOWER
+    WORD = 260,                    // WORD
+    NEWLINE = 261,                 // NEWLINE
+    CHAR = 262                     // CHAR
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -479,37 +480,20 @@ namespace yy {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 18, ///< Number of tokens.
+        YYNTOKENS = 8, ///< Number of tokens.
         S_YYEMPTY = -2,
-        S_YYEOF = 0,                             // END
+        S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
         S_YYUNDEF = 2,                           // "invalid token"
-        S_INT = 3,                               // INT
-        S_IDENTIFIER = 4,                        // IDENTIFIER
-        S_REGISTER = 5,                          // REGISTER
-        S_PLUS = 6,                              // PLUS
-        S_MINUS = 7,                             // MINUS
-        S_TIMES = 8,                             // TIMES
-        S_DIVIDE = 9,                            // DIVIDE
-        S_LSHIFT = 10,                           // LSHIFT
-        S_RSHIFT = 11,                           // RSHIFT
-        S_COMMA = 12,                            // COMMA
-        S_COLON = 13,                            // COLON
-        S_LPAREN = 14,                           // LPAREN
-        S_RPAREN = 15,                           // RPAREN
-        S_HASH = 16,                             // HASH
-        S_PERCENT = 17,                          // PERCENT
-        S_YYACCEPT = 18,                         // $accept
-        S_program = 19,                          // program
-        S_statements = 20,                       // statements
-        S_expression = 21,                       // expression
-        S_paren_expr = 22,                       // paren_expr
-        S_label = 23,                            // label
-        S_operand = 24,                          // operand
-        S_instruction = 25,                      // instruction
-        S_statement = 26,                        // statement
-        S_imm = 27,                              // imm
-        S_mem = 28                               // mem
+        S_UPPER = 3,                             // UPPER
+        S_LOWER = 4,                             // LOWER
+        S_WORD = 5,                              // WORD
+        S_NEWLINE = 6,                           // NEWLINE
+        S_CHAR = 7,                              // CHAR
+        S_YYACCEPT = 8,                          // $accept
+        S_list_option = 9,                       // list_option
+        S_list = 10,                             // list
+        S_item = 11                              // item
       };
     };
 
@@ -524,7 +508,7 @@ namespace yy {
     /// Expects its Base type to provide access to the symbol kind
     /// via kind ().
     ///
-    /// Provide access to semantic value.
+    /// Provide access to semantic value and location.
     template <typename Base>
     struct basic_symbol : Base
     {
@@ -534,6 +518,7 @@ namespace yy {
       /// Default constructor.
       basic_symbol ()
         : value ()
+        , location ()
       {}
 
 #if 201103L <= YY_CPLUSPLUS
@@ -541,9 +526,14 @@ namespace yy {
       basic_symbol (basic_symbol&& that)
         : Base (std::move (that))
         , value ()
+        , location (std::move (that.location))
       {
         switch (this->kind ())
     {
+      case symbol_kind::S_WORD: // WORD
+        value.move< std::string > (std::move (that.value));
+        break;
+
       default:
         break;
     }
@@ -556,12 +546,28 @@ namespace yy {
 
       /// Constructors for typed symbols.
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t)
+      basic_symbol (typename Base::kind_type t, location_type&& l)
         : Base (t)
+        , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t)
+      basic_symbol (typename Base::kind_type t, const location_type& l)
         : Base (t)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::string&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::string& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
       {}
 #endif
 
@@ -587,6 +593,10 @@ namespace yy {
         // Value type destructor.
 switch (yykind)
     {
+      case symbol_kind::S_WORD: // WORD
+        value.template destroy< std::string > ();
+        break;
+
       default:
         break;
     }
@@ -594,11 +604,14 @@ switch (yykind)
         Base::clear ();
       }
 
+#if YYDEBUG || 0
       /// The user-facing name of this symbol.
-      std::string name () const YY_NOEXCEPT
+      const char *name () const YY_NOEXCEPT
       {
-        return  asm_parser ::symbol_name (this->kind ());
+        return Parser::symbol_name (this->kind ());
       }
+#endif // #if YYDEBUG || 0
+
 
       /// Backward compatibility (Bison 3.6).
       symbol_kind_type type_get () const YY_NOEXCEPT;
@@ -611,6 +624,9 @@ switch (yykind)
 
       /// The semantic value.
       semantic_type value;
+
+      /// The location.
+      location_type location;
 
     private:
 #if YY_CPLUSPLUS < 201103L
@@ -671,27 +687,38 @@ switch (yykind)
 
       /// Constructor for valueless symbols, and symbols from each type.
 #if 201103L <= YY_CPLUSPLUS
-      symbol_type (int tok)
-        : super_type(token_type (tok))
+      symbol_type (int tok, location_type l)
+        : super_type(token_type (tok), std::move (l))
 #else
-      symbol_type (int tok)
-        : super_type(token_type (tok))
+      symbol_type (int tok, const location_type& l)
+        : super_type(token_type (tok), l)
 #endif
       {
         YY_ASSERT (tok == token::END
-                   || (token::YYerror <= tok && tok <= token::PERCENT));
+                   || (token::YYerror <= tok && tok <= token::LOWER)
+                   || (token::NEWLINE <= tok && tok <= token::CHAR));
+      }
+#if 201103L <= YY_CPLUSPLUS
+      symbol_type (int tok, std::string v, location_type l)
+        : super_type(token_type (tok), std::move (v), std::move (l))
+#else
+      symbol_type (int tok, const std::string& v, const location_type& l)
+        : super_type(token_type (tok), v, l)
+#endif
+      {
+        YY_ASSERT (tok == token::WORD);
       }
     };
 
     /// Build a parser object.
-     asm_parser  ();
-    virtual ~ asm_parser  ();
+    Parser (Scanner &scanner_yyarg, Driver  &driver_yyarg);
+    virtual ~Parser ();
 
 #if 201103L <= YY_CPLUSPLUS
     /// Non copyable.
-     asm_parser  (const  asm_parser &) = delete;
+    Parser (const Parser&) = delete;
     /// Non copyable.
-     asm_parser & operator= (const  asm_parser &) = delete;
+    Parser& operator= (const Parser&) = delete;
 #endif
 
     /// Parse.  An alias for parse ().
@@ -717,324 +744,155 @@ switch (yykind)
 #endif
 
     /// Report a syntax error.
+    /// \param loc    where the syntax error is found.
     /// \param msg    a description of the syntax error.
-    virtual void error (const std::string& msg);
+    virtual void error (const location_type& loc, const std::string& msg);
 
     /// Report a syntax error.
     void error (const syntax_error& err);
 
+#if YYDEBUG || 0
     /// The user-facing name of the symbol whose (internal) number is
     /// YYSYMBOL.  No bounds checking.
-    static std::string symbol_name (symbol_kind_type yysymbol);
+    static const char *symbol_name (symbol_kind_type yysymbol);
+#endif // #if YYDEBUG || 0
+
 
     // Implementation of make_symbol for each symbol type.
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_END ()
+      make_END (location_type l)
       {
-        return symbol_type (token::END);
+        return symbol_type (token::END, std::move (l));
       }
 #else
       static
       symbol_type
-      make_END ()
+      make_END (const location_type& l)
       {
-        return symbol_type (token::END);
+        return symbol_type (token::END, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_YYerror ()
+      make_YYerror (location_type l)
       {
-        return symbol_type (token::YYerror);
+        return symbol_type (token::YYerror, std::move (l));
       }
 #else
       static
       symbol_type
-      make_YYerror ()
+      make_YYerror (const location_type& l)
       {
-        return symbol_type (token::YYerror);
+        return symbol_type (token::YYerror, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_YYUNDEF ()
+      make_YYUNDEF (location_type l)
       {
-        return symbol_type (token::YYUNDEF);
+        return symbol_type (token::YYUNDEF, std::move (l));
       }
 #else
       static
       symbol_type
-      make_YYUNDEF ()
+      make_YYUNDEF (const location_type& l)
       {
-        return symbol_type (token::YYUNDEF);
+        return symbol_type (token::YYUNDEF, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_INT ()
+      make_UPPER (location_type l)
       {
-        return symbol_type (token::INT);
+        return symbol_type (token::UPPER, std::move (l));
       }
 #else
       static
       symbol_type
-      make_INT ()
+      make_UPPER (const location_type& l)
       {
-        return symbol_type (token::INT);
+        return symbol_type (token::UPPER, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_IDENTIFIER ()
+      make_LOWER (location_type l)
       {
-        return symbol_type (token::IDENTIFIER);
+        return symbol_type (token::LOWER, std::move (l));
       }
 #else
       static
       symbol_type
-      make_IDENTIFIER ()
+      make_LOWER (const location_type& l)
       {
-        return symbol_type (token::IDENTIFIER);
+        return symbol_type (token::LOWER, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_REGISTER ()
+      make_WORD (std::string v, location_type l)
       {
-        return symbol_type (token::REGISTER);
+        return symbol_type (token::WORD, std::move (v), std::move (l));
       }
 #else
       static
       symbol_type
-      make_REGISTER ()
+      make_WORD (const std::string& v, const location_type& l)
       {
-        return symbol_type (token::REGISTER);
+        return symbol_type (token::WORD, v, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_PLUS ()
+      make_NEWLINE (location_type l)
       {
-        return symbol_type (token::PLUS);
+        return symbol_type (token::NEWLINE, std::move (l));
       }
 #else
       static
       symbol_type
-      make_PLUS ()
+      make_NEWLINE (const location_type& l)
       {
-        return symbol_type (token::PLUS);
+        return symbol_type (token::NEWLINE, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_MINUS ()
+      make_CHAR (location_type l)
       {
-        return symbol_type (token::MINUS);
+        return symbol_type (token::CHAR, std::move (l));
       }
 #else
       static
       symbol_type
-      make_MINUS ()
+      make_CHAR (const location_type& l)
       {
-        return symbol_type (token::MINUS);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_TIMES ()
-      {
-        return symbol_type (token::TIMES);
-      }
-#else
-      static
-      symbol_type
-      make_TIMES ()
-      {
-        return symbol_type (token::TIMES);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_DIVIDE ()
-      {
-        return symbol_type (token::DIVIDE);
-      }
-#else
-      static
-      symbol_type
-      make_DIVIDE ()
-      {
-        return symbol_type (token::DIVIDE);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_LSHIFT ()
-      {
-        return symbol_type (token::LSHIFT);
-      }
-#else
-      static
-      symbol_type
-      make_LSHIFT ()
-      {
-        return symbol_type (token::LSHIFT);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_RSHIFT ()
-      {
-        return symbol_type (token::RSHIFT);
-      }
-#else
-      static
-      symbol_type
-      make_RSHIFT ()
-      {
-        return symbol_type (token::RSHIFT);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_COMMA ()
-      {
-        return symbol_type (token::COMMA);
-      }
-#else
-      static
-      symbol_type
-      make_COMMA ()
-      {
-        return symbol_type (token::COMMA);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_COLON ()
-      {
-        return symbol_type (token::COLON);
-      }
-#else
-      static
-      symbol_type
-      make_COLON ()
-      {
-        return symbol_type (token::COLON);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_LPAREN ()
-      {
-        return symbol_type (token::LPAREN);
-      }
-#else
-      static
-      symbol_type
-      make_LPAREN ()
-      {
-        return symbol_type (token::LPAREN);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_RPAREN ()
-      {
-        return symbol_type (token::RPAREN);
-      }
-#else
-      static
-      symbol_type
-      make_RPAREN ()
-      {
-        return symbol_type (token::RPAREN);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_HASH ()
-      {
-        return symbol_type (token::HASH);
-      }
-#else
-      static
-      symbol_type
-      make_HASH ()
-      {
-        return symbol_type (token::HASH);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_PERCENT ()
-      {
-        return symbol_type (token::PERCENT);
-      }
-#else
-      static
-      symbol_type
-      make_PERCENT ()
-      {
-        return symbol_type (token::PERCENT);
+        return symbol_type (token::CHAR, l);
       }
 #endif
 
-
-    class context
-    {
-    public:
-      context (const  asm_parser & yyparser, const symbol_type& yyla);
-      const symbol_type& lookahead () const { return yyla_; }
-      symbol_kind_type token () const { return yyla_.kind (); }
-      /// Put in YYARG at most YYARGN of the expected tokens, and return the
-      /// number of tokens stored in YYARG.  If YYARG is null, return the
-      /// number of expected tokens (guaranteed to be less than YYNTOKENS).
-      int expected_tokens (symbol_kind_type yyarg[], int yyargn) const;
-
-    private:
-      const  asm_parser & yyparser_;
-      const symbol_type& yyla_;
-    };
 
   private:
 #if YY_CPLUSPLUS < 201103L
     /// Non copyable.
-     asm_parser  (const  asm_parser &);
+    Parser (const Parser&);
     /// Non copyable.
-     asm_parser & operator= (const  asm_parser &);
+    Parser& operator= (const Parser&);
 #endif
 
 
     /// Stored state numbers (used for stacks).
     typedef signed char state_type;
 
-    /// The arguments of the error message.
-    int yy_syntax_error_arguments_ (const context& yyctx,
-                                    symbol_kind_type yyarg[], int yyargn) const;
-
-    /// Generate an error message.
-    /// \param yyctx     the context in which the error occurred.
-    virtual std::string yysyntax_error_ (const context& yyctx) const;
     /// Compute post-reduction state.
     /// \param yystate   the current state
     /// \param yysym     the nonterminal to push on the stack
@@ -1056,11 +914,10 @@ switch (yykind)
     /// are valid, yet not members of the token_type enum.
     static symbol_kind_type yytranslate_ (int t);
 
-    /// Convert the symbol name \a n to a form suitable for a diagnostic.
-    static std::string yytnamerr_ (const char *yystr);
-
+#if YYDEBUG || 0
     /// For a symbol, its name in clear.
     static const char* const yytname_[];
+#endif // #if YYDEBUG || 0
 
 
     // Tables.
@@ -1326,166 +1183,24 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 46,     ///< Last index in yytable_.
-      yynnts_ = 11,  ///< Number of nonterminal symbols.
-      yyfinal_ = 3 ///< Termination state number.
+      yylast_ = 15,     ///< Last index in yytable_.
+      yynnts_ = 4,  ///< Number of nonterminal symbols.
+      yyfinal_ = 10 ///< Termination state number.
     };
 
 
+    // User arguments.
+    Scanner &scanner;
+    Driver  &driver;
 
   };
 
-  inline
-   asm_parser ::symbol_kind_type
-   asm_parser ::yytranslate_ (int t)
-  {
-    // YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to
-    // TOKEN-NUM as returned by yylex.
-    static
-    const signed char
-    translate_table[] =
-    {
-       0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17
-    };
-    // Last valid token kind.
-    const int code_max = 272;
 
-    if (t <= 0)
-      return symbol_kind::S_YYEOF;
-    else if (t <= code_max)
-      return YY_CAST (symbol_kind_type, translate_table[t]);
-    else
-      return symbol_kind::S_YYUNDEF;
-  }
-
-  // basic_symbol.
-  template <typename Base>
-   asm_parser ::basic_symbol<Base>::basic_symbol (const basic_symbol& that)
-    : Base (that)
-    , value ()
-  {
-    switch (this->kind ())
-    {
-      default:
-        break;
-    }
-
-  }
-
-
-
-  template <typename Base>
-   asm_parser ::symbol_kind_type
-   asm_parser ::basic_symbol<Base>::type_get () const YY_NOEXCEPT
-  {
-    return this->kind ();
-  }
-
-  template <typename Base>
-  bool
-   asm_parser ::basic_symbol<Base>::empty () const YY_NOEXCEPT
-  {
-    return this->kind () == symbol_kind::S_YYEMPTY;
-  }
-
-  template <typename Base>
-  void
-   asm_parser ::basic_symbol<Base>::move (basic_symbol& s)
-  {
-    super_type::move (s);
-    switch (this->kind ())
-    {
-      default:
-        break;
-    }
-
-  }
-
-  // by_kind.
-  inline
-   asm_parser ::by_kind::by_kind ()
-    : kind_ (symbol_kind::S_YYEMPTY)
-  {}
-
-#if 201103L <= YY_CPLUSPLUS
-  inline
-   asm_parser ::by_kind::by_kind (by_kind&& that)
-    : kind_ (that.kind_)
-  {
-    that.clear ();
-  }
-#endif
-
-  inline
-   asm_parser ::by_kind::by_kind (const by_kind& that)
-    : kind_ (that.kind_)
-  {}
-
-  inline
-   asm_parser ::by_kind::by_kind (token_kind_type t)
-    : kind_ (yytranslate_ (t))
-  {}
-
-  inline
-  void
-   asm_parser ::by_kind::clear ()
-  {
-    kind_ = symbol_kind::S_YYEMPTY;
-  }
-
-  inline
-  void
-   asm_parser ::by_kind::move (by_kind& that)
-  {
-    kind_ = that.kind_;
-    that.clear ();
-  }
-
-  inline
-   asm_parser ::symbol_kind_type
-   asm_parser ::by_kind::kind () const YY_NOEXCEPT
-  {
-    return kind_;
-  }
-
-  inline
-   asm_parser ::symbol_kind_type
-   asm_parser ::by_kind::type_get () const YY_NOEXCEPT
-  {
-    return this->kind ();
-  }
-
-} // yy
-#line 1487 "calc.tab.hpp"
+#line 5 "parser.yy"
+} // assembler
+#line 1202 "parser.tab.hpp"
 
 
 
 
-#endif // !YY_YY_CALC_TAB_HPP_INCLUDED
+#endif // !YY_YY_PARSER_TAB_HPP_INCLUDED

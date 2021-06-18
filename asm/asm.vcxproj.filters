@@ -10,38 +10,61 @@
     <Filter Include="Grammar Files">
       <UniqueIdentifier>{5591a56a-c0ec-491a-857d-06c9eb472901}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\cpp">
+      <UniqueIdentifier>{815f0f26-a1b0-44b1-8667-01bd7f058313}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\hpp">
+      <UniqueIdentifier>{b4c812b1-dca2-4b1a-bc1a-2fac44e3030b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{9790fe71-2cc2-432b-82ab-c58c5b5c3ad2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Generated Files\hpp">
+      <UniqueIdentifier>{c027831e-79c3-4a75-916b-697f75d97572}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Generated Files\cpp">
+      <UniqueIdentifier>{4091608d-aa3f-4104-999b-85cc93eb1692}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Flex Include="src\calc.l">
+    <ClInclude Include="src\driver.hpp">
+      <Filter>Header Files\hpp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scanner.hpp">
+      <Filter>Header Files\hpp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\location.hh">
+      <Filter>Generated Files\hpp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parser.tab.hpp">
+      <Filter>Generated Files\hpp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\position.hh">
+      <Filter>Generated Files\hpp</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\driver.cpp">
+      <Filter>Header Files\cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lexer.flex.cpp">
+      <Filter>Generated Files\cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\parser.tab.cpp">
+      <Filter>Generated Files\cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Flex Include="src\lexer.ll">
       <Filter>Grammar Files</Filter>
     </Flex>
   </ItemGroup>
   <ItemGroup>
-    <Bison Include="src\calc.y">
+    <Bison Include="src\parser.yy">
       <Filter>Grammar Files</Filter>
     </Bison>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="src\tmp.txt">
-      <Filter>Grammar Files</Filter>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="src\calc.output">
-      <Filter>Grammar Files</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="src\calc.flex.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\calc.tab.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\calc.tab.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

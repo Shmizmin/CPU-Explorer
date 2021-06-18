@@ -19,30 +19,33 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <Flex Include="src\calc.l">
+    <Flex Include="src\lexer.ll">
+      <FileType>Document</FileType>
       <Cpp Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</Cpp>
-      <CppClassName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Assembler</CppClassName>
       <Cpp Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</Cpp>
-      <CppClassName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Assembler</CppClassName>
     </Flex>
-  </ItemGroup>
-  <ItemGroup>
-    <Bison Include="src\calc.y">
+    <Bison Include="src\parser.yy">
+      <FileType>Document</FileType>
+      <DefinesFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).tab.hpp</DefinesFile>
+      <Verbose Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</Verbose>
       <DefinesFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).tab.hpp</DefinesFile>
+      <Verbose Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</Verbose>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">-d %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">-d %(AdditionalOptions)</AdditionalOptions>
     </Bison>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="src\tmp.txt" />
+    <ClInclude Include="src\driver.hpp" />
+    <ClInclude Include="src\location.hh" />
+    <ClInclude Include="src\parser.tab.hpp" />
+    <ClInclude Include="src\position.hh" />
+    <ClInclude Include="src\scanner.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\calc.output" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="src\calc.flex.cpp" />
-    <ClCompile Include="src\calc.tab.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\calc.tab.hpp" />
+    <ClCompile Include="src\driver.cpp" />
+    <ClCompile Include="src\lexer.flex.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\parser.tab.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -164,6 +167,7 @@
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <AdditionalIncludeDirectories>$(FlexBisonWin)..\..\flex\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -186,9 +190,9 @@
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
       <OpenMPSupport>true</OpenMPSupport>
-      <EnableModules>true</EnableModules>
+      <EnableModules>false</EnableModules>
       <CallingConvention>VectorCall</CallingConvention>
-      <DisableSpecificWarnings>5050;4541</DisableSpecificWarnings>
+      <DisableSpecificWarnings>5050;4541;4065;4127</DisableSpecificWarnings>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
@@ -198,6 +202,7 @@
       <FloatingPointModel>Precise</FloatingPointModel>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <AdditionalIncludeDirectories>$(FlexBisonWin)..\..\flex\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
