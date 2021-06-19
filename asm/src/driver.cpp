@@ -7,20 +7,22 @@
 
 assembler::Driver::~Driver(void) noexcept
 {
-	delete(scanner);
+	delete scanner;
 	scanner = nullptr;
-	delete(parser);
+	delete parser;
 	parser = nullptr;
 }
 
-void assembler::Driver::parse(const char* const filename) noexcept
+void assembler::Driver::parse(const char* filename) noexcept
 {
 	assert(filename != nullptr);
 	std::ifstream in_file(filename);
+
 	if (!in_file.good())
 	{
-		exit(EXIT_FAILURE);
+		std::exit(EXIT_FAILURE);
 	}
+
 	parse_helper(in_file);
 	return;
 }
@@ -39,9 +41,9 @@ void assembler::Driver::parse(std::istream& stream) noexcept
 
 void assembler::Driver::parse_helper(std::istream& stream) noexcept
 {
-	delete(scanner);
+	delete scanner;
 	scanner = new assembler::Scanner(&stream);
-	delete(parser);
+	delete parser;
 	parser = new assembler::Parser((*scanner), (*this));
 
 	//const int accept(0);

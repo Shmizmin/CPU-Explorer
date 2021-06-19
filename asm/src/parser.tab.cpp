@@ -179,8 +179,13 @@ namespace assembler {
   {
     switch (this->kind ())
     {
-      case symbol_kind::S_WORD: // WORD
+      case symbol_kind::S_IDENTIFIER: // IDENTIFIER
         value.copy< std::string > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_INT: // INT
+      case symbol_kind::S_REGISTER: // REGISTER
+        value.copy< unsigned long long > (YY_MOVE (that.value));
         break;
 
       default:
@@ -212,8 +217,13 @@ namespace assembler {
     super_type::move (s);
     switch (this->kind ())
     {
-      case symbol_kind::S_WORD: // WORD
+      case symbol_kind::S_IDENTIFIER: // IDENTIFIER
         value.move< std::string > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_INT: // INT
+      case symbol_kind::S_REGISTER: // REGISTER
+        value.move< unsigned long long > (YY_MOVE (s.value));
         break;
 
       default:
@@ -313,8 +323,13 @@ namespace assembler {
   {
     switch (that.kind ())
     {
-      case symbol_kind::S_WORD: // WORD
+      case symbol_kind::S_IDENTIFIER: // IDENTIFIER
         value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_INT: // INT
+      case symbol_kind::S_REGISTER: // REGISTER
+        value.YY_MOVE_OR_COPY< unsigned long long > (YY_MOVE (that.value));
         break;
 
       default:
@@ -332,8 +347,13 @@ namespace assembler {
   {
     switch (that.kind ())
     {
-      case symbol_kind::S_WORD: // WORD
+      case symbol_kind::S_IDENTIFIER: // IDENTIFIER
         value.move< std::string > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_INT: // INT
+      case symbol_kind::S_REGISTER: // REGISTER
+        value.move< unsigned long long > (YY_MOVE (that.value));
         break;
 
       default:
@@ -351,8 +371,13 @@ namespace assembler {
     state = that.state;
     switch (that.kind ())
     {
-      case symbol_kind::S_WORD: // WORD
+      case symbol_kind::S_IDENTIFIER: // IDENTIFIER
         value.copy< std::string > (that.value);
+        break;
+
+      case symbol_kind::S_INT: // INT
+      case symbol_kind::S_REGISTER: // REGISTER
+        value.copy< unsigned long long > (that.value);
         break;
 
       default:
@@ -369,8 +394,13 @@ namespace assembler {
     state = that.state;
     switch (that.kind ())
     {
-      case symbol_kind::S_WORD: // WORD
+      case symbol_kind::S_IDENTIFIER: // IDENTIFIER
         value.move< std::string > (that.value);
+        break;
+
+      case symbol_kind::S_INT: // INT
+      case symbol_kind::S_REGISTER: // REGISTER
+        value.move< unsigned long long > (that.value);
         break;
 
       default:
@@ -631,8 +661,13 @@ namespace assembler {
          when using variants.  */
       switch (yyr1_[yyn])
     {
-      case symbol_kind::S_WORD: // WORD
+      case symbol_kind::S_IDENTIFIER: // IDENTIFIER
         yylhs.value.emplace< std::string > ();
+        break;
+
+      case symbol_kind::S_INT: // INT
+      case symbol_kind::S_REGISTER: // REGISTER
+        yylhs.value.emplace< unsigned long long > ();
         break;
 
       default:
@@ -655,38 +690,8 @@ namespace assembler {
         {
           switch (yyn)
             {
-  case 6: // item: UPPER
-#line 58 "parser.yy"
-              { driver.add_upper();    }
-#line 662 "parser.tab.cpp"
-    break;
 
-  case 7: // item: LOWER
-#line 59 "parser.yy"
-                  { driver.add_lower();    }
-#line 668 "parser.tab.cpp"
-    break;
-
-  case 8: // item: WORD
-#line 60 "parser.yy"
-                  { driver.add_word( yystack_[0].value.as < std::string > () ); }
-#line 674 "parser.tab.cpp"
-    break;
-
-  case 9: // item: NEWLINE
-#line 61 "parser.yy"
-                  { driver.add_newline();  }
-#line 680 "parser.tab.cpp"
-    break;
-
-  case 10: // item: CHAR
-#line 62 "parser.yy"
-                  { driver.add_char();     }
-#line 686 "parser.tab.cpp"
-    break;
-
-
-#line 690 "parser.tab.cpp"
+#line 695 "parser.tab.cpp"
 
             default:
               break;
@@ -875,69 +880,104 @@ namespace assembler {
 
 
 
-  const signed char Parser::yypact_ninf_ = -7;
+  const signed char Parser::yypact_ninf_ = -13;
 
   const signed char Parser::yytable_ninf_ = -1;
 
   const signed char
   Parser::yypact_[] =
   {
-       0,    -7,    -7,    -7,    -7,    -7,    -7,     1,     8,    -7,
-      -7,    -7,    -7
+     -13,    13,     9,   -13,    30,     8,     0,    10,     8,   -13,
+     -13,   -13,   -13,   -13,   -13,     3,     4,   -10,   -13,   -13,
+     -12,   -13,   -13,   -13,   -13,     5,   -13,   -13,    39,   -13,
+     -13,   -13,     7,    39,     0,   -13,   -13,    53,   -13,   -13,
+     -13,    63,    23,    31,   -13,    39,    39,    39,    39,    39,
+      39,   -13,     0,    34,    67,    67,   -13,   -13,   -13,   -13,
+     -13,   -13,    -1,   -13
   };
 
   const signed char
   Parser::yydefact_[] =
   {
-       0,     2,     6,     7,     8,     9,    10,     0,     0,     4,
-       1,     3,     5
+      36,     0,     2,     1,    29,     0,     0,     0,     0,    33,
+      34,    32,    35,    26,    25,     0,     0,    30,    27,    28,
+       0,     9,    12,    13,    11,     0,    10,    37,     0,    38,
+      39,    40,     0,     0,     6,    17,    18,     0,    15,    16,
+      31,     7,     5,     0,     4,     0,     0,     0,     0,     0,
+       0,    14,     0,     0,    19,    20,    21,    22,    23,    24,
+       3,    36,     0,     8
   };
 
   const signed char
   Parser::yypgoto_[] =
   {
-      -7,    -7,    -7,    -6
+     -13,   -13,   -13,   -13,    40,   -13,    -6,    -5,    -8,   -13,
+      20,   -13,   -13,    -4,    -3,    -2
   };
 
   const signed char
   Parser::yydefgoto_[] =
   {
-      -1,     7,     8,     9
+      -1,     1,    42,    43,    21,     9,    35,    36,    37,    10,
+      17,    11,    12,     2,    38,    39
   };
 
   const signed char
   Parser::yytable_[] =
   {
-       1,    10,    12,     2,     3,     4,     5,     6,    11,     0,
-       0,     2,     3,     4,     5,     6
+      24,    18,    19,    32,    22,     4,    23,    27,    30,    33,
+      29,    31,    13,     3,    20,     4,    25,    63,    28,    28,
+      34,     5,     6,     7,     8,    41,    15,    16,    44,    18,
+      19,     5,     6,     7,     8,    13,    52,    54,    55,    56,
+      57,    58,    59,    22,    14,    23,    60,    53,    26,    15,
+      16,    61,    40,     0,    28,     0,     0,    62,    15,    16,
+      45,    46,    47,    48,    49,    50,     0,     0,     0,    51,
+      45,    46,    47,    48,    49,    50,    47,    48,    49,    50
   };
 
   const signed char
   Parser::yycheck_[] =
   {
-       0,     0,     8,     3,     4,     5,     6,     7,     0,    -1,
-      -1,     3,     4,     5,     6,     7
+       6,     4,     4,    13,     4,     6,     6,     4,     4,    21,
+      15,    16,     5,     0,     6,     6,     6,    18,    15,    15,
+      15,    22,    23,    24,    25,    33,    19,    20,    34,    32,
+      32,    22,    23,    24,    25,     5,    13,    45,    46,    47,
+      48,    49,    50,     4,    14,     6,    52,    16,     8,    19,
+      20,    17,    32,    -1,    15,    -1,    -1,    61,    19,    20,
+       7,     8,     9,    10,    11,    12,    -1,    -1,    -1,    16,
+       7,     8,     9,    10,    11,    12,     9,    10,    11,    12
   };
 
   const signed char
   Parser::yystos_[] =
   {
-       0,     0,     3,     4,     5,     6,     7,     9,    10,    11,
-       0,     0,    11
+       0,    27,    39,     0,     6,    22,    23,    24,    25,    31,
+      35,    37,    38,     5,    14,    19,    20,    36,    40,    41,
+       6,    30,     4,     6,    32,     6,    30,     4,    15,    33,
+       4,    33,    13,    21,    15,    32,    33,    34,    40,    41,
+      36,    34,    28,    29,    32,     7,     8,     9,    10,    11,
+      12,    16,    13,    16,    34,    34,    34,    34,    34,    34,
+      32,    17,    39,    18
   };
 
   const signed char
   Parser::yyr1_[] =
   {
-       0,     8,     9,     9,    10,    10,    11,    11,    11,    11,
-      11
+       0,    26,    27,    28,    28,    29,    29,    30,    31,    31,
+      31,    31,    32,    32,    33,    34,    34,    34,    34,    34,
+      34,    34,    34,    34,    34,    35,    36,    36,    36,    37,
+      37,    37,    38,    38,    38,    39,    39,    40,    40,    41,
+      41
   };
 
   const signed char
   Parser::yyr2_[] =
   {
-       0,     2,     1,     2,     1,     2,     1,     1,     1,     1,
-       1
+       0,     2,     1,     3,     1,     1,     0,     3,     8,     2,
+       2,     2,     1,     1,     3,     1,     1,     1,     1,     3,
+       3,     3,     3,     3,     3,     2,     1,     1,     1,     1,
+       2,     4,     1,     1,     1,     2,     0,     2,     2,     2,
+       2
   };
 
 
@@ -947,8 +987,13 @@ namespace assembler {
   const char*
   const Parser::yytname_[] =
   {
-  "\"end of file\"", "error", "\"invalid token\"", "UPPER", "LOWER",
-  "WORD", "NEWLINE", "CHAR", "$accept", "list_option", "list", "item", YY_NULLPTR
+  "END", "error", "\"invalid token\"", "NEWLINE", "INT", "REGISTER",
+  "IDENTIFIER", "PLUS", "MINUS", "TIMES", "DIVIDE", "LSHIFT", "RSHIFT",
+  "COMMA", "COLON", "LPAREN", "RPAREN", "LBRACE", "RBRACE", "HASH",
+  "PERCENT", "EQUAL", "ALIAS", "ORIGIN", "MACRO", "VAR", "$accept",
+  "program", "arguments_helper", "arguments", "assignment", "directive",
+  "number", "paren_expr", "expression", "label", "operand", "instruction",
+  "statement", "statements", "imm", "mem", YY_NULLPTR
   };
 #endif
 
@@ -957,8 +1002,11 @@ namespace assembler {
   const signed char
   Parser::yyrline_[] =
   {
-       0,    50,    50,    51,    54,    55,    58,    59,    60,    61,
-      62
+       0,    59,    59,    62,    63,    65,    66,    68,    70,    71,
+      72,    73,    75,    76,    78,    80,    81,    82,    83,    84,
+      85,    86,    87,    88,    89,    91,    93,    94,    95,    97,
+      98,    99,   101,   102,   103,   105,   106,   108,   109,   111,
+     112
   };
 
   void
@@ -1023,10 +1071,12 @@ namespace assembler {
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7
+       5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
+      15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
+      25
     };
     // Last valid token kind.
-    const int code_max = 262;
+    const int code_max = 280;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
@@ -1038,9 +1088,9 @@ namespace assembler {
 
 #line 5 "parser.yy"
 } // assembler
-#line 1042 "parser.tab.cpp"
+#line 1092 "parser.tab.cpp"
 
-#line 65 "parser.yy"
+#line 114 "parser.yy"
 
 
 

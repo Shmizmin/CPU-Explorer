@@ -25,6 +25,9 @@
     <Filter Include="Generated Files\cpp">
       <UniqueIdentifier>{4091608d-aa3f-4104-999b-85cc93eb1692}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Supporting Files">
+      <UniqueIdentifier>{fcae9dfb-6594-4c3d-9d9f-04b4f4a23259}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\driver.hpp">
@@ -37,9 +40,6 @@
       <Filter>Generated Files\hpp</Filter>
     </ClInclude>
     <ClInclude Include="src\parser.tab.hpp">
-      <Filter>Generated Files\hpp</Filter>
-    </ClInclude>
-    <ClInclude Include="src\position.hh">
       <Filter>Generated Files\hpp</Filter>
     </ClInclude>
   </ItemGroup>
@@ -66,5 +66,13 @@
     <Bison Include="src\parser.yy">
       <Filter>Grammar Files</Filter>
     </Bison>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="docs\documentation.txt">
+      <Filter>Supporting Files</Filter>
+    </Text>
+    <Text Include="docs\todo.txt">
+      <Filter>Supporting Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

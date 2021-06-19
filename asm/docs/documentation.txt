@@ -1,11 +1,33 @@
-Exit Codes:
-	Code 00: successful program execution
-	Code 01: unspecified runtime error
-	
-	Code 10: the specified file does not exist
-	Code 11: an invalid number of arguments was passed
-	Code 12: there was a syntax error in parsing the supplied assembly file
-	Code 13: an operand type was passed to an instruction that doesn't accept that type
-	Code 14: a duplicate jump label name was encountered
-	Code 15: a reference to a label could not be resolved
-	Code 16: a numeric constant did not contain at least one number
+Grammar Specification:
+
+Program:
+	Statements
+		One or more statements
+
+Statement:
+	Instruction
+	Directive
+	Comment
+	Label
+
+Comment: (ignored)
+	semicolon
+	One or more legal text characters
+
+Instruction:
+	Mnemonic
+	Operand (optional)
+		comma (optional)
+			Operand
+
+Directive:
+	fullstop
+	Identifier
+		lparen (optional)
+			Zero or more comma delimited expressionss
+			rparen
+			lbrace
+				One or more statements
+				rbrace
+			
+

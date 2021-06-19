@@ -1,15 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31320.298
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31410.414
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "asm", "asm\asm.vcxproj", "{B6070189-33AC-4FAD-86B1-F610A0AB1775}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "emu", "emu\emu.vcxproj", "{FDDC915D-5066-4720-8CBD-E056938BC6F9}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dbg", "dbg\dbg.vcxproj", "{F66EEEDB-AD61-448F-A87B-A0D38F179E0C}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "disasm", "disasm\disasm.vcxproj", "{8E7DDA42-7099-4FBF-940F-93954DBDBFD4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +27,6 @@ Global
 		{F66EEEDB-AD61-448F-A87B-A0D38F179E0C}.Debug|x64.Build.0 = Debug|x64
 		{F66EEEDB-AD61-448F-A87B-A0D38F179E0C}.Release|x64.ActiveCfg = Release|x64
 		{F66EEEDB-AD61-448F-A87B-A0D38F179E0C}.Release|x64.Build.0 = Release|x64
-		{8E7DDA42-7099-4FBF-940F-93954DBDBFD4}.Debug|x64.ActiveCfg = Debug|x64
-		{8E7DDA42-7099-4FBF-940F-93954DBDBFD4}.Debug|x64.Build.0 = Debug|x64
-		{8E7DDA42-7099-4FBF-940F-93954DBDBFD4}.Release|x64.ActiveCfg = Release|x64
-		{8E7DDA42-7099-4FBF-940F-93954DBDBFD4}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

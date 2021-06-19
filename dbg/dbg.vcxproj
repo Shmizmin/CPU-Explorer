@@ -26,6 +26,10 @@
     <ClCompile Include="src\app.cc" />
     <ClCompile Include="src\frame.cc" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="docs\documentation.txt" />
+    <Text Include="docs\todo.txt" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

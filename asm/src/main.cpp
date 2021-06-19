@@ -17,10 +17,20 @@ int __cdecl main(const int argc, const char** argv) noexcept
 
 	switch (argc)
 	{
+		case 1:
+		{
+			driver.parse(std::cin);
+			break;
+		}
+
 		case 2:
 		{
 			if (std::strncmp(argv[1], "-o", 2) == 0) //input was terminal pipe
+			{
 				driver.parse(std::cin);
+				break;
+			}
+			
 			else //unrecognized
 				goto default_case;
 		}
@@ -28,7 +38,11 @@ int __cdecl main(const int argc, const char** argv) noexcept
 		case 3:
 		{
 			if (std::strncmp(argv[1], "-f", 2) == 0) //input was filepath
+			{
 				driver.parse(argv[2]);
+				break;
+			}
+
 			else //unrecognized
 				goto default_case;
 		}

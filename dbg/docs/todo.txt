@@ -1,0 +1,17 @@
+TODO:
+	add support more multiple errors in a single file
+	add more verbose error messages
+
+	better register support in the lexer
+		REGISTER TOKEN:
+			val 0 = r0 all
+			val 1 = r1 all
+			val 2 = r2 all
+
+			val 3 = r0 low
+			val 4 = r1 low
+			val 6 = r2 low
+
+			val 7 = r0 high
+			val 8 = r1 high
+			val 9 = r2 high

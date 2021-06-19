@@ -1,11 +1,1 @@
-todo list:
-	-add line number information to errors
-	-support multiple errors in a file
-	-specific and verbose error messages
-	-improve invalid code detection
-	-performance optimizations
-	-single line compilation support?
 
-#INSTRUCTION <-  (MNEMONIC                     ~COMMENT?) /
-#                (MNEMONIC OPERAND             ~COMMENT?) /
-#                (MNEMONIC OPERAND ',' OPERAND ~COMMENT?)
