@@ -19,12 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <Flex Include="src\lexer.ll">
+    <Flex Include="src\lexer.l">
       <FileType>Document</FileType>
       <Cpp Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</Cpp>
       <Cpp Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</Cpp>
     </Flex>
-    <Bison Include="src\parser.yy">
+    <Bison Include="src\parser.y">
       <FileType>Document</FileType>
       <DefinesFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).tab.hpp</DefinesFile>
       <Verbose Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</Verbose>
@@ -164,7 +164,8 @@
       <OpenMPSupport>true</OpenMPSupport>
       <EnableModules>false</EnableModules>
       <CallingConvention>VectorCall</CallingConvention>
-      <DisableSpecificWarnings>5050;4541;4065;4127</DisableSpecificWarnings>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <FunctionLevelLinking>false</FunctionLevelLinking>
@@ -195,7 +196,8 @@
       <OpenMPSupport>true</OpenMPSupport>
       <EnableModules>false</EnableModules>
       <CallingConvention>VectorCall</CallingConvention>
-      <DisableSpecificWarnings>5050;4541;4065;4127</DisableSpecificWarnings>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>

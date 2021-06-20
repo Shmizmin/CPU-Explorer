@@ -58,12 +58,12 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Flex Include="src\lexer.ll">
+    <Flex Include="src\lexer.l">
       <Filter>Grammar Files</Filter>
     </Flex>
   </ItemGroup>
   <ItemGroup>
-    <Bison Include="src\parser.yy">
+    <Bison Include="src\parser.y">
       <Filter>Grammar Files</Filter>
     </Bison>
   </ItemGroup>
