@@ -71,15 +71,17 @@ extern int yydebug;
     T_RPAREN = 272,                /* T_RPAREN  */
     T_LBRACE = 273,                /* T_LBRACE  */
     T_RBRACE = 274,                /* T_RBRACE  */
-    T_EQUAL = 275,                 /* T_EQUAL  */
-    T_HASH = 276,                  /* T_HASH  */
-    T_PERCENT = 277,               /* T_PERCENT  */
-    T_ALIAS = 278,                 /* T_ALIAS  */
-    T_ORIGIN = 279,                /* T_ORIGIN  */
-    T_MACRO = 280,                 /* T_MACRO  */
-    T_VAR = 281,                   /* T_VAR  */
-    T_ASCII = 282,                 /* T_ASCII  */
-    T_CARET = 283                  /* T_CARET  */
+    T_LBRACK = 275,                /* T_LBRACK  */
+    T_RBRACK = 276,                /* T_RBRACK  */
+    T_EQUAL = 277,                 /* T_EQUAL  */
+    T_HASH = 278,                  /* T_HASH  */
+    T_PERCENT = 279,               /* T_PERCENT  */
+    T_ALIAS = 280,                 /* T_ALIAS  */
+    T_ORIGIN = 281,                /* T_ORIGIN  */
+    T_MACRO = 282,                 /* T_MACRO  */
+    T_VAR = 283,                   /* T_VAR  */
+    T_ASCII = 284,                 /* T_ASCII  */
+    T_CARET = 285                  /* T_CARET  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -93,7 +95,7 @@ union YYSTYPE
 	int ival;
 	char* sval;
 
-#line 97 "parser.tab.hpp"
+#line 99 "parser.tab.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;

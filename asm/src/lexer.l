@@ -21,6 +21,7 @@ enum
 
 whitespace      [ \t]
 endl            \n
+carriagereturn  \r
 decimal         -?[0-9]+
 hexadecimal     -?"$"[0-9a-fA-F]+
 identifier      [a-zA-Z][a-zA-Z_0-9]+
@@ -30,7 +31,8 @@ stringliteral   (\"|\')([^\\\"]|\\.)*(\"\')
 
 %%
 
-{whitespace}	{ std::cout << "Flex found whitespace" << '\n'; }
+{carriagereturn}{ std::cout << "Flex found a carriage return\n"; }
+{whitespace}	{ std::cout << "Flex found whitespace\n"; }
 {comment}		{ std::cout << "Flex found a comment: " << yytext << '\n'; }
 {endl}			{ line_number++; return T_ENDL; }
 

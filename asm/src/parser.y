@@ -25,7 +25,7 @@ int yyerror(const char* s);
 %token<sval> T_IDENTIFIER
 %token<sval> T_STRING
 %token T_PLUS T_MINUS T_TIMES T_DIVIDE T_LSHIFT T_RSHIFT
-%token T_COMMA T_COLON T_LPAREN T_RPAREN T_LBRACE T_RBRACE T_EQUAL
+%token T_COMMA T_COLON T_LPAREN T_RPAREN T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_EQUAL
 %token T_HASH T_PERCENT
 %token T_ALIAS T_ORIGIN T_MACRO T_VAR T_ASCII
 
@@ -58,7 +58,8 @@ directive: T_MACRO T_IDENTIFIER T_LPAREN arguments T_RPAREN T_LBRACE statements 
 number: T_INT
 |		T_IDENTIFIER;
 
-paren_expr: T_LPAREN expression T_RPAREN;
+paren_expr: T_LPAREN expression T_RPAREN
+|			T_LBRACK expression T_RBRACK;
 
 expression: imm
 |			mem
@@ -103,10 +104,33 @@ int yyerror(const char *s)
 	return 0;
 }
 
-int __cdecl main(void) noexcept
+int __cdecl main(int argc, const char** argv) noexcept
 {
-	yyin = stdin;
+	//init the in file stream
+	yyin = nullptr;
 
+	//determine whether a filepath was supplied on the command line
+	switch (argc)
+	{
+	case 2:
+		//open the file specified
+		yyin = std::fopen(argv[1], "r");
+		break;
+
+	default:
+		//otherwise throw an error
+		std::cerr << "Usage: assemble [filepath]";
+		return 1;
+	}
+
+	//verify that the file opening succedded
+	if (yyin == nullptr)
+	{
+		std::cerr << "Failed to open the specified file";
+		return 2;
+	}
+
+	//lex and parse the file contents
 	do
 	{
 		yyparse();
