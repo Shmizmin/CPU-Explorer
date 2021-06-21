@@ -1,17 +1,15 @@
-%require  "3.2"
-
 %{
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
 
-extern "C" int yylex();
-extern "C" int yyparse();
-extern "C" std::FILE* yyin;
+extern int yylex();
+extern int yyparse();
+extern std::FILE* yyin;
 
 extern int line_number;
 
-void yyerror(const char *s);
+int yyerror(const char* s);
 %}
 
 %union
@@ -20,27 +18,27 @@ void yyerror(const char *s);
 	char* sval;
 }
 
-%token END 0
-%token T_NEWLINE
+%token T_ENDL
+%token T_EOF 0
 %token<ival> T_INT
-%token<ival> T_IMM
-%token<ival> T_MEM
 %token<ival> T_REGISTER
 %token<sval> T_IDENTIFIER
+%token<sval> T_STRING
 %token T_PLUS T_MINUS T_TIMES T_DIVIDE T_LSHIFT T_RSHIFT
 %token T_COMMA T_COLON T_LPAREN T_RPAREN T_LBRACE T_RBRACE T_EQUAL
+%token T_HASH T_PERCENT
 %token T_ALIAS T_ORIGIN T_MACRO T_VAR T_ASCII
 
-%left PLUS MINUS
-%left TIMES DIVIDE
-%left LSHIFT RSHIFT
+%left T_PLUS T_MINUS
+%left T_TIMES T_DIVIDE
+%left T_LSHIFT T_RSHIFT
+%right T_CARET
 
 %start program
 
 %%
 
-program: statements
-	   ;
+program: statements { std::puts("Parsing program"); };
 
 arguments_helper: arguments_helper T_COMMA number
 |				  number;
@@ -48,7 +46,7 @@ arguments_helper: arguments_helper T_COMMA number
 arguments: arguments_helper
 |		   %empty;
 
-assignment: IDENTIFIER EQUAL expression;
+assignment: T_IDENTIFIER T_EQUAL expression;
 
 directive: T_MACRO T_IDENTIFIER T_LPAREN arguments T_RPAREN T_LBRACE statements T_RBRACE
 |		   T_ORIGIN number
@@ -56,49 +54,63 @@ directive: T_MACRO T_IDENTIFIER T_LPAREN arguments T_RPAREN T_LBRACE statements 
 |		   T_VAR assignment
 |		   T_ASCII T_STRING;
 
+
 number: T_INT
 |		T_IDENTIFIER;
 
-paren_expr: LPAREN expression RPAREN;
+paren_expr: T_LPAREN expression T_RPAREN;
 
 expression: imm
 |			mem
 |			number
 |			paren_expr
-|			expression PLUS expression
-|			expression MINUS expression
-|			expression TIMES expression
-|			expression DIVIDE expression
-|			expression LSHIFT expression
-|			expression RSHIFT expression;
+|			expression T_PLUS expression
+|			expression T_MINUS expression
+|			expression T_TIMES expression
+|			expression T_DIVIDE expression
+|			expression T_LSHIFT expression
+|			expression T_RSHIFT expression
+|			expression T_CARET expression
 
-label: IDENTIFIER COLON;
+label: T_IDENTIFIER T_COLON
 
-operand: REGISTER
-|		 imm
+operand: imm
 |		 mem;
+|		 T_REGISTER
 
-instruction: IDENTIFIER
-|			 IDENTIFIER operand
-|			 IDENTIFIER operand COMMA operand;
+instruction: T_IDENTIFIER { std::puts("Parsing a zero-arg instruction"); }
+|			 T_IDENTIFIER operand { std::puts("Parsing a one-arg instruction"); }
+|			 T_IDENTIFIER operand T_COMMA operand { std::puts("Parsing a two-arg instruction"); };
 
-statement: instruction
-|		   directive
-|		   label;
+statement: instruction T_ENDL
+|		   directive T_ENDL { std::puts("Parsing a directive"); }
+|		   label T_ENDL { std::puts("Parsing a label"); }
 
-statements: statements statement
+statements: statements statement T_ENDL
 |			%empty;
 
-imm: T_HASH INT
+imm: T_HASH number;
 |	 T_HASH paren_expr;
 
-mem: T_PERCENT INT
+mem: T_PERCENT number;
 |	 T_PERCENT paren_expr;
 
 %%
 
-
-void assembler::Parser::error(const location_type& l, const std::string& err_message)
+int yyerror(const char *s)
 {
-	std::cerr << "Error: " << err_message << " at " << l << "\n";
+	std::printf("%s\n", s);
+	return 0;
+}
+
+int __cdecl main(void) noexcept
+{
+	yyin = stdin;
+
+	do
+	{
+		yyparse();
+	} while(!std::feof(yyin));
+
+	return 0;
 }

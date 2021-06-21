@@ -4,17 +4,8 @@
     <Filter Include="Source Files">
       <UniqueIdentifier>{4eb6e2bc-40e4-4dc3-8775-f397bd7b05f4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{ea03451c-a62d-4d65-afdd-06ae7730c682}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Grammar Files">
       <UniqueIdentifier>{5591a56a-c0ec-491a-857d-06c9eb472901}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\cpp">
-      <UniqueIdentifier>{815f0f26-a1b0-44b1-8667-01bd7f058313}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\hpp">
-      <UniqueIdentifier>{b4c812b1-dca2-4b1a-bc1a-2fac44e3030b}</UniqueIdentifier>
     </Filter>
     <Filter Include="Generated Files">
       <UniqueIdentifier>{9790fe71-2cc2-432b-82ab-c58c5b5c3ad2}</UniqueIdentifier>
@@ -30,31 +21,19 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\driver.hpp">
-      <Filter>Header Files\hpp</Filter>
-    </ClInclude>
-    <ClInclude Include="src\scanner.hpp">
-      <Filter>Header Files\hpp</Filter>
-    </ClInclude>
-    <ClInclude Include="src\location.hh">
+    <ClInclude Include="src\parser.tab.hpp">
       <Filter>Generated Files\hpp</Filter>
     </ClInclude>
-    <ClInclude Include="src\parser.tab.hpp">
+    <ClInclude Include="src\lexer.flex.hpp">
       <Filter>Generated Files\hpp</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\driver.cpp">
-      <Filter>Header Files\cpp</Filter>
-    </ClCompile>
     <ClCompile Include="src\lexer.flex.cpp">
       <Filter>Generated Files\cpp</Filter>
     </ClCompile>
     <ClCompile Include="src\parser.tab.cpp">
       <Filter>Generated Files\cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="src\main.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

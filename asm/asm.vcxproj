@@ -21,8 +21,10 @@
   <ItemGroup>
     <Flex Include="src\lexer.l">
       <FileType>Document</FileType>
-      <Cpp Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</Cpp>
-      <Cpp Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</Cpp>
+      <Cpp Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</Cpp>
+      <Cpp Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</Cpp>
+      <HeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).flex.hpp</HeaderFile>
+      <Debug Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</Debug>
     </Flex>
     <Bison Include="src\parser.y">
       <FileType>Document</FileType>
@@ -32,18 +34,15 @@
       <Verbose Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</Verbose>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">-d %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">-d %(AdditionalOptions)</AdditionalOptions>
+      <Debug Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</Debug>
     </Bison>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\driver.hpp" />
-    <ClInclude Include="src\location.hh" />
+    <ClInclude Include="src\lexer.flex.hpp" />
     <ClInclude Include="src\parser.tab.hpp" />
-    <ClInclude Include="src\scanner.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\driver.cpp" />
     <ClCompile Include="src\lexer.flex.cpp" />
-    <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\parser.tab.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -164,8 +163,7 @@
       <OpenMPSupport>true</OpenMPSupport>
       <EnableModules>false</EnableModules>
       <CallingConvention>VectorCall</CallingConvention>
-      <DisableSpecificWarnings>
-      </DisableSpecificWarnings>
+      <DisableSpecificWarnings>4065;4505;4702</DisableSpecificWarnings>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <FunctionLevelLinking>false</FunctionLevelLinking>
@@ -196,8 +194,7 @@
       <OpenMPSupport>true</OpenMPSupport>
       <EnableModules>false</EnableModules>
       <CallingConvention>VectorCall</CallingConvention>
-      <DisableSpecificWarnings>
-      </DisableSpecificWarnings>
+      <DisableSpecificWarnings>4065;4505;4702</DisableSpecificWarnings>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>

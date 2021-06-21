@@ -1,1 +1,3 @@
 
+delete dynamic character pointers from duplicated lexemes after complete
+	--strdupplicate
