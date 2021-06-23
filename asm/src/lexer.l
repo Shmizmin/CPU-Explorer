@@ -27,49 +27,50 @@ hexadecimal     -?"$"[0-9a-fA-F]+
 identifier      [a-zA-Z][a-zA-Z_0-9]+
 comment         \;[^\n]*
 binary          -?"@"[0-1]+
-stringliteral   (\"|\')([^\\\"]|\\.)*(\"\')
+stringliteral   ((\"|\')(([^\"]|\\\")*[^\\])?(\"|\'))
 
 %%
 
-{carriagereturn}{ std::cout << "Flex found a carriage return\n"; }
-{whitespace}	{ std::cout << "Flex found whitespace\n"; }
-{comment}		{ std::cout << "Flex found a comment: " << yytext << '\n'; }
-{endl}			{ line_number++; return T_ENDL; }
+{carriagereturn}	{ std::cout << "Flex found a carriage return\n"; }
+{whitespace}		{ std::cout << "Flex found whitespace\n"; }
+	/*{comment} { return T_COMMENT; }*/
+{comment}			{}
+{endl}				{ line_number++; return T_ENDL; }
 
-{decimal}		{
-					std::cout << "Flex found a decimal int: " << yytext << '\n';
-					yylval.ival = static_cast<int>(std::stoul(std::string(yytext), nullptr, 10));
-					return T_INT;
-				}
+{decimal}			{
+						std::cout << "Flex found a decimal int: " << yytext;
+						yylval.ival = static_cast<int>(std::stoul(std::string(yytext), nullptr, 10));
+						std::cout << " - " << yylval.ival << '\n';
+						return T_INT;
+					}
 
-{identifier}	{
-					std::cout << "Flex found an identifier: " << yytext << '\n';
-					auto char_count = (std::strlen(yytext) + 1);
-					auto* tmp = new char[char_count];
-					std::memcpy(tmp, yytext, char_count);
-					return T_IDENTIFIER;
-				}
+{identifier}		{
+						std::cout << "Flex found an identifier: " << yytext << '\n';
+						static auto tmp = std::string(yytext);
+						yylval.sval = &tmp[0];
+						return T_IDENTIFIER;
+					}
 
-{stringliteral} {
-					std::cout << "Flex found a string literal: " << yytext << '\n';
-					auto char_count = (std::strlen(yytext) - 1);
-					auto* tmp = new char[char_count];
-					std::memcpy(tmp, (yytext + sizeof(char) * 1), char_count);
-					return T_STRING;
-				}
+{stringliteral}		{
+						std::cout << "Flex found a string literal: " << yytext << '\n';
+						static auto tmp = std::string(yytext).substr(1, std::strlen(yytext) - 2);
+						yylval.sval = &tmp[0];
+						return T_STRING;
+					}
 
-{hexadecimal}	{
-					std::cout << "Flex found a hexadecimal int: " << yytext << '\n';
-					yylval.ival = static_cast<int>(std::string(yytext).substr(1), nullptr, 10);
-					return T_INT;
-				}
+{hexadecimal}		{
+						std::cout << "Flex found a hexadecimal int: " << yytext;
+						yylval.ival = static_cast<int>(std::stoul(std::string(yytext).substr(1), nullptr, 16));
+						std::cout << " - " << yylval.ival << '\n';
+						return T_INT;
+					}
 
-{binary}		{
-					std::cout << "Flex found a binary int: " << yytext << '\n';
-					yylval.ival = static_cast<int>(std::stoul(std::string(yytext).substr(1), nullptr, 2));
-					return T_INT;
-				}
-
+{binary}			{
+						std::cout << "Flex found a binary int: " << yytext;
+						yylval.ival = static_cast<int>(std::stoul(std::string(yytext).substr(1), nullptr, 2));
+						std::cout << " - " << yylval.ival << '\n';
+						return T_INT;
+					}
 
 "%"  { return T_PERCENT; }
 "#"  { return T_HASH;    }

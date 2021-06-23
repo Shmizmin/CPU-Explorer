@@ -27,6 +27,7 @@ int yyerror(const char* s);
 %token T_PLUS T_MINUS T_TIMES T_DIVIDE T_LSHIFT T_RSHIFT
 %token T_COMMA T_COLON T_LPAREN T_RPAREN T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_EQUAL
 %token T_HASH T_PERCENT
+//%token T_COMMENT
 %token T_ALIAS T_ORIGIN T_MACRO T_VAR T_ASCII
 
 %left T_PLUS T_MINUS
@@ -71,29 +72,34 @@ expression: imm
 |			expression T_DIVIDE expression
 |			expression T_LSHIFT expression
 |			expression T_RSHIFT expression
-|			expression T_CARET expression
+|			expression T_CARET expression;
 
-label: T_IDENTIFIER T_COLON
+label: T_IDENTIFIER T_COLON;
 
-operand: imm
-|		 mem;
-|		 T_REGISTER
+operand: imm { std::puts("Parsing an operand"); }
+|		 mem
+|		 T_REGISTER;
 
 instruction: T_IDENTIFIER { std::puts("Parsing a zero-arg instruction"); }
 |			 T_IDENTIFIER operand { std::puts("Parsing a one-arg instruction"); }
 |			 T_IDENTIFIER operand T_COMMA operand { std::puts("Parsing a two-arg instruction"); };
 
-statement: instruction T_ENDL
-|		   directive T_ENDL { std::puts("Parsing a directive"); }
-|		   label T_ENDL { std::puts("Parsing a label"); }
+statement: instruction
+|		   directive { std::puts("Parsing a directive"); }
+|		   label { std::puts("Parsing a label"); };
+//| T_COMMENT{ std::puts("Ignoring a comment"); };
 
-statements: statements statement T_ENDL
+statement_with_endl: statement T_ENDL
+|					 statement T_EOF
+|					 T_ENDL { std::puts("Ignoring a blank line"); };
+
+statements: statements statement_with_endl
 |			%empty;
 
-imm: T_HASH number;
+imm: T_HASH number { std::puts("Parsing an immediate value"); }
 |	 T_HASH paren_expr;
 
-mem: T_PERCENT number;
+mem: T_PERCENT number { std::puts("Parsing a memory address"); }
 |	 T_PERCENT paren_expr;
 
 %%
@@ -109,12 +115,21 @@ int __cdecl main(int argc, const char** argv) noexcept
 	//init the in file stream
 	yyin = nullptr;
 
+	//file handle to our stream
+	std::FILE* handle = nullptr;
+
 	//determine whether a filepath was supplied on the command line
 	switch (argc)
 	{
 	case 2:
 		//open the file specified
-		yyin = std::fopen(argv[1], "r");
+		handle = std::fopen(argv[1], "r");
+		yyin = handle;
+		break;
+
+	case 1:
+		//pipe the console stream in
+		yyin = stdin;
 		break;
 
 	default:
@@ -135,6 +150,12 @@ int __cdecl main(int argc, const char** argv) noexcept
 	{
 		yyparse();
 	} while(!std::feof(yyin));
+
+	//verify that the file handle is cleaned up properly
+	if (handle != nullptr)
+	{
+		std::fclose(handle);
+	}
 
 	return 0;
 }
