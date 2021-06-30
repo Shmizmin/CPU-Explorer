@@ -976,18 +976,17 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 YY_RULE_SETUP
 #line 34 "lexer.l"
-{ std::cout << "Flex found a carriage return\n"; }
+{ /*std::cout << "Flex found a carriage return\n";*/ }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
 #line 35 "lexer.l"
-{ std::cout << "Flex found whitespace\n"; }
+{ /*std::cout << "Flex found whitespace\n";*/ }
 	YY_BREAK
-/*{comment} { return T_COMMENT; }*/
 case 3:
 YY_RULE_SETUP
 #line 37 "lexer.l"
-{}
+{ /*std::cout << "Flex found a comment\n";*/ }
 	YY_BREAK
 case 4:
 /* rule 4 can match eol */
@@ -999,9 +998,9 @@ case 5:
 YY_RULE_SETUP
 #line 40 "lexer.l"
 {
-						std::cout << "Flex found a decimal int: " << yytext;
+						/*std::cout << "Flex found a decimal int: " << yytext;*/
 						yylval.ival = static_cast<int>(std::stoul(std::string(yytext), nullptr, 10));
-						std::cout << " - " << yylval.ival << '\n';
+						/*std::cout << " - " << yylval.ival << '\n';*/
 						return T_INT;
 					}
 	YY_BREAK
@@ -1009,7 +1008,7 @@ case 6:
 YY_RULE_SETUP
 #line 47 "lexer.l"
 {
-						std::cout << "Flex found an identifier: " << yytext << '\n';
+						/*std::cout << "Flex found an identifier: " << yytext << '\n';*/
 						static auto tmp = std::string(yytext);
 						yylval.sval = &tmp[0];
 						return T_IDENTIFIER;
@@ -1020,7 +1019,7 @@ case 7:
 YY_RULE_SETUP
 #line 54 "lexer.l"
 {
-						std::cout << "Flex found a string literal: " << yytext << '\n';
+						/*std::cout << "Flex found a string literal: " << yytext << '\n';*/
 						static auto tmp = std::string(yytext).substr(1, std::strlen(yytext) - 2);
 						yylval.sval = &tmp[0];
 						return T_STRING;
@@ -1030,9 +1029,9 @@ case 8:
 YY_RULE_SETUP
 #line 61 "lexer.l"
 {
-						std::cout << "Flex found a hexadecimal int: " << yytext;
+						/*std::cout << "Flex found a hexadecimal int: " << yytext;*/
 						yylval.ival = static_cast<int>(std::stoul(std::string(yytext).substr(1), nullptr, 16));
-						std::cout << " - " << yylval.ival << '\n';
+						/*std::cout << " - " << yylval.ival << '\n';*/
 						return T_INT;
 					}
 	YY_BREAK
@@ -1040,9 +1039,9 @@ case 9:
 YY_RULE_SETUP
 #line 68 "lexer.l"
 {
-						std::cout << "Flex found a binary int: " << yytext;
+						/*std::cout << "Flex found a binary int: " << yytext;*/
 						yylval.ival = static_cast<int>(std::stoul(std::string(yytext).substr(1), nullptr, 2));
-						std::cout << " - " << yylval.ival << '\n';
+						/*std::cout << " - " << yylval.ival << '\n';*/
 						return T_INT;
 					}
 	YY_BREAK
@@ -1216,7 +1215,7 @@ YY_RULE_SETUP
 #line 113 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1219 "lexer.flex.cpp"
+#line 1218 "lexer.flex.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 

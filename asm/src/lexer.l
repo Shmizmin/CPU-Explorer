@@ -31,44 +31,44 @@ stringliteral   ((\"|\')(([^\"]|\\\")*[^\\])?(\"|\'))
 
 %%
 
-{carriagereturn}	{ std::cout << "Flex found a carriage return\n"; }
-{whitespace}		{ std::cout << "Flex found whitespace\n"; }
-	/*{comment} { return T_COMMENT; }*/
-{comment}			{}
+{carriagereturn}	{ /*std::cout << "Flex found a carriage return\n";*/ }
+{whitespace}		{ /*std::cout << "Flex found whitespace\n";*/ }
+
+{comment}			{ /*std::cout << "Flex found a comment\n";*/ }
 {endl}				{ line_number++; return T_ENDL; }
 
 {decimal}			{
-						std::cout << "Flex found a decimal int: " << yytext;
+						/*std::cout << "Flex found a decimal int: " << yytext;*/
 						yylval.ival = static_cast<int>(std::stoul(std::string(yytext), nullptr, 10));
-						std::cout << " - " << yylval.ival << '\n';
+						/*std::cout << " - " << yylval.ival << '\n';*/
 						return T_INT;
 					}
 
 {identifier}		{
-						std::cout << "Flex found an identifier: " << yytext << '\n';
+						/*std::cout << "Flex found an identifier: " << yytext << '\n';*/
 						static auto tmp = std::string(yytext);
 						yylval.sval = &tmp[0];
 						return T_IDENTIFIER;
 					}
 
 {stringliteral}		{
-						std::cout << "Flex found a string literal: " << yytext << '\n';
+						/*std::cout << "Flex found a string literal: " << yytext << '\n';*/
 						static auto tmp = std::string(yytext).substr(1, std::strlen(yytext) - 2);
 						yylval.sval = &tmp[0];
 						return T_STRING;
 					}
 
 {hexadecimal}		{
-						std::cout << "Flex found a hexadecimal int: " << yytext;
+						/*std::cout << "Flex found a hexadecimal int: " << yytext;*/
 						yylval.ival = static_cast<int>(std::stoul(std::string(yytext).substr(1), nullptr, 16));
-						std::cout << " - " << yylval.ival << '\n';
+						/*std::cout << " - " << yylval.ival << '\n';*/
 						return T_INT;
 					}
 
 {binary}			{
-						std::cout << "Flex found a binary int: " << yytext;
+						/*std::cout << "Flex found a binary int: " << yytext;*/
 						yylval.ival = static_cast<int>(std::stoul(std::string(yytext).substr(1), nullptr, 2));
-						std::cout << " - " << yylval.ival << '\n';
+						/*std::cout << " - " << yylval.ival << '\n';*/
 						return T_INT;
 					}
 

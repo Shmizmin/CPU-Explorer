@@ -530,8 +530,8 @@ static const yytype_int8 yyrline[] =
        0,    42,    42,    44,    45,    47,    48,    50,    52,    53,
       54,    55,    56,    59,    60,    62,    63,    65,    66,    67,
       68,    69,    70,    71,    72,    73,    74,    75,    77,    79,
-      80,    81,    83,    84,    85,    87,    88,    89,    92,    93,
-      94,    96,    97,    99,   100,   102,   103
+      80,    81,    83,    84,    85,    87,    88,    89,    91,    92,
+      93,    95,    96,    98,    99,   101,   102
 };
 #endif
 
@@ -1167,56 +1167,56 @@ yyreduce:
 #line 1168 "parser.tab.cpp"
     break;
 
+  case 15: /* paren_expr: T_LPAREN expression T_RPAREN  */
+#line 62 "parser.y"
+                                         { std::puts("Parsing a paren-expr"); }
+#line 1174 "parser.tab.cpp"
+    break;
+
   case 29: /* operand: imm  */
 #line 79 "parser.y"
              { std::puts("Parsing an operand"); }
-#line 1174 "parser.tab.cpp"
+#line 1180 "parser.tab.cpp"
     break;
 
   case 32: /* instruction: T_IDENTIFIER  */
 #line 83 "parser.y"
                           { std::puts("Parsing a zero-arg instruction"); }
-#line 1180 "parser.tab.cpp"
+#line 1186 "parser.tab.cpp"
     break;
 
   case 33: /* instruction: T_IDENTIFIER operand  */
 #line 84 "parser.y"
                                               { std::puts("Parsing a one-arg instruction"); }
-#line 1186 "parser.tab.cpp"
+#line 1192 "parser.tab.cpp"
     break;
 
   case 34: /* instruction: T_IDENTIFIER operand T_COMMA operand  */
 #line 85 "parser.y"
                                                               { std::puts("Parsing a two-arg instruction"); }
-#line 1192 "parser.tab.cpp"
+#line 1198 "parser.tab.cpp"
     break;
 
   case 36: /* statement: directive  */
 #line 88 "parser.y"
                              { std::puts("Parsing a directive"); }
-#line 1198 "parser.tab.cpp"
+#line 1204 "parser.tab.cpp"
     break;
 
   case 37: /* statement: label  */
 #line 89 "parser.y"
                          { std::puts("Parsing a label"); }
-#line 1204 "parser.tab.cpp"
-    break;
-
-  case 40: /* statement_with_endl: T_ENDL  */
-#line 94 "parser.y"
-                                                { std::puts("Ignoring a blank line"); }
 #line 1210 "parser.tab.cpp"
     break;
 
   case 43: /* imm: T_HASH number  */
-#line 99 "parser.y"
+#line 98 "parser.y"
                    { std::puts("Parsing an immediate value"); }
 #line 1216 "parser.tab.cpp"
     break;
 
   case 45: /* mem: T_PERCENT number  */
-#line 102 "parser.y"
+#line 101 "parser.y"
                       { std::puts("Parsing a memory address"); }
 #line 1222 "parser.tab.cpp"
     break;
@@ -1416,7 +1416,7 @@ yyreturn:
   return yyresult;
 }
 
-#line 105 "parser.y"
+#line 104 "parser.y"
 
 
 int yyerror(const char *s)

@@ -1,6 +1,10 @@
 %{
 #include <cstdio>
+#include <cstdint>
 #include <cstdlib>
+
+#include <vector>
+#include <optional>
 #include <iostream>
 
 extern int yylex();
@@ -8,6 +12,8 @@ extern int yyparse();
 extern std::FILE* yyin;
 
 extern int line_number;
+
+extern std::vector<std::uint8_t> code;
 
 int yyerror(const char* s);
 %}
@@ -37,6 +43,77 @@ int yyerror(const char* s);
 
 %start program
 
+%{
+	enum Addressing
+	{
+		Direct,
+		Indirect,
+	};
+
+	enum Mode
+	{
+		None,
+		Memory,
+		Register,
+		Immediate,
+	};
+
+	enum Size
+	{
+		None,
+		WordAll,
+		ByteLow,
+		ByteHigh,
+	};
+
+	enum Opcode
+	{
+		Add,
+		Subtract,
+		Multiply,
+		Divide,
+
+		Xor,
+		Or,
+		And,
+		Not,
+		Compl,
+
+		Load,
+		Unload,
+		Transfer,
+
+		EnableInts,
+		DisableInts,
+
+		Interrupt,
+		Reset,
+
+		Push,
+		Pop,
+	};
+
+	struct Operand
+	{
+		Size size;
+		Mode mode1, mode2;
+		Addressing addr1, addr2;
+
+		union
+		{
+			std::uint8_t val8;
+			std::uint16_t val16;
+		};
+	};
+
+	struct Instruction
+	{
+		Opcode opcode;
+		std::optional<Operand> operand1, operand2;
+	};
+
+%}
+
 %%
 
 program: statements { std::puts("Parsing program"); };
@@ -53,14 +130,14 @@ directive: T_MACRO T_IDENTIFIER T_LPAREN arguments T_RPAREN T_LBRACE statements 
 |		   T_ORIGIN number
 |		   T_ALIAS assignment
 |		   T_VAR assignment
-|		   T_ASCII T_STRING;
+|		   T_ASCII T_STRING { for (auto c: std::string($2))  };
 
 
 number: T_INT
 |		T_IDENTIFIER;
 
-paren_expr: T_LPAREN expression T_RPAREN
-|			T_LBRACK expression T_RBRACK;
+paren_expr: T_LPAREN expression T_RPAREN { std::puts("Parsing a paren-expr"); }
+|			T_LBRACK expression T_RBRACK { std::puts("Parsing a paren-expr"); };
 
 expression: imm
 |			mem
@@ -87,11 +164,10 @@ instruction: T_IDENTIFIER { std::puts("Parsing a zero-arg instruction"); }
 statement: instruction
 |		   directive { std::puts("Parsing a directive"); }
 |		   label { std::puts("Parsing a label"); };
-//| T_COMMENT{ std::puts("Ignoring a comment"); };
 
 statement_with_endl: statement T_ENDL
 |					 statement T_EOF
-|					 T_ENDL { std::puts("Ignoring a blank line"); };
+|					 T_ENDL
 
 statements: statements statement_with_endl
 |			%empty;
@@ -112,6 +188,9 @@ int yyerror(const char *s)
 
 int __cdecl main(int argc, const char** argv) noexcept
 {
+	//stores the assembled machine code
+	std::vector<std::uint8_t> code{};
+
 	//init the in file stream
 	yyin = nullptr;
 
