@@ -70,8 +70,13 @@
 #line 1 "parser.y"
 
 #include <cstdio>
+#include <cstdint>
 #include <cstdlib>
+
+#include <vector>
+#include <optional>
 #include <iostream>
+#include <unordered_map>
 
 extern int yylex();
 extern int yyparse();
@@ -79,9 +84,13 @@ extern std::FILE* yyin;
 
 extern int line_number;
 
+std::uint16_t write_head{ 0 };
+std::vector<std::uint8_t> code{ 0 };
+std::unordered_map<std::string, std::uint16_t> identifiers{};
+
 int yyerror(const char* s);
 
-#line 85 "parser.tab.cpp"
+#line 94 "parser.tab.cpp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -161,6 +170,107 @@ enum yysymbol_kind_t
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
 
+/* Second part of user prologue.  */
+#line 49 "parser.y"
+
+	enum class Addr : unsigned
+	{
+		Direct,
+		Indirect,
+	};
+
+	enum class Mode : unsigned
+	{
+		None,
+		Memory,
+		Register,
+		Immediate,
+	};
+
+	enum class Size : unsigned
+	{
+		None,
+		WordAll,
+		ByteLow,
+		ByteHigh,
+	};
+
+	enum class Opcode : unsigned
+	{
+		Add,
+		Subtract,
+		Multiply,
+		Divide,
+
+		Xor,
+		Or,
+		And,
+		Not,
+		Compl,
+
+		Load,
+		Unload,
+		Transfer,
+
+		EnableInts,
+		DisableInts,
+
+		Interrupt,
+		Reset,
+
+		Push,
+		Pop,
+	};
+
+	struct ModRM
+	{
+		Size size;
+		Mode mode1, mode2;
+		Addr addr1, addr2;
+
+		constexpr auto from_byte(std::uint8_t byte) noexcept
+		{
+			size  =	static_cast<Size>((byte & 0b11000000) >> 6);
+			mode1 = static_cast<Mode>((byte & 0b00110000) >> 4);
+			mode2 = static_cast<Mode>((byte & 0b00001100) >> 2);
+			addr1 = static_cast<Addr>((byte & 0b00000010) >> 1);
+			addr2 = static_cast<Addr>((byte & 0b00000001) >> 0);
+		}
+
+		constexpr auto to_byte(void) noexcept
+		{
+			auto   byte  =  static_cast<std::uint8_t>(0);
+			       byte |= (static_cast<std::uint8_t>(size ) << 6);
+			       byte |= (static_cast<std::uint8_t>(mode1) << 4);
+			       byte |= (static_cast<std::uint8_t>(mode2) << 2);
+			       byte |= (static_cast<std::uint8_t>(addr1) << 1);
+			       byte |= (static_cast<std::uint8_t>(addr2) << 0);
+			return byte;
+		}
+
+		constexpr ModRM(std::uint8_t byte) noexcept
+			{ from_byte(byte); }
+	};
+
+	struct Operand
+	{
+		ModRM modrm;
+
+		union
+		{
+			std::uint8_t val8;
+			std::uint16_t val16;
+		};
+	};
+
+	struct Instruction
+	{
+		Opcode opcode;
+		std::optional<Operand> operand1, operand2;
+	};
+
+
+#line 274 "parser.tab.cpp"
 
 
 #ifdef short
@@ -466,7 +576,7 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  3
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   104
+#define YYLAST   113
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  31
@@ -475,7 +585,7 @@ union yyalloc
 /* YYNRULES -- Number of rules.  */
 #define YYNRULES  46
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  75
+#define YYNSTATES  76
 
 /* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   285
@@ -525,13 +635,13 @@ static const yytype_int8 yytranslate[] =
 
 #if YYDEBUG
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_int8 yyrline[] =
+static const yytype_uint8 yyrline[] =
 {
-       0,    42,    42,    44,    45,    47,    48,    50,    52,    53,
-      54,    55,    56,    59,    60,    62,    63,    65,    66,    67,
-      68,    69,    70,    71,    72,    73,    74,    75,    77,    79,
-      80,    81,    83,    84,    85,    87,    88,    89,    91,    92,
-      93,    95,    96,    98,    99,   101,   102
+       0,   150,   150,   152,   153,   155,   156,   158,   160,   161,
+     162,   163,   164,   172,   173,   175,   176,   178,   179,   180,
+     181,   182,   183,   184,   185,   186,   187,   188,   190,   192,
+     193,   194,   196,   197,   198,   200,   201,   202,   204,   205,
+     206,   208,   209,   211,   212,   214,   215
 };
 #endif
 
@@ -591,14 +701,14 @@ static const yytype_int16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-     -32,     7,    39,   -32,   -32,    73,     4,    13,    15,     4,
-       6,   -32,   -32,   -32,     5,   -32,   -32,   -32,     0,     0,
-      14,   -32,   -32,     8,   -32,   -32,   -32,   -32,    30,   -32,
-     -32,   -32,   -32,    75,    75,   -32,   -32,   -32,   -32,     9,
-      75,    13,   -32,   -32,    40,   -32,   -32,    50,   -32,    64,
-      33,    37,   -32,    75,    75,    75,    75,    75,    75,   -32,
-      75,   -32,    13,    38,    72,    72,    74,    74,    59,    59,
-      59,   -32,   -32,    12,   -32
+     -32,    16,    26,   -32,   -32,    72,    11,     2,    13,    11,
+      14,   -32,   -32,   -32,     7,   -32,   -32,   -32,    93,    93,
+      19,   -32,   -32,    -1,   -32,   -32,   -32,   -32,    32,   -32,
+      42,   -32,   -32,    70,    70,   -32,   -32,   -32,   -32,    68,
+      70,     2,   -32,   -32,   -32,    49,   -32,   -32,    59,   -32,
+      34,    36,    46,   -32,    70,    70,    70,    70,    70,    70,
+     -32,    70,   -32,     2,    47,    71,    71,    -8,    -8,    45,
+      45,    45,   -32,   -32,    12,   -32
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -609,25 +719,25 @@ static const yytype_int8 yydefact[] =
       42,     0,     2,     1,    40,    32,     0,     0,     0,     0,
        0,    36,    37,    35,     0,    41,    31,    28,     0,     0,
       33,    29,    30,     0,    10,    13,    14,     9,     0,    11,
-      12,    39,    38,     0,     0,    43,    44,    45,    46,     0,
-       0,     6,    19,    20,     0,    17,    18,     0,    34,     7,
-       5,     0,     4,     0,     0,     0,     0,     0,     0,    15,
-       0,    16,     0,     0,    21,    22,    23,    24,    25,    26,
-      27,     3,    42,     0,     8
+       0,    39,    38,     0,     0,    43,    44,    45,    46,     0,
+       0,     6,    12,    19,    20,     0,    17,    18,     0,    34,
+       7,     5,     0,     4,     0,     0,     0,     0,     0,     0,
+      15,     0,    16,     0,     0,    21,    22,    23,    24,    25,
+      26,    27,     3,    42,     0,     8
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -32,   -32,   -32,   -32,    60,   -32,    -7,    25,   -31,   -32,
-      51,   -32,   -32,   -32,    20,    -4,    -3
+     -32,   -32,   -32,   -32,    69,   -32,    -7,    -5,   -31,   -32,
+      61,   -32,   -32,   -32,    15,    -4,    -3
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     1,    50,    51,    24,    11,    42,    43,    44,    12,
-      20,    13,    14,    15,     2,    45,    46
+      -1,     1,    51,    52,    24,    11,    43,    44,    45,    12,
+      20,    13,    14,    15,     2,    46,    47
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -635,32 +745,34 @@ static const yytype_int8 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      27,    21,    22,    47,    25,    31,    26,     3,    32,    49,
-      23,    35,    37,    30,    16,     4,    33,    25,     5,    26,
-      34,    28,    64,    65,    66,    67,    68,    69,    39,    70,
-      40,    74,    18,    19,    52,    21,    22,     6,     7,     8,
-       9,    10,     4,    36,    38,     5,    41,    62,    53,    54,
-      55,    56,    57,    58,    63,    71,    72,    59,    53,    54,
-      55,    56,    57,    58,     6,     7,     8,     9,    10,    29,
-      60,    61,    53,    54,    55,    56,    57,    58,    16,    25,
-      60,    26,    55,    56,    57,    58,    57,    58,    17,    60,
-      48,    33,    73,     0,    60,    34,    18,    19,    18,    19,
-       0,     0,    60,     0,    60
+      27,    21,    22,    48,    58,    59,    25,    31,    26,    50,
+      32,    35,    37,    36,    38,     4,     3,    23,     5,    28,
+      30,    40,    61,    65,    66,    67,    68,    69,    70,     4,
+      71,    75,     5,    39,    53,    21,    22,     6,     7,     8,
+       9,    10,    54,    55,    56,    57,    58,    59,    41,    42,
+      63,     6,     7,     8,     9,    10,    72,    54,    55,    56,
+      57,    58,    59,    64,    61,    73,    60,    54,    55,    56,
+      57,    58,    59,    16,    25,    61,    26,    16,    29,    61,
+      62,    56,    57,    58,    59,     0,    33,    17,    74,    61,
+      34,    18,    19,    18,    19,    18,    19,    25,     0,    26,
+      49,    61,     0,     0,     0,     0,     0,     0,     0,    33,
+       0,     0,     0,    34
 };
 
 static const yytype_int8 yycheck[] =
 {
-       7,     5,     5,    34,     4,     0,     6,     0,     3,    40,
-       6,    18,    19,     7,     5,     3,    16,     4,     6,     6,
-      20,     6,    53,    54,    55,    56,    57,    58,    14,    60,
-      22,    19,    23,    24,    41,    39,    39,    25,    26,    27,
-      28,    29,     3,    18,    19,     6,    16,    14,     8,     9,
-      10,    11,    12,    13,    17,    62,    18,    17,     8,     9,
-      10,    11,    12,    13,    25,    26,    27,    28,    29,     9,
-      30,    21,     8,     9,    10,    11,    12,    13,     5,     4,
-      30,     6,    10,    11,    12,    13,    12,    13,    15,    30,
-      39,    16,    72,    -1,    30,    20,    23,    24,    23,    24,
-      -1,    -1,    30,    -1,    30
+       7,     5,     5,    34,    12,    13,     4,     0,     6,    40,
+       3,    18,    19,    18,    19,     3,     0,     6,     6,     6,
+       6,    22,    30,    54,    55,    56,    57,    58,    59,     3,
+      61,    19,     6,    14,    41,    39,    39,    25,    26,    27,
+      28,    29,     8,     9,    10,    11,    12,    13,    16,     7,
+      14,    25,    26,    27,    28,    29,    63,     8,     9,    10,
+      11,    12,    13,    17,    30,    18,    17,     8,     9,    10,
+      11,    12,    13,     5,     4,    30,     6,     5,     9,    30,
+      21,    10,    11,    12,    13,    -1,    16,    15,    73,    30,
+      20,    23,    24,    23,    24,    23,    24,     4,    -1,     6,
+      39,    30,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    16,
+      -1,    -1,    -1,    20
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
@@ -670,11 +782,11 @@ static const yytype_int8 yystos[] =
        0,    32,    45,     0,     3,     6,    25,    26,    27,    28,
       29,    36,    40,    42,    43,    44,     5,    15,    23,    24,
       41,    46,    47,     6,    35,     4,     6,    37,     6,    35,
-       7,     0,     3,    16,    20,    37,    38,    37,    38,    14,
-      22,    16,    37,    38,    39,    46,    47,    39,    41,    39,
-      33,    34,    37,     8,     9,    10,    11,    12,    13,    17,
-      30,    21,    14,    17,    39,    39,    39,    39,    39,    39,
-      39,    37,    18,    45,    19
+       6,     0,     3,    16,    20,    37,    38,    37,    38,    14,
+      22,    16,     7,    37,    38,    39,    46,    47,    39,    41,
+      39,    33,    34,    37,     8,     9,    10,    11,    12,    13,
+      17,    30,    21,    14,    17,    39,    39,    39,    39,    39,
+      39,    39,    37,    18,    45,    19
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
@@ -691,7 +803,7 @@ static const yytype_int8 yyr1[] =
 static const yytype_int8 yyr2[] =
 {
        0,     2,     1,     3,     1,     1,     0,     3,     8,     2,
-       2,     2,     2,     1,     1,     3,     3,     1,     1,     1,
+       2,     2,     3,     1,     1,     3,     3,     1,     1,     1,
        1,     3,     3,     3,     3,     3,     3,     3,     2,     1,
        1,     1,     1,     2,     4,     1,     1,     1,     2,     2,
        1,     2,     0,     2,     2,     2,     2
@@ -1162,67 +1274,84 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* program: statements  */
-#line 42 "parser.y"
+#line 150 "parser.y"
                     { std::puts("Parsing program"); }
-#line 1168 "parser.tab.cpp"
+#line 1280 "parser.tab.cpp"
+    break;
+
+  case 12: /* directive: T_ASCII T_IDENTIFIER T_STRING  */
+#line 164 "parser.y"
+                                                 {
+											identifiers[(yyvsp[-1].sval)] = write_head;
+
+											for (auto c : std::string((yyvsp[0].sval)))
+												code.emplace_back(c);
+										 }
+#line 1291 "parser.tab.cpp"
     break;
 
   case 15: /* paren_expr: T_LPAREN expression T_RPAREN  */
-#line 62 "parser.y"
+#line 175 "parser.y"
                                          { std::puts("Parsing a paren-expr"); }
-#line 1174 "parser.tab.cpp"
+#line 1297 "parser.tab.cpp"
+    break;
+
+  case 16: /* paren_expr: T_LBRACK expression T_RBRACK  */
+#line 176 "parser.y"
+                                                     { std::puts("Parsing a paren-expr"); }
+#line 1303 "parser.tab.cpp"
     break;
 
   case 29: /* operand: imm  */
-#line 79 "parser.y"
+#line 192 "parser.y"
              { std::puts("Parsing an operand"); }
-#line 1180 "parser.tab.cpp"
+#line 1309 "parser.tab.cpp"
     break;
 
   case 32: /* instruction: T_IDENTIFIER  */
-#line 83 "parser.y"
+#line 196 "parser.y"
                           { std::puts("Parsing a zero-arg instruction"); }
-#line 1186 "parser.tab.cpp"
+#line 1315 "parser.tab.cpp"
     break;
 
   case 33: /* instruction: T_IDENTIFIER operand  */
-#line 84 "parser.y"
+#line 197 "parser.y"
                                               { std::puts("Parsing a one-arg instruction"); }
-#line 1192 "parser.tab.cpp"
+#line 1321 "parser.tab.cpp"
     break;
 
   case 34: /* instruction: T_IDENTIFIER operand T_COMMA operand  */
-#line 85 "parser.y"
+#line 198 "parser.y"
                                                               { std::puts("Parsing a two-arg instruction"); }
-#line 1198 "parser.tab.cpp"
+#line 1327 "parser.tab.cpp"
     break;
 
   case 36: /* statement: directive  */
-#line 88 "parser.y"
+#line 201 "parser.y"
                              { std::puts("Parsing a directive"); }
-#line 1204 "parser.tab.cpp"
+#line 1333 "parser.tab.cpp"
     break;
 
   case 37: /* statement: label  */
-#line 89 "parser.y"
+#line 202 "parser.y"
                          { std::puts("Parsing a label"); }
-#line 1210 "parser.tab.cpp"
+#line 1339 "parser.tab.cpp"
     break;
 
   case 43: /* imm: T_HASH number  */
-#line 98 "parser.y"
+#line 211 "parser.y"
                    { std::puts("Parsing an immediate value"); }
-#line 1216 "parser.tab.cpp"
+#line 1345 "parser.tab.cpp"
     break;
 
   case 45: /* mem: T_PERCENT number  */
-#line 101 "parser.y"
+#line 214 "parser.y"
                       { std::puts("Parsing a memory address"); }
-#line 1222 "parser.tab.cpp"
+#line 1351 "parser.tab.cpp"
     break;
 
 
-#line 1226 "parser.tab.cpp"
+#line 1355 "parser.tab.cpp"
 
       default: break;
     }
@@ -1416,7 +1545,7 @@ yyreturn:
   return yyresult;
 }
 
-#line 104 "parser.y"
+#line 217 "parser.y"
 
 
 int yyerror(const char *s)

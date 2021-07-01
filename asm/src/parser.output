@@ -16,7 +16,7 @@ Grammar
     8          | T_ORIGIN number
     9          | T_ALIAS assignment
    10          | T_VAR assignment
-   11          | T_ASCII T_STRING
+   11          | T_ASCII T_IDENTIFIER T_STRING
 
    12 number: T_INT
    13       | T_IDENTIFIER
@@ -71,7 +71,7 @@ Terminals, with rules where they appear
     T_ENDL (258) 37 39
     T_INT <ival> (259) 12
     T_REGISTER <ival> (260) 30
-    T_IDENTIFIER <sval> (261) 6 7 13 27 31 32 33
+    T_IDENTIFIER <sval> (261) 6 7 11 13 27 31 32 33
     T_STRING <sval> (262) 11
     T_PLUS (263) 20
     T_MINUS (264) 21
@@ -261,9 +261,9 @@ State 9
 
 State 10
 
-   11 directive: T_ASCII . T_STRING
+   11 directive: T_ASCII . T_IDENTIFIER T_STRING
 
-    T_STRING  shift, and go to state 30
+    T_IDENTIFIER  shift, and go to state 30
 
 
 State 11
@@ -420,9 +420,9 @@ State 29
 
 State 30
 
-   11 directive: T_ASCII T_STRING .
+   11 directive: T_ASCII T_IDENTIFIER . T_STRING
 
-    $default  reduce using rule 11 (directive)
+    T_STRING  shift, and go to state 42
 
 
 State 31
@@ -450,11 +450,11 @@ State 33
     T_HASH        shift, and go to state 18
     T_PERCENT     shift, and go to state 19
 
-    number      go to state 42
-    paren_expr  go to state 43
-    expression  go to state 44
-    imm         go to state 45
-    mem         go to state 46
+    number      go to state 43
+    paren_expr  go to state 44
+    expression  go to state 45
+    imm         go to state 46
+    mem         go to state 47
 
 
 State 34
@@ -468,11 +468,11 @@ State 34
     T_HASH        shift, and go to state 18
     T_PERCENT     shift, and go to state 19
 
-    number      go to state 42
-    paren_expr  go to state 43
-    expression  go to state 47
-    imm         go to state 45
-    mem         go to state 46
+    number      go to state 43
+    paren_expr  go to state 44
+    expression  go to state 48
+    imm         go to state 46
+    mem         go to state 47
 
 
 State 35
@@ -511,7 +511,7 @@ State 39
     T_HASH      shift, and go to state 18
     T_PERCENT   shift, and go to state 19
 
-    operand  go to state 48
+    operand  go to state 49
     imm      go to state 21
     mem      go to state 22
 
@@ -527,11 +527,11 @@ State 40
     T_HASH        shift, and go to state 18
     T_PERCENT     shift, and go to state 19
 
-    number      go to state 42
-    paren_expr  go to state 43
-    expression  go to state 49
-    imm         go to state 45
-    mem         go to state 46
+    number      go to state 43
+    paren_expr  go to state 44
+    expression  go to state 50
+    imm         go to state 46
+    mem         go to state 47
 
 
 State 41
@@ -543,26 +543,33 @@ State 41
 
     $default  reduce using rule 5 (arguments)
 
-    arguments_helper  go to state 50
-    arguments         go to state 51
-    number            go to state 52
+    arguments_helper  go to state 51
+    arguments         go to state 52
+    number            go to state 53
 
 
 State 42
+
+   11 directive: T_ASCII T_IDENTIFIER T_STRING .
+
+    $default  reduce using rule 11 (directive)
+
+
+State 43
 
    18 expression: number .
 
     $default  reduce using rule 18 (expression)
 
 
-State 43
+State 44
 
    19 expression: paren_expr .
 
     $default  reduce using rule 19 (expression)
 
 
-State 44
+State 45
 
    14 paren_expr: T_LPAREN expression . T_RPAREN
    20 expression: expression . T_PLUS expression
@@ -573,31 +580,31 @@ State 44
    25           | expression . T_RSHIFT expression
    26           | expression . T_CARET expression
 
-    T_PLUS    shift, and go to state 53
-    T_MINUS   shift, and go to state 54
-    T_TIMES   shift, and go to state 55
-    T_DIVIDE  shift, and go to state 56
-    T_LSHIFT  shift, and go to state 57
-    T_RSHIFT  shift, and go to state 58
-    T_RPAREN  shift, and go to state 59
-    T_CARET   shift, and go to state 60
+    T_PLUS    shift, and go to state 54
+    T_MINUS   shift, and go to state 55
+    T_TIMES   shift, and go to state 56
+    T_DIVIDE  shift, and go to state 57
+    T_LSHIFT  shift, and go to state 58
+    T_RSHIFT  shift, and go to state 59
+    T_RPAREN  shift, and go to state 60
+    T_CARET   shift, and go to state 61
 
 
-State 45
+State 46
 
    16 expression: imm .
 
     $default  reduce using rule 16 (expression)
 
 
-State 46
+State 47
 
    17 expression: mem .
 
     $default  reduce using rule 17 (expression)
 
 
-State 47
+State 48
 
    15 paren_expr: T_LBRACK expression . T_RBRACK
    20 expression: expression . T_PLUS expression
@@ -608,24 +615,24 @@ State 47
    25           | expression . T_RSHIFT expression
    26           | expression . T_CARET expression
 
-    T_PLUS    shift, and go to state 53
-    T_MINUS   shift, and go to state 54
-    T_TIMES   shift, and go to state 55
-    T_DIVIDE  shift, and go to state 56
-    T_LSHIFT  shift, and go to state 57
-    T_RSHIFT  shift, and go to state 58
-    T_RBRACK  shift, and go to state 61
-    T_CARET   shift, and go to state 60
+    T_PLUS    shift, and go to state 54
+    T_MINUS   shift, and go to state 55
+    T_TIMES   shift, and go to state 56
+    T_DIVIDE  shift, and go to state 57
+    T_LSHIFT  shift, and go to state 58
+    T_RSHIFT  shift, and go to state 59
+    T_RBRACK  shift, and go to state 62
+    T_CARET   shift, and go to state 61
 
 
-State 48
+State 49
 
    33 instruction: T_IDENTIFIER operand T_COMMA operand .
 
     $default  reduce using rule 33 (instruction)
 
 
-State 49
+State 50
 
     6 assignment: T_IDENTIFIER T_EQUAL expression .
    20 expression: expression . T_PLUS expression
@@ -636,42 +643,42 @@ State 49
    25           | expression . T_RSHIFT expression
    26           | expression . T_CARET expression
 
-    T_PLUS    shift, and go to state 53
-    T_MINUS   shift, and go to state 54
-    T_TIMES   shift, and go to state 55
-    T_DIVIDE  shift, and go to state 56
-    T_LSHIFT  shift, and go to state 57
-    T_RSHIFT  shift, and go to state 58
-    T_CARET   shift, and go to state 60
+    T_PLUS    shift, and go to state 54
+    T_MINUS   shift, and go to state 55
+    T_TIMES   shift, and go to state 56
+    T_DIVIDE  shift, and go to state 57
+    T_LSHIFT  shift, and go to state 58
+    T_RSHIFT  shift, and go to state 59
+    T_CARET   shift, and go to state 61
 
     $default  reduce using rule 6 (assignment)
 
 
-State 50
+State 51
 
     2 arguments_helper: arguments_helper . T_COMMA number
     4 arguments: arguments_helper .
 
-    T_COMMA  shift, and go to state 62
+    T_COMMA  shift, and go to state 63
 
     $default  reduce using rule 4 (arguments)
 
 
-State 51
+State 52
 
     7 directive: T_MACRO T_IDENTIFIER T_LPAREN arguments . T_RPAREN T_LBRACE statements T_RBRACE
 
-    T_RPAREN  shift, and go to state 63
+    T_RPAREN  shift, and go to state 64
 
 
-State 52
+State 53
 
     3 arguments_helper: number .
 
     $default  reduce using rule 3 (arguments_helper)
 
 
-State 53
+State 54
 
    20 expression: expression T_PLUS . expression
 
@@ -682,14 +689,14 @@ State 53
     T_HASH        shift, and go to state 18
     T_PERCENT     shift, and go to state 19
 
-    number      go to state 42
-    paren_expr  go to state 43
-    expression  go to state 64
-    imm         go to state 45
-    mem         go to state 46
+    number      go to state 43
+    paren_expr  go to state 44
+    expression  go to state 65
+    imm         go to state 46
+    mem         go to state 47
 
 
-State 54
+State 55
 
    21 expression: expression T_MINUS . expression
 
@@ -700,14 +707,14 @@ State 54
     T_HASH        shift, and go to state 18
     T_PERCENT     shift, and go to state 19
 
-    number      go to state 42
-    paren_expr  go to state 43
-    expression  go to state 65
-    imm         go to state 45
-    mem         go to state 46
+    number      go to state 43
+    paren_expr  go to state 44
+    expression  go to state 66
+    imm         go to state 46
+    mem         go to state 47
 
 
-State 55
+State 56
 
    22 expression: expression T_TIMES . expression
 
@@ -718,14 +725,14 @@ State 55
     T_HASH        shift, and go to state 18
     T_PERCENT     shift, and go to state 19
 
-    number      go to state 42
-    paren_expr  go to state 43
-    expression  go to state 66
-    imm         go to state 45
-    mem         go to state 46
+    number      go to state 43
+    paren_expr  go to state 44
+    expression  go to state 67
+    imm         go to state 46
+    mem         go to state 47
 
 
-State 56
+State 57
 
    23 expression: expression T_DIVIDE . expression
 
@@ -736,14 +743,14 @@ State 56
     T_HASH        shift, and go to state 18
     T_PERCENT     shift, and go to state 19
 
-    number      go to state 42
-    paren_expr  go to state 43
-    expression  go to state 67
-    imm         go to state 45
-    mem         go to state 46
+    number      go to state 43
+    paren_expr  go to state 44
+    expression  go to state 68
+    imm         go to state 46
+    mem         go to state 47
 
 
-State 57
+State 58
 
    24 expression: expression T_LSHIFT . expression
 
@@ -754,14 +761,14 @@ State 57
     T_HASH        shift, and go to state 18
     T_PERCENT     shift, and go to state 19
 
-    number      go to state 42
-    paren_expr  go to state 43
-    expression  go to state 68
-    imm         go to state 45
-    mem         go to state 46
+    number      go to state 43
+    paren_expr  go to state 44
+    expression  go to state 69
+    imm         go to state 46
+    mem         go to state 47
 
 
-State 58
+State 59
 
    25 expression: expression T_RSHIFT . expression
 
@@ -772,21 +779,21 @@ State 58
     T_HASH        shift, and go to state 18
     T_PERCENT     shift, and go to state 19
 
-    number      go to state 42
-    paren_expr  go to state 43
-    expression  go to state 69
-    imm         go to state 45
-    mem         go to state 46
+    number      go to state 43
+    paren_expr  go to state 44
+    expression  go to state 70
+    imm         go to state 46
+    mem         go to state 47
 
 
-State 59
+State 60
 
    14 paren_expr: T_LPAREN expression T_RPAREN .
 
     $default  reduce using rule 14 (paren_expr)
 
 
-State 60
+State 61
 
    26 expression: expression T_CARET . expression
 
@@ -797,38 +804,38 @@ State 60
     T_HASH        shift, and go to state 18
     T_PERCENT     shift, and go to state 19
 
-    number      go to state 42
-    paren_expr  go to state 43
-    expression  go to state 70
-    imm         go to state 45
-    mem         go to state 46
+    number      go to state 43
+    paren_expr  go to state 44
+    expression  go to state 71
+    imm         go to state 46
+    mem         go to state 47
 
 
-State 61
+State 62
 
    15 paren_expr: T_LBRACK expression T_RBRACK .
 
     $default  reduce using rule 15 (paren_expr)
 
 
-State 62
+State 63
 
     2 arguments_helper: arguments_helper T_COMMA . number
 
     T_INT         shift, and go to state 25
     T_IDENTIFIER  shift, and go to state 26
 
-    number  go to state 71
-
-
-State 63
-
-    7 directive: T_MACRO T_IDENTIFIER T_LPAREN arguments T_RPAREN . T_LBRACE statements T_RBRACE
-
-    T_LBRACE  shift, and go to state 72
+    number  go to state 72
 
 
 State 64
+
+    7 directive: T_MACRO T_IDENTIFIER T_LPAREN arguments T_RPAREN . T_LBRACE statements T_RBRACE
+
+    T_LBRACE  shift, and go to state 73
+
+
+State 65
 
    20 expression: expression . T_PLUS expression
    20           | expression T_PLUS expression .
@@ -839,16 +846,16 @@ State 64
    25           | expression . T_RSHIFT expression
    26           | expression . T_CARET expression
 
-    T_TIMES   shift, and go to state 55
-    T_DIVIDE  shift, and go to state 56
-    T_LSHIFT  shift, and go to state 57
-    T_RSHIFT  shift, and go to state 58
-    T_CARET   shift, and go to state 60
+    T_TIMES   shift, and go to state 56
+    T_DIVIDE  shift, and go to state 57
+    T_LSHIFT  shift, and go to state 58
+    T_RSHIFT  shift, and go to state 59
+    T_CARET   shift, and go to state 61
 
     $default  reduce using rule 20 (expression)
 
 
-State 65
+State 66
 
    20 expression: expression . T_PLUS expression
    21           | expression . T_MINUS expression
@@ -859,16 +866,16 @@ State 65
    25           | expression . T_RSHIFT expression
    26           | expression . T_CARET expression
 
-    T_TIMES   shift, and go to state 55
-    T_DIVIDE  shift, and go to state 56
-    T_LSHIFT  shift, and go to state 57
-    T_RSHIFT  shift, and go to state 58
-    T_CARET   shift, and go to state 60
+    T_TIMES   shift, and go to state 56
+    T_DIVIDE  shift, and go to state 57
+    T_LSHIFT  shift, and go to state 58
+    T_RSHIFT  shift, and go to state 59
+    T_CARET   shift, and go to state 61
 
     $default  reduce using rule 21 (expression)
 
 
-State 66
+State 67
 
    20 expression: expression . T_PLUS expression
    21           | expression . T_MINUS expression
@@ -879,14 +886,14 @@ State 66
    25           | expression . T_RSHIFT expression
    26           | expression . T_CARET expression
 
-    T_LSHIFT  shift, and go to state 57
-    T_RSHIFT  shift, and go to state 58
-    T_CARET   shift, and go to state 60
+    T_LSHIFT  shift, and go to state 58
+    T_RSHIFT  shift, and go to state 59
+    T_CARET   shift, and go to state 61
 
     $default  reduce using rule 22 (expression)
 
 
-State 67
+State 68
 
    20 expression: expression . T_PLUS expression
    21           | expression . T_MINUS expression
@@ -897,14 +904,14 @@ State 67
    25           | expression . T_RSHIFT expression
    26           | expression . T_CARET expression
 
-    T_LSHIFT  shift, and go to state 57
-    T_RSHIFT  shift, and go to state 58
-    T_CARET   shift, and go to state 60
+    T_LSHIFT  shift, and go to state 58
+    T_RSHIFT  shift, and go to state 59
+    T_CARET   shift, and go to state 61
 
     $default  reduce using rule 23 (expression)
 
 
-State 68
+State 69
 
    20 expression: expression . T_PLUS expression
    21           | expression . T_MINUS expression
@@ -915,25 +922,9 @@ State 68
    25           | expression . T_RSHIFT expression
    26           | expression . T_CARET expression
 
-    T_CARET  shift, and go to state 60
+    T_CARET  shift, and go to state 61
 
     $default  reduce using rule 24 (expression)
-
-
-State 69
-
-   20 expression: expression . T_PLUS expression
-   21           | expression . T_MINUS expression
-   22           | expression . T_TIMES expression
-   23           | expression . T_DIVIDE expression
-   24           | expression . T_LSHIFT expression
-   25           | expression . T_RSHIFT expression
-   25           | expression T_RSHIFT expression .
-   26           | expression . T_CARET expression
-
-    T_CARET  shift, and go to state 60
-
-    $default  reduce using rule 25 (expression)
 
 
 State 70
@@ -944,38 +935,54 @@ State 70
    23           | expression . T_DIVIDE expression
    24           | expression . T_LSHIFT expression
    25           | expression . T_RSHIFT expression
+   25           | expression T_RSHIFT expression .
+   26           | expression . T_CARET expression
+
+    T_CARET  shift, and go to state 61
+
+    $default  reduce using rule 25 (expression)
+
+
+State 71
+
+   20 expression: expression . T_PLUS expression
+   21           | expression . T_MINUS expression
+   22           | expression . T_TIMES expression
+   23           | expression . T_DIVIDE expression
+   24           | expression . T_LSHIFT expression
+   25           | expression . T_RSHIFT expression
    26           | expression . T_CARET expression
    26           | expression T_CARET expression .
 
-    T_CARET  shift, and go to state 60
+    T_CARET  shift, and go to state 61
 
     $default  reduce using rule 26 (expression)
 
 
-State 71
+State 72
 
     2 arguments_helper: arguments_helper T_COMMA number .
 
     $default  reduce using rule 2 (arguments_helper)
 
 
-State 72
+State 73
 
     7 directive: T_MACRO T_IDENTIFIER T_LPAREN arguments T_RPAREN T_LBRACE . statements T_RBRACE
 
     $default  reduce using rule 41 (statements)
 
-    statements  go to state 73
+    statements  go to state 74
 
 
-State 73
+State 74
 
     7 directive: T_MACRO T_IDENTIFIER T_LPAREN arguments T_RPAREN T_LBRACE statements . T_RBRACE
    40 statements: statements . statement_with_endl
 
     T_ENDL        shift, and go to state 4
     T_IDENTIFIER  shift, and go to state 5
-    T_RBRACE      shift, and go to state 74
+    T_RBRACE      shift, and go to state 75
     T_ALIAS       shift, and go to state 6
     T_ORIGIN      shift, and go to state 7
     T_MACRO       shift, and go to state 8
@@ -989,7 +996,7 @@ State 73
     statement_with_endl  go to state 15
 
 
-State 74
+State 75
 
     7 directive: T_MACRO T_IDENTIFIER T_LPAREN arguments T_RPAREN T_LBRACE statements T_RBRACE .
 

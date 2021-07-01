@@ -6,6 +6,7 @@
 #include <vector>
 #include <optional>
 #include <iostream>
+#include <unordered_map>
 
 extern int yylex();
 extern int yyparse();
@@ -13,7 +14,9 @@ extern std::FILE* yyin;
 
 extern int line_number;
 
-extern std::vector<std::uint8_t> code;
+std::uint16_t write_head{ 0 };
+std::vector<std::uint8_t> code{ 0 };
+std::unordered_map<std::string, std::uint16_t> identifiers{};
 
 int yyerror(const char* s);
 %}
@@ -44,13 +47,13 @@ int yyerror(const char* s);
 %start program
 
 %{
-	enum Addressing
+	enum class Addr : unsigned
 	{
 		Direct,
 		Indirect,
 	};
 
-	enum Mode
+	enum class Mode : unsigned
 	{
 		None,
 		Memory,
@@ -58,7 +61,7 @@ int yyerror(const char* s);
 		Immediate,
 	};
 
-	enum Size
+	enum class Size : unsigned
 	{
 		None,
 		WordAll,
@@ -66,7 +69,7 @@ int yyerror(const char* s);
 		ByteHigh,
 	};
 
-	enum Opcode
+	enum class Opcode : unsigned
 	{
 		Add,
 		Subtract,
@@ -93,11 +96,39 @@ int yyerror(const char* s);
 		Pop,
 	};
 
-	struct Operand
+	struct ModRM
 	{
 		Size size;
 		Mode mode1, mode2;
-		Addressing addr1, addr2;
+		Addr addr1, addr2;
+
+		constexpr auto from_byte(std::uint8_t byte) noexcept
+		{
+			size  =	static_cast<Size>((byte & 0b11000000) >> 6);
+			mode1 = static_cast<Mode>((byte & 0b00110000) >> 4);
+			mode2 = static_cast<Mode>((byte & 0b00001100) >> 2);
+			addr1 = static_cast<Addr>((byte & 0b00000010) >> 1);
+			addr2 = static_cast<Addr>((byte & 0b00000001) >> 0);
+		}
+
+		constexpr auto to_byte(void) noexcept
+		{
+			auto   byte  =  static_cast<std::uint8_t>(0);
+			       byte |= (static_cast<std::uint8_t>(size ) << 6);
+			       byte |= (static_cast<std::uint8_t>(mode1) << 4);
+			       byte |= (static_cast<std::uint8_t>(mode2) << 2);
+			       byte |= (static_cast<std::uint8_t>(addr1) << 1);
+			       byte |= (static_cast<std::uint8_t>(addr2) << 0);
+			return byte;
+		}
+
+		constexpr ModRM(std::uint8_t byte) noexcept
+			{ from_byte(byte); }
+	};
+
+	struct Operand
+	{
+		ModRM modrm;
 
 		union
 		{
@@ -130,7 +161,12 @@ directive: T_MACRO T_IDENTIFIER T_LPAREN arguments T_RPAREN T_LBRACE statements 
 |		   T_ORIGIN number
 |		   T_ALIAS assignment
 |		   T_VAR assignment
-|		   T_ASCII T_STRING { for (auto c: std::string($2))  };
+|		   T_ASCII T_IDENTIFIER T_STRING {
+											identifiers[$2] = write_head;
+
+											for (auto c : std::string($3))
+												code.emplace_back(c);
+										 };
 
 
 number: T_INT
@@ -181,16 +217,13 @@ mem: T_PERCENT number { std::puts("Parsing a memory address"); }
 %%
 
 int yyerror(const char *s)
-{
+{ 
 	std::printf("%s\n", s);
 	return 0;
 }
 
 int __cdecl main(int argc, const char** argv) noexcept
 {
-	//stores the assembled machine code
-	std::vector<std::uint8_t> code{};
-
 	//init the in file stream
 	yyin = nullptr;
 
