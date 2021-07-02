@@ -16,7 +16,8 @@ extern int line_number;
 
 std::uint16_t write_head{ 0 };
 std::vector<std::uint8_t> code{ 0 };
-std::unordered_map<std::string, std::uint16_t> identifiers{};
+
+std::unordered_map<std::string, std::uint16_t> identifiers{}; //maps any string identifier to a 16bit integer
 
 int yyerror(const char* s);
 %}
@@ -47,18 +48,26 @@ int yyerror(const char* s);
 %start program
 
 %{
-	enum class Addr : unsigned
-	{
-		Direct,
-		Indirect,
-	};
-
 	enum class Mode : unsigned
 	{
 		None,
 		Memory,
 		Register,
 		Immediate,
+	};
+
+	enum class Addr : unsigned
+	{
+		Direct,
+		Indirect,
+	};
+
+	enum class Rsel : unsigned
+	{
+		None,
+		R0,
+		R1,
+		R2
 	};
 
 	enum class Size : unsigned
@@ -98,13 +107,13 @@ int yyerror(const char* s);
 
 	struct ModRM
 	{
-		Size size;
+		Rsel rsel;
 		Mode mode1, mode2;
 		Addr addr1, addr2;
 
 		constexpr auto from_byte(std::uint8_t byte) noexcept
 		{
-			size  =	static_cast<Size>((byte & 0b11000000) >> 6);
+			rsel  = static_cast<Rsel>((byte & 0b11000000) >> 6);
 			mode1 = static_cast<Mode>((byte & 0b00110000) >> 4);
 			mode2 = static_cast<Mode>((byte & 0b00001100) >> 2);
 			addr1 = static_cast<Addr>((byte & 0b00000010) >> 1);
@@ -114,7 +123,7 @@ int yyerror(const char* s);
 		constexpr auto to_byte(void) noexcept
 		{
 			auto   byte  =  static_cast<std::uint8_t>(0);
-			       byte |= (static_cast<std::uint8_t>(size ) << 6);
+			       byte |= (static_cast<std::uint8_t>(rsel)  << 6);
 			       byte |= (static_cast<std::uint8_t>(mode1) << 4);
 			       byte |= (static_cast<std::uint8_t>(mode2) << 2);
 			       byte |= (static_cast<std::uint8_t>(addr1) << 1);
@@ -137,12 +146,18 @@ int yyerror(const char* s);
 		};
 	};
 
-	struct Instruction
+	struct Mnemonic
 	{
+		Mode mode;
+		Addr addr;
 		Opcode opcode;
-		std::optional<Operand> operand1, operand2;
 	};
 
+	struct Instruction
+	{
+		Mnemonic mnemonic;
+		std::optional<Operand> operand1, operand2;
+	};
 %}
 
 %%
@@ -158,7 +173,9 @@ arguments: arguments_helper
 assignment: T_IDENTIFIER T_EQUAL expression;
 
 directive: T_MACRO T_IDENTIFIER T_LPAREN arguments T_RPAREN T_LBRACE statements T_RBRACE
-|		   T_ORIGIN number
+|		   T_ORIGIN number {
+								write_head = $2;
+						   }
 |		   T_ALIAS assignment
 |		   T_VAR assignment
 |		   T_ASCII T_IDENTIFIER T_STRING {
