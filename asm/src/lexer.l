@@ -91,9 +91,12 @@ stringliteral   ((\"|\')(([^\"]|\\\")*[^\\])?(\"|\'))
 
 ".ascii" { return T_ASCII; }
 ".macro" { return T_MACRO; }
-".alias" { return T_ALIAS; }
 ".org" { return T_ORIGIN; }
-".var" { return T_VAR; }
+
+".alias8" { return T_ALIAS8; }
+".alias16" { return T_ALIAS16; }
+".var8" { return T_VAR8; }
+".var16" { return T_VAR16; }
 
 ([rR]\0[hH])    { yylval.ival = (int)R0H; return T_REGISTER; }
 ([rR]\1[hH])    { yylval.ival = (int)R1H; return T_REGISTER; }

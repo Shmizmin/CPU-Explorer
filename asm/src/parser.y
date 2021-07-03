@@ -4,6 +4,7 @@
 #include <cstdlib>
 
 #include <vector>
+#include <utility>
 #include <optional>
 #include <iostream>
 #include <unordered_map>
@@ -17,7 +18,19 @@ extern int line_number;
 std::uint16_t write_head{ 0 };
 std::vector<std::uint8_t> code{ 0 };
 
-std::unordered_map<std::string, std::uint16_t> identifiers{}; //maps any string identifier to a 16bit integer
+enum class Qualifier
+{
+	Address,
+
+	Value8,
+	Value16,
+
+	Variable8,
+	Variable16,
+};
+
+//maps any string identifier to a 16bit integer with a 'direct-ness' tag
+std::unordered_map<std::string, std::pair<Qualifier, std::uint16_t>> identifiers{};
 
 int yyerror(const char* s);
 %}
@@ -38,7 +51,7 @@ int yyerror(const char* s);
 %token T_COMMA T_COLON T_LPAREN T_RPAREN T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_EQUAL
 %token T_HASH T_PERCENT
 //%token T_COMMENT
-%token T_ALIAS T_ORIGIN T_MACRO T_VAR T_ASCII
+%token T_ORIGIN T_MACRO T_VAR8 T_VAR16 T_ALIAS8 T_ALIAS16 T_ASCII
 
 %left T_PLUS T_MINUS
 %left T_TIMES T_DIVIDE
@@ -170,19 +183,41 @@ arguments_helper: arguments_helper T_COMMA number
 arguments: arguments_helper
 |		   %empty;
 
-assignment: T_IDENTIFIER T_EQUAL expression;
-
 directive: T_MACRO T_IDENTIFIER T_LPAREN arguments T_RPAREN T_LBRACE statements T_RBRACE
 |		   T_ORIGIN number {
 								write_head = $2;
 						   }
-|		   T_ALIAS assignment
-|		   T_VAR assignment
+|		   T_ALIAS8 T_IDENTIFIER T_COLON expression {
+														identifiers[$2] = std::make_pair(Qualifier::Value8, $4);
+														code[write_head] = $4;
+														write_head += 1;
+													}
+|		   T_ALIAS16 T_IDENTIFIER T_EQUAL expression {
+														identifiers[$2] = std::make_pair(Qualifier::Value16, $4);
+														code[write_head] = ($4 & 0x00FF);
+														write_head += 1;
+														code[write_head] = ($4 & 0xFF00);
+														write_head += 1;
+													}
+|		   T_VAR16 T_IDENTIFIER T_EQUAL expression {
+														identifiers[$2] = std::make_pair(Qualifier::Variable16, $4);
+														code[write_head] = ($4 & 0x00FF);
+														write_head += 1;
+														code[write_head] = ($4 & 0xFF00);
+														write_head += 1;
+												   }
+|		   T_VAR8 T_IDENTIFIER T_EQUAL expression {
+													identifiers[$2] = std::make_pair(Qualifier::Variable8, $4);
+													code[write_head] = $4;
+													write_head += 1;
+												 }
 |		   T_ASCII T_IDENTIFIER T_STRING {
-											identifiers[$2] = write_head;
+											identifiers[$2] = std::make_pair(Qualifier::Address, write_head);
 
-											for (auto c : std::string($3))
-												code.emplace_back(c);
+											auto chars = $3;
+											auto count = (std::strlen(chars) + 1);
+											std::memcpy(&code[write_head], &chars, count)
+											write_head += count;
 										 };
 
 
