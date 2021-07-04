@@ -7,7 +7,7 @@
 #include <utility>
 #include <optional>
 #include <iostream>
-#include <unordered_map>
+#include <map>
 
 extern int yylex();
 extern int yyparse();
@@ -15,11 +15,14 @@ extern std::FILE* yyin;
 
 extern int line_number;
 
-std::uint16_t write_head{ 0 };
+std::uint16_t macro_iden{ 1 },
+			  write_head{ 0 };
+
 std::vector<std::uint8_t> code{ 0 };
 
 enum class Qualifier
 {
+	Macro,
 	Address,
 
 	Value8,
@@ -30,7 +33,7 @@ enum class Qualifier
 };
 
 //maps any string identifier to a 16bit integer with a 'direct-ness' tag
-std::unordered_map<std::string, std::pair<Qualifier, std::uint16_t>> identifiers{};
+std::map<std::string, std::pair<Qualifier, std::uint16_t>> identifiers{};
 
 int yyerror(const char* s);
 %}
@@ -93,6 +96,8 @@ int yyerror(const char* s);
 
 	enum class Opcode : unsigned
 	{
+		Nop,
+
 		Add,
 		Subtract,
 		Multiply,
@@ -171,6 +176,21 @@ int yyerror(const char* s);
 		Mnemonic mnemonic;
 		std::optional<Operand> operand1, operand2;
 	};
+
+	auto contains(std::map<std::string, std::pair<Qualifier, std::uint16_t>>& map, 
+		const std::string& key, std::pair<Qualifier, std::uint16_t> val) noexcept
+	{
+		if (map.contains(key)) [[unlikely]]
+		{
+			std::cerr << "Duplicate identifier " << key << " found\n";
+			std::exit(3);
+		}
+
+		else [[likely]]
+		{
+			map.insert({ key, val });
+		}
+	}
 %}
 
 %%
@@ -183,31 +203,39 @@ arguments_helper: arguments_helper T_COMMA number
 arguments: arguments_helper
 |		   %empty;
 
-directive: T_MACRO T_IDENTIFIER T_LPAREN arguments T_RPAREN T_LBRACE statements T_RBRACE
+directive: T_MACRO T_IDENTIFIER T_LPAREN arguments T_RPAREN T_LBRACE statements T_RBRACE {
+																							//identifiers[$2] = std::make_pair(Qualifier::Macro, macro_iden);
+																							contains(identifiers, $2, { Qualifier::Macro, $4 });
+																							++macro_iden;
+																						 }
 |		   T_ORIGIN number {
 								write_head = $2;
 						   }
 |		   T_ALIAS8 T_IDENTIFIER T_COLON expression {
-														identifiers[$2] = std::make_pair(Qualifier::Value8, $4);
+														//identifiers[$2] = std::make_pair(Qualifier::Value8, $4);
+														contains(identifiers, $2, { Qualifier::Value8, $4 });
 														code[write_head] = $4;
 														write_head += 1;
 													}
 |		   T_ALIAS16 T_IDENTIFIER T_EQUAL expression {
-														identifiers[$2] = std::make_pair(Qualifier::Value16, $4);
+														//identifiers[$2] = std::make_pair(Qualifier::Value16, $4);
+														contains(identifiers, $2, { Qualifier::Value16, $4 });
 														code[write_head] = ($4 & 0x00FF);
 														write_head += 1;
 														code[write_head] = ($4 & 0xFF00);
 														write_head += 1;
 													}
 |		   T_VAR16 T_IDENTIFIER T_EQUAL expression {
-														identifiers[$2] = std::make_pair(Qualifier::Variable16, $4);
+														//identifiers[$2] = std::make_pair(Qualifier::Variable16, $4);
+														contains(identifiers, $2, { Qualifier::Variable16, $4 });
 														code[write_head] = ($4 & 0x00FF);
 														write_head += 1;
 														code[write_head] = ($4 & 0xFF00);
 														write_head += 1;
 												   }
 |		   T_VAR8 T_IDENTIFIER T_EQUAL expression {
-													identifiers[$2] = std::make_pair(Qualifier::Variable8, $4);
+													//identifiers[$2] = std::make_pair(Qualifier::Variable8, $4);
+													contains(identifiers, $2, { Qualifier::Variable8, $4 });
 													code[write_head] = $4;
 													write_head += 1;
 												 }
