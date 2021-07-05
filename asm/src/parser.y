@@ -35,6 +35,9 @@ enum class Qualifier
 //maps any string identifier to a 16bit integer with a 'direct-ness' tag
 std::map<std::string, std::pair<Qualifier, std::uint16_t>> identifiers{};
 
+//stores any parsed macros in string form
+std::vector<std::string> macros{};
+
 int yyerror(const char* s);
 %}
 
@@ -197,17 +200,37 @@ int yyerror(const char* s);
 
 program: statements { std::puts("Parsing program"); };
 
+declarations_helper: declarations_helper T_COMMA T_IDENTIFIER
+|					 T_IDENTIFIER;
+
+declarations: declarations_helper
+|			  %empty;
+
 arguments_helper: arguments_helper T_COMMA number
 |				  number;
 
 arguments: arguments_helper
 |		   %empty;
 
-directive: T_MACRO T_IDENTIFIER T_LPAREN arguments T_RPAREN T_LBRACE statements T_RBRACE {
-																							//identifiers[$2] = std::make_pair(Qualifier::Macro, macro_iden);
-																							contains(identifiers, $2, { Qualifier::Macro, $4 });
-																							++macro_iden;
-																						 }
+directive: T_MACRO T_IDENTIFIER T_LPAREN declarations T_RPAREN T_LBRACE statements T_RBRACE {
+																								//identifiers[$2] = std::make_pair(Qualifier::Macro, macro_iden);
+																								contains(identifiers, $2, { Qualifier::Macro, macro_iden });
+																								macros.emplace_back($7);
+																								++macro_iden;
+																							}
+|		   T_IDENTIFIER T_LPAREN arguments T_RPAREN {
+														auto result = std::find(identifiers.begin(), identifiers.end(), { Qualifier::Macro, $1 });
+
+														if (result not_eq identifiers.end()) [[likely]]
+														{
+															
+														}
+
+														else [[unlikely]]
+														{
+
+														}
+													}
 |		   T_ORIGIN number {
 								write_head = $2;
 						   }
