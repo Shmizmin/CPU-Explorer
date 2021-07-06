@@ -1,2 +1,5 @@
-hello:
-	lea #($100 + 1) ;asdasd
+.macro test(a, b)
+{
+}
+
+test(1, 2)

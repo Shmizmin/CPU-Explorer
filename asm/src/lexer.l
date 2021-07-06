@@ -72,22 +72,27 @@ stringliteral   ((\"|\')(([^\"]|\\\")*[^\\])?(\"|\'))
 						return T_INT;
 					}
 
-"%"  { return T_PERCENT; }
-"#"  { return T_HASH;    }
-"+"  { return T_PLUS;    }
-"-"  { return T_MINUS;   }
-"*"  { return T_TIMES;   }
-"/"  { return T_DIVIDE;  }
-"("  { return T_LPAREN;  }
-")"  { return T_RPAREN;  }
-"{"  { return T_LBRACE;  }
-"}"  { return T_RBRACE;  }
-"="  { return T_EQUAL;   }
-":"  { return T_COLON;   }
-","  { return T_COMMA;   }
-"^"  { return T_CARET;   }
-"<<" { return T_LSHIFT;  }
-">>" { return T_RSHIFT;  }
+
+"|"  { return T_PIPE;      }
+"&"  { return T_AMPERSAND; }
+"!"  { return T_TILDE;     }
+"~"  { return T_TILDE;     }
+"%"  { return T_PERCENT;   }
+"#"  { return T_HASH;      }
+"+"  { return T_PLUS;      }
+"-"  { return T_MINUS;     }
+"*"  { return T_TIMES;     }
+"/"  { return T_DIVIDE;    }
+"("  { return T_LPAREN;    }
+")"  { return T_RPAREN;    }
+"{"  { return T_LBRACE;    }
+"}"  { return T_RBRACE;    }
+"="  { return T_EQUAL;     }
+":"  { return T_COLON;     }
+","  { return T_COMMA;     }
+"^"  { return T_CARET;     }
+"<<" { return T_LSHIFT;    }
+">>" { return T_RSHIFT;    }
 
 ".ascii" { return T_ASCII; }
 ".macro" { return T_MACRO; }

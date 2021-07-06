@@ -45,6 +45,7 @@ int yyerror(const char* s);
 {
 	int ival;
 	char* sval;
+	expression
 }
 
 %token T_ENDL
@@ -53,16 +54,19 @@ int yyerror(const char* s);
 %token<ival> T_REGISTER
 %token<sval> T_IDENTIFIER
 %token<sval> T_STRING
-%token T_PLUS T_MINUS T_TIMES T_DIVIDE T_LSHIFT T_RSHIFT
+%token T_PLUS T_MINUS T_TIMES T_DIVIDE T_LSHIFT T_RSHIFT T_AMPERSAND T_CARET T_TILDE T_PIPE
 %token T_COMMA T_COLON T_LPAREN T_RPAREN T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_EQUAL
 %token T_HASH T_PERCENT
 //%token T_COMMENT
 %token T_ORIGIN T_MACRO T_VAR8 T_VAR16 T_ALIAS8 T_ALIAS16 T_ASCII
 
+%left T_PIPE
+%left T_CARET
+%left T_AMPERSAND
 %left T_PLUS T_MINUS
 %left T_TIMES T_DIVIDE
 %left T_LSHIFT T_RSHIFT
-%right T_CARET
+%left UNARY
 
 %start program
 
@@ -144,11 +148,11 @@ int yyerror(const char* s);
 		constexpr auto to_byte(void) noexcept
 		{
 			auto   byte  =  static_cast<std::uint8_t>(0);
-			       byte |= (static_cast<std::uint8_t>(rsel)  << 6);
-			       byte |= (static_cast<std::uint8_t>(mode1) << 4);
-			       byte |= (static_cast<std::uint8_t>(mode2) << 2);
-			       byte |= (static_cast<std::uint8_t>(addr1) << 1);
-			       byte |= (static_cast<std::uint8_t>(addr2) << 0);
+				   byte |= (static_cast<std::uint8_t>(rsel)  << 6);
+				   byte |= (static_cast<std::uint8_t>(mode1) << 4);
+				   byte |= (static_cast<std::uint8_t>(mode2) << 2);
+				   byte |= (static_cast<std::uint8_t>(addr1) << 1);
+				   byte |= (static_cast<std::uint8_t>(addr2) << 0);
 			return byte;
 		}
 
@@ -179,21 +183,6 @@ int yyerror(const char* s);
 		Mnemonic mnemonic;
 		std::optional<Operand> operand1, operand2;
 	};
-
-	auto contains(std::map<std::string, std::pair<Qualifier, std::uint16_t>>& map, 
-		const std::string& key, std::pair<Qualifier, std::uint16_t> val) noexcept
-	{
-		if (map.contains(key)) [[unlikely]]
-		{
-			std::cerr << "Duplicate identifier " << key << " found\n";
-			std::exit(3);
-		}
-
-		else [[likely]]
-		{
-			map.insert({ key, val });
-		}
-	}
 %}
 
 %%
@@ -219,16 +208,27 @@ directive: T_MACRO T_IDENTIFIER T_LPAREN declarations T_RPAREN T_LBRACE statemen
 																								++macro_iden;
 																							}
 |		   T_IDENTIFIER T_LPAREN arguments T_RPAREN {
-														auto result = std::find(identifiers.begin(), identifiers.end(), { Qualifier::Macro, $1 });
+														std::cout << "invoked a macro" << std::endl;
 
-														if (result not_eq identifiers.end()) [[likely]]
+														//auto result = std::find(identifiers.begin(), identifiers.end(), { Qualifier::Macro, $1 });
+														auto result = identifiers.find($1);
+														if (result->first == Qualifier::Macro)
 														{
-															
+															if (result not_eq identifiers.end()) [[likely]]
+															{
+																std::cout << result->second << std::endl;
+															}
+
+															else [[unlikely]]
+															{
+
+															}
 														}
-
-														else [[unlikely]]
+														
+														else
 														{
-
+															std::cerr << "Macro " << $1 << " was invoked but was not previously defined";
+															std::exit(4);
 														}
 													}
 |		   T_ORIGIN number {
@@ -272,23 +272,26 @@ directive: T_MACRO T_IDENTIFIER T_LPAREN declarations T_RPAREN T_LBRACE statemen
 										 };
 
 
-number: T_INT
-|		T_IDENTIFIER;
+number: T_INT        { $<ival>$ = $1; }
+|		T_IDENTIFIER { $<sval>$ = $1; };
 
-paren_expr: T_LPAREN expression T_RPAREN { std::puts("Parsing a paren-expr"); }
-|			T_LBRACK expression T_RBRACK { std::puts("Parsing a paren-expr"); };
+paren_expr: T_LPAREN expression T_RPAREN { $$ = $2; }
+|			T_LBRACK expression T_RBRACK { $$ = $2; };
 
-expression: imm
-|			mem
-|			number
-|			paren_expr
-|			expression T_PLUS expression
-|			expression T_MINUS expression
-|			expression T_TIMES expression
-|			expression T_DIVIDE expression
-|			expression T_LSHIFT expression
-|			expression T_RSHIFT expression
-|			expression T_CARET expression;
+expression:	number								{ $$ =  $1;       }
+|			paren_expr							{ $$ =  $1;       }
+|			expression T_PLUS expression		{ $$ =  $1 +  $3; }
+|			expression T_MINUS expression		{ $$ =  $1 -  $3; }
+|			expression T_TIMES expression		{ $$ =  $1 *  $3; }
+|			expression T_DIVIDE expression		{ $$ =  $1 /  $3; }
+|			expression T_LSHIFT expression		{ $$ =  $1 << $3; }
+|			expression T_RSHIFT expression		{ $$ =  $1 >> $3; }
+|			expression T_CARET expression		{ $$ =  $1 ^  $3; }
+|			expression T_AMPERSAND expression	{ $$ =  $1 &  $3; }
+|			expression T_PIPE expression		{ $$ =  $1 |  $3; }
+|			T_MINUS expression %prec UNARY		{ $$ = -$1;       }
+|			T_TILDE expression %prec UNARY		{ $$ = ~$1;       }
+
 
 label: T_IDENTIFIER T_COLON;
 
@@ -296,7 +299,7 @@ operand: imm { std::puts("Parsing an operand"); }
 |		 mem
 |		 T_REGISTER;
 
-instruction: T_IDENTIFIER { std::puts("Parsing a zero-arg instruction"); }
+instruction: T_IDENTIFIER                         { $$ = Instruction{ mnemonics[$1] } }
 |			 T_IDENTIFIER operand { std::puts("Parsing a one-arg instruction"); }
 |			 T_IDENTIFIER operand T_COMMA operand { std::puts("Parsing a two-arg instruction"); };
 
@@ -311,11 +314,11 @@ statement_with_endl: statement T_ENDL
 statements: statements statement_with_endl
 |			%empty;
 
-imm: T_HASH number { std::puts("Parsing an immediate value"); }
-|	 T_HASH paren_expr;
+imm: T_HASH number     { $<ival>$ = $2; }
+|	 T_HASH paren_expr { $<ival>$ = $2; };
 
-mem: T_PERCENT number { std::puts("Parsing a memory address"); }
-|	 T_PERCENT paren_expr;
+mem: T_PERCENT number    { $$ = $2; }
+|	 T_PERCENT paren_exp { $$ = $2; };
 
 %%
 
