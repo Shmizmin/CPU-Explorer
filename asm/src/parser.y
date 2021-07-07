@@ -23,7 +23,7 @@ std::vector<std::uint8_t> code{ 0 };
 enum class Qualifier
 {
 	Macro,
-	Address,
+	Ascii,
 
 	Value8,
 	Value16,
@@ -31,6 +31,24 @@ enum class Qualifier
 	Variable8,
 	Variable16,
 };
+
+std::uint16_t ident2int(const std::string& str, std::map<std::string, std::pair<Qualifier, std::uint16_t>> idents) noexcept
+{
+	auto res = idents.at(str);
+
+	switch (res.first)
+	{
+	case Qualifier::Macro:
+		std::cout << "Macro identifiers cannot be converted implicitly to integer";
+		std::exit(5);
+		break;
+
+	case Qualifier::Ascii:
+		std::cout << "Ascii identifiers cannot be converted implicitly to integer";
+		std::exit(5);
+		break;
+	}
+}
 
 //maps any string identifier to a 16bit integer with a 'direct-ness' tag
 std::map<std::string, std::pair<Qualifier, std::uint16_t>> identifiers{};
@@ -45,7 +63,7 @@ int yyerror(const char* s);
 {
 	int ival;
 	char* sval;
-	expression
+	Expression eval;
 }
 
 %token T_ENDL
@@ -59,6 +77,9 @@ int yyerror(const char* s);
 %token T_HASH T_PERCENT
 //%token T_COMMENT
 %token T_ORIGIN T_MACRO T_VAR8 T_VAR16 T_ALIAS8 T_ALIAS16 T_ASCII
+
+%type<eval> paren_expr
+%type<eval> expression
 
 %left T_PIPE
 %left T_CARET
@@ -183,11 +204,17 @@ int yyerror(const char* s);
 		Mnemonic mnemonic;
 		std::optional<Operand> operand1, operand2;
 	};
+
+	struct Expression
+	{
+		int ival;
+		char* sval;
+	};
 %}
 
 %%
 
-program: statements { std::puts("Parsing program"); };
+program: statements { std::puts("Parsing..."); };
 
 declarations_helper: declarations_helper T_COMMA T_IDENTIFIER
 |					 T_IDENTIFIER;
@@ -263,7 +290,7 @@ directive: T_MACRO T_IDENTIFIER T_LPAREN declarations T_RPAREN T_LBRACE statemen
 													write_head += 1;
 												 }
 |		   T_ASCII T_IDENTIFIER T_STRING {
-											identifiers[$2] = std::make_pair(Qualifier::Address, write_head);
+											identifiers[$2] = std::make_pair(Qualifier::Ascii, write_head);
 
 											auto chars = $3;
 											auto count = (std::strlen(chars) + 1);
@@ -273,10 +300,10 @@ directive: T_MACRO T_IDENTIFIER T_LPAREN declarations T_RPAREN T_LBRACE statemen
 
 
 number: T_INT        { $<ival>$ = $1; }
-|		T_IDENTIFIER { $<sval>$ = $1; };
+|		T_IDENTIFIER { $<sval>$ = $1; }
 
-paren_expr: T_LPAREN expression T_RPAREN { $$ = $2; }
-|			T_LBRACK expression T_RBRACK { $$ = $2; };
+paren_expr: T_LPAREN expression T_RPAREN { $<ival>$ = $2; }
+|			T_LBRACK expression T_RBRACK { $<ival>$ = $2; };
 
 expression:	number								{ $$ =  $1;       }
 |			paren_expr							{ $$ =  $1;       }
@@ -303,9 +330,9 @@ instruction: T_IDENTIFIER                         { $$ = Instruction{ mnemonics[
 |			 T_IDENTIFIER operand { std::puts("Parsing a one-arg instruction"); }
 |			 T_IDENTIFIER operand T_COMMA operand { std::puts("Parsing a two-arg instruction"); };
 
-statement: instruction
-|		   directive { std::puts("Parsing a directive"); }
-|		   label { std::puts("Parsing a label"); };
+statement: instruction { $$ = $1; }
+|		   directive   { $$ = $1; }
+|		   label       { $$ = $1; };
 
 statement_with_endl: statement T_ENDL
 |					 statement T_EOF
@@ -317,8 +344,8 @@ statements: statements statement_with_endl
 imm: T_HASH number     { $<ival>$ = $2; }
 |	 T_HASH paren_expr { $<ival>$ = $2; };
 
-mem: T_PERCENT number    { $$ = $2; }
-|	 T_PERCENT paren_exp { $$ = $2; };
+mem: T_PERCENT number     { $$ = $2; }
+|	 T_PERCENT paren_expr { $$ = $2; };
 
 %%
 

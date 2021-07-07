@@ -43,7 +43,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\lexer.flex.cpp" />
-    <ClCompile Include="src\parser.tab.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="docs\documentation.txt" />
