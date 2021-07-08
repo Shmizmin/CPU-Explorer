@@ -32,7 +32,7 @@ enum class Qualifier
 	Variable16,
 };
 
-std::uint16_t ident2int(const std::string& str, std::map<std::string, std::pair<Qualifier, std::uint16_t>> idents) noexcept
+std::uint16_t ident2int(const std::string& str, std::map<std::string, std::pair<Qualifier, std::uint16_t>>& idents) noexcept
 {
 	auto res = idents.at(str);
 
@@ -47,6 +47,20 @@ std::uint16_t ident2int(const std::string& str, std::map<std::string, std::pair<
 		std::cout << "Ascii identifiers cannot be converted implicitly to integer";
 		std::exit(5);
 		break;
+
+	case Qualifier::Value8:     [[fallthrough]];
+	case Qualifier::Value16:    [[fallthrough]];
+		return res.second;
+		break;
+
+	case Qualifier::Variable8:  [[fallthrough]];
+		return std::uint16_t{ code[res.second] };
+		break;
+
+	case Qualifier::Variable16: [[fallthrough]];
+		auto lower = code[static_cast<int>(res.second) + 0];
+		auto upper = code[static_cast<int>(res.second) + 1];
+		return std::uint16_t{ (lower | (upper << 8)) };
 	}
 }
 
@@ -265,29 +279,29 @@ directive: T_MACRO T_IDENTIFIER T_LPAREN declarations T_RPAREN T_LBRACE statemen
 														//identifiers[$2] = std::make_pair(Qualifier::Value8, $4);
 														contains(identifiers, $2, { Qualifier::Value8, $4 });
 														code[write_head] = $4;
-														write_head += 1;
+														++write_head;
 													}
 |		   T_ALIAS16 T_IDENTIFIER T_EQUAL expression {
 														//identifiers[$2] = std::make_pair(Qualifier::Value16, $4);
 														contains(identifiers, $2, { Qualifier::Value16, $4 });
 														code[write_head] = ($4 & 0x00FF);
-														write_head += 1;
+														++write_head;
 														code[write_head] = ($4 & 0xFF00);
-														write_head += 1;
+														++write_head;
 													}
 |		   T_VAR16 T_IDENTIFIER T_EQUAL expression {
 														//identifiers[$2] = std::make_pair(Qualifier::Variable16, $4);
-														contains(identifiers, $2, { Qualifier::Variable16, $4 });
+														contains(identifiers, $2, { Qualifier::Variable16, write_head });
 														code[write_head] = ($4 & 0x00FF);
-														write_head += 1;
+														++write_head;
 														code[write_head] = ($4 & 0xFF00);
-														write_head += 1;
+														++write_head;
 												   }
 |		   T_VAR8 T_IDENTIFIER T_EQUAL expression {
 													//identifiers[$2] = std::make_pair(Qualifier::Variable8, $4);
-													contains(identifiers, $2, { Qualifier::Variable8, $4 });
+													contains(identifiers, $2, { Qualifier::Variable8, write_head });
 													code[write_head] = $4;
-													write_head += 1;
+													++write_head;
 												 }
 |		   T_ASCII T_IDENTIFIER T_STRING {
 											identifiers[$2] = std::make_pair(Qualifier::Ascii, write_head);
