@@ -53,11 +53,11 @@ std::uint16_t ident2int(const std::string& str, std::map<std::string, std::pair<
 		return res.second;
 		break;
 
-	case Qualifier::Variable8:  [[fallthrough]];
+	case Qualifier::Variable8:
 		return std::uint16_t{ code[res.second] };
 		break;
 
-	case Qualifier::Variable16: [[fallthrough]];
+	case Qualifier::Variable16:
 		auto lower = code[static_cast<int>(res.second) + 0];
 		auto upper = code[static_cast<int>(res.second) + 1];
 		return std::uint16_t{ (lower | (upper << 8)) };
@@ -77,7 +77,6 @@ int yyerror(const char* s);
 {
 	int ival;
 	char* sval;
-	Expression eval;
 }
 
 %token T_ENDL
@@ -92,8 +91,9 @@ int yyerror(const char* s);
 //%token T_COMMENT
 %token T_ORIGIN T_MACRO T_VAR8 T_VAR16 T_ALIAS8 T_ALIAS16 T_ASCII
 
-%type<eval> paren_expr
-%type<eval> expression
+%type<ival> operand
+%type<ival> imm
+%type<ival> mem
 
 %left T_PIPE
 %left T_CARET
@@ -313,50 +313,50 @@ directive: T_MACRO T_IDENTIFIER T_LPAREN declarations T_RPAREN T_LBRACE statemen
 										 };
 
 
-number: T_INT        { $<ival>$ = $1; }
+number: T_INT        { $<nval>$ = $1; }
 |		T_IDENTIFIER { $<sval>$ = $1; }
 
-paren_expr: T_LPAREN expression T_RPAREN { $<ival>$ = $2; }
-|			T_LBRACK expression T_RBRACK { $<ival>$ = $2; };
+paren_expr: T_LPAREN expression T_RPAREN { $<nval>$ = $2; }
+|			T_LBRACK expression T_RBRACK { $<nval>$ = $2; };
 
-expression:	number								{ $$ =  $1;       }
-|			paren_expr							{ $$ =  $1;       }
-|			expression T_PLUS expression		{ $$ =  $1 +  $3; }
-|			expression T_MINUS expression		{ $$ =  $1 -  $3; }
-|			expression T_TIMES expression		{ $$ =  $1 *  $3; }
-|			expression T_DIVIDE expression		{ $$ =  $1 /  $3; }
-|			expression T_LSHIFT expression		{ $$ =  $1 << $3; }
-|			expression T_RSHIFT expression		{ $$ =  $1 >> $3; }
-|			expression T_CARET expression		{ $$ =  $1 ^  $3; }
-|			expression T_AMPERSAND expression	{ $$ =  $1 &  $3; }
-|			expression T_PIPE expression		{ $$ =  $1 |  $3; }
-|			T_MINUS expression %prec UNARY		{ $$ = -$1;       }
-|			T_TILDE expression %prec UNARY		{ $$ = ~$1;       }
+expression:	number                            { $$ =  $1;       }
+|			paren_expr                        { $$ =  $1;       }
+|			expression T_PLUS expression      { $$ =  $1 +  $3; }
+|			expression T_MINUS expression     { $$ =  $1 -  $3; }
+|			expression T_TIMES expression     { $$ =  $1 *  $3; }
+|			expression T_DIVIDE expression    { $$ =  $1 /  $3; }
+|			expression T_LSHIFT expression    { $$ =  $1 << $3; }
+|			expression T_RSHIFT expression    { $$ =  $1 >> $3; }
+|			expression T_CARET expression     { $$ =  $1 ^  $3; }
+|			expression T_AMPERSAND expression { $$ =  $1 &  $3; }
+|			expression T_PIPE expression      { $$ =  $1 |  $3; }
+|			T_MINUS expression %prec UNARY    { $$ = -$1;       }
+|			T_TILDE expression %prec UNARY    { $$ = ~$1;       }
 
 
 label: T_IDENTIFIER T_COLON;
 
-operand: imm { std::puts("Parsing an operand"); }
-|		 mem
-|		 T_REGISTER;
+operand: imm        { $$ = $1; }
+|		 mem        { $$ = $1; }
+|		 T_REGISTER { $$ = $1; }
 
-instruction: T_IDENTIFIER                         { $$ = Instruction{ mnemonics[$1] } }
-|			 T_IDENTIFIER operand { std::puts("Parsing a one-arg instruction"); }
-|			 T_IDENTIFIER operand T_COMMA operand { std::puts("Parsing a two-arg instruction"); };
+instruction: T_IDENTIFIER
+|			 T_IDENTIFIER operand
+|			 T_IDENTIFIER operand T_COMMA operand;
 
-statement: instruction { $$ = $1; }
-|		   directive   { $$ = $1; }
-|		   label       { $$ = $1; };
+statement: instruction
+|		   directive
+|		   label;
 
 statement_with_endl: statement T_ENDL
 |					 statement T_EOF
 |					 T_ENDL
 
-statements: statements statement_with_endl
+statements: statements statement_with_endl { $$ = $1; }
 |			%empty;
 
-imm: T_HASH number     { $<ival>$ = $2; }
-|	 T_HASH paren_expr { $<ival>$ = $2; };
+imm: T_HASH number     { $$ = $2; }
+|	 T_HASH paren_expr { $$ = $2; };
 
 mem: T_PERCENT number     { $$ = $2; }
 |	 T_PERCENT paren_expr { $$ = $2; };
