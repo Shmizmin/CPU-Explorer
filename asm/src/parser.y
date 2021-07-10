@@ -3,11 +3,12 @@
 #include <cstdint>
 #include <cstdlib>
 
+#include <map>
+#include <regex>
 #include <vector>
 #include <utility>
 #include <optional>
 #include <iostream>
-#include <map>
 
 extern int yylex();
 extern int yyparse();
@@ -31,6 +32,12 @@ enum class Qualifier
 	Variable8,
 	Variable16,
 };
+
+std::vector<std::uint8_t> assemble(const Instruction& insn) noexcept
+{
+
+}
+
 
 std::uint16_t ident2int(const std::string& str, std::map<std::string, std::pair<Qualifier, std::uint16_t>>& idents) noexcept
 {
@@ -67,8 +74,8 @@ std::uint16_t ident2int(const std::string& str, std::map<std::string, std::pair<
 //maps any string identifier to a 16bit integer with a 'direct-ness' tag
 std::map<std::string, std::pair<Qualifier, std::uint16_t>> identifiers{};
 
-//stores any parsed macros in string form
-std::vector<std::string> macros{};
+//stores all of the parsed macros
+std::vector<Instruction> macros{};
 
 int yyerror(const char* s);
 %}
@@ -77,6 +84,7 @@ int yyerror(const char* s);
 {
 	int ival;
 	char* sval;
+	std::vector<std::uint8_t> cval;
 }
 
 %token T_ENDL
@@ -91,9 +99,13 @@ int yyerror(const char* s);
 //%token T_COMMENT
 %token T_ORIGIN T_MACRO T_VAR8 T_VAR16 T_ALIAS8 T_ALIAS16 T_ASCII
 
-%type<ival> operand
 %type<ival> imm
 %type<ival> mem
+%type<ival> number
+%type<ival> operand
+%type<ival> expression
+%type<ival> paren_expr
+%type<cval> statement_with_endl
 
 %left T_PIPE
 %left T_CARET
@@ -242,10 +254,10 @@ arguments_helper: arguments_helper T_COMMA number
 arguments: arguments_helper
 |		   %empty;
 
-directive: T_MACRO T_IDENTIFIER T_LPAREN declarations T_RPAREN T_LBRACE statements T_RBRACE {
+directive: T_MACRO T_IDENTIFIER T_LPAREN declarations T_RPAREN T_LBRACE statements_recorded T_RBRACE {
 																								//identifiers[$2] = std::make_pair(Qualifier::Macro, macro_iden);
-																								contains(identifiers, $2, { Qualifier::Macro, macro_iden });
-																								macros.emplace_back($7);
+																								identifiers[$2] = { Qualifier::Macro, macro_iden };
+																								macros.emplace_back()
 																								++macro_iden;
 																							}
 |		   T_IDENTIFIER T_LPAREN arguments T_RPAREN {
@@ -313,11 +325,11 @@ directive: T_MACRO T_IDENTIFIER T_LPAREN declarations T_RPAREN T_LBRACE statemen
 										 };
 
 
-number: T_INT        { $<nval>$ = $1; }
-|		T_IDENTIFIER { $<sval>$ = $1; }
+number: T_INT        { $$ = $1;            }
+|		T_IDENTIFIER { $$ = ident2int($1); }
 
-paren_expr: T_LPAREN expression T_RPAREN { $<nval>$ = $2; }
-|			T_LBRACK expression T_RBRACK { $<nval>$ = $2; };
+paren_expr: T_LPAREN expression T_RPAREN { $$ = $2; }
+|			T_LBRACK expression T_RBRACK { $$ = $2; };
 
 expression:	number                            { $$ =  $1;       }
 |			paren_expr                        { $$ =  $1;       }
@@ -333,7 +345,6 @@ expression:	number                            { $$ =  $1;       }
 |			T_MINUS expression %prec UNARY    { $$ = -$1;       }
 |			T_TILDE expression %prec UNARY    { $$ = ~$1;       }
 
-
 label: T_IDENTIFIER T_COLON;
 
 operand: imm        { $$ = $1; }
@@ -348,12 +359,15 @@ statement: instruction
 |		   directive
 |		   label;
 
-statement_with_endl: statement T_ENDL
-|					 statement T_EOF
-|					 T_ENDL
+statement_with_endl: statement T_ENDL { $$ = assemble($1); }
+|					 statement T_EOF  { $$ = assemble($1); }
+|					 T_ENDL           { $$ = {};           }
 
-statements: statements statement_with_endl { $$ = $1; }
+statements: statements statement_with_endl { code[write_head] = $2; ++write_head; }
 |			%empty;
+
+statements_recorded: statements_recorded statement_with_endl { macros[macro_iden].emplace_back($2); }
+|					 %empty;
 
 imm: T_HASH number     { $$ = $2; }
 |	 T_HASH paren_expr { $$ = $2; };
@@ -369,7 +383,7 @@ int yyerror(const char *s)
 	return 0;
 }
 
-int __cdecl main(int argc, const char** argv) noexcept
+int __cdecl main(const int argc, const char* const* const argv) noexcept
 {
 	//init the in file stream
 	yyin = nullptr;
@@ -381,14 +395,29 @@ int __cdecl main(int argc, const char** argv) noexcept
 	switch (argc)
 	{
 	case 2:
-		//open the file specified
-		handle = std::fopen(argv[1], "r");
-		yyin = handle;
-		break;
+		//fetch the filepath off the command line
+		std::string fp = argv[1];
 
-	case 1:
-		//pipe the console stream in
-		yyin = stdin;
+		//open the file specified
+		std::ifstream file(fp);
+
+		//local cache of each macro that is found
+		std::vector<std::string> macro_list{};
+
+		std::regex
+
+		handle = std::fopen(argv[1], "r");
+		if (!handle) [[unlikely]]
+		{
+			std::cerr << "Failed to open the speciifed file";
+			yyin = handle;
+			return 2;
+
+		//lex and parse the file contents
+		do
+		{
+			yyparse();
+		} while(!std::feof(yyin));
 		break;
 
 	default:
@@ -404,17 +433,9 @@ int __cdecl main(int argc, const char** argv) noexcept
 		return 2;
 	}
 
-	//lex and parse the file contents
-	do
-	{
-		yyparse();
-	} while(!std::feof(yyin));
-
 	//verify that the file handle is cleaned up properly
 	if (handle != nullptr)
-	{
 		std::fclose(handle);
-	}
 
 	return 0;
 }

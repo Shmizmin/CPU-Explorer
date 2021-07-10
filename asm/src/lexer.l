@@ -35,7 +35,7 @@ stringliteral   ((\"|\')(([^\"]|\\\")*[^\\])?(\"|\'))
 {whitespace}		{ /*std::cout << "Flex found whitespace\n";*/ }
 
 {comment}			{ /*std::cout << "Flex found a comment\n";*/ }
-{endl}				{ if (line_number == 1) std::puts("Lexing..."); line_number++; return T_ENDL; }
+{endl}				{ if (line_number == 1) [[unlikely]] std::puts("Lexing..."); line_number++; return T_ENDL; }
 
 {decimal}			{
 						/*std::cout << "Flex found a decimal int: " << yytext;*/

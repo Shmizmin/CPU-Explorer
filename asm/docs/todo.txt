@@ -1,0 +1,10 @@
+parsing macros:
+	find macro initialization sequence,
+		then parse each statement and store all tokens (in statement form) via pointer (?),
+		then when macro is invoked, assemble each of those statements in place
+
+todo this:
+	must delegate statement processing and assembling off to another function entirely
+		parameters: statement pointer, code segment vector reference, write head reference
+		return res: void or success flag
+		side effects: assembles the statement into the code at the write head's location
