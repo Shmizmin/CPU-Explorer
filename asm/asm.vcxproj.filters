@@ -32,6 +32,9 @@
     <ClCompile Include="src\lexer.flex.cpp">
       <Filter>Generated Files\cpp</Filter>
     </ClCompile>
+    <ClCompile Include="src\parser.tab.cpp">
+      <Filter>Generated Files\cpp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Flex Include="src\lexer.l">

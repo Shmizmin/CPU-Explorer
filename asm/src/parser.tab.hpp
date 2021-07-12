@@ -65,23 +65,29 @@ extern int yydebug;
     T_DIVIDE = 266,                /* T_DIVIDE  */
     T_LSHIFT = 267,                /* T_LSHIFT  */
     T_RSHIFT = 268,                /* T_RSHIFT  */
-    T_COMMA = 269,                 /* T_COMMA  */
-    T_COLON = 270,                 /* T_COLON  */
-    T_LPAREN = 271,                /* T_LPAREN  */
-    T_RPAREN = 272,                /* T_RPAREN  */
-    T_LBRACE = 273,                /* T_LBRACE  */
-    T_RBRACE = 274,                /* T_RBRACE  */
-    T_LBRACK = 275,                /* T_LBRACK  */
-    T_RBRACK = 276,                /* T_RBRACK  */
-    T_EQUAL = 277,                 /* T_EQUAL  */
-    T_HASH = 278,                  /* T_HASH  */
-    T_PERCENT = 279,               /* T_PERCENT  */
-    T_ALIAS = 280,                 /* T_ALIAS  */
-    T_ORIGIN = 281,                /* T_ORIGIN  */
-    T_MACRO = 282,                 /* T_MACRO  */
-    T_VAR = 283,                   /* T_VAR  */
-    T_ASCII = 284,                 /* T_ASCII  */
-    T_CARET = 285                  /* T_CARET  */
+    T_AMPERSAND = 269,             /* T_AMPERSAND  */
+    T_CARET = 270,                 /* T_CARET  */
+    T_TILDE = 271,                 /* T_TILDE  */
+    T_PIPE = 272,                  /* T_PIPE  */
+    T_COMMA = 273,                 /* T_COMMA  */
+    T_COLON = 274,                 /* T_COLON  */
+    T_LPAREN = 275,                /* T_LPAREN  */
+    T_RPAREN = 276,                /* T_RPAREN  */
+    T_LBRACE = 277,                /* T_LBRACE  */
+    T_RBRACE = 278,                /* T_RBRACE  */
+    T_LBRACK = 279,                /* T_LBRACK  */
+    T_RBRACK = 280,                /* T_RBRACK  */
+    T_EQUAL = 281,                 /* T_EQUAL  */
+    T_HASH = 282,                  /* T_HASH  */
+    T_PERCENT = 283,               /* T_PERCENT  */
+    T_ORIGIN = 284,                /* T_ORIGIN  */
+    T_MACRO = 285,                 /* T_MACRO  */
+    T_VAR8 = 286,                  /* T_VAR8  */
+    T_VAR16 = 287,                 /* T_VAR16  */
+    T_ALIAS8 = 288,                /* T_ALIAS8  */
+    T_ALIAS16 = 289,               /* T_ALIAS16  */
+    T_ASCII = 290,                 /* T_ASCII  */
+    UNARY = 291                    /* UNARY  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -90,12 +96,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 25 "parser.y"
+#line 88 "parser.y"
 
 	int ival;
 	char* sval;
 
-#line 99 "parser.tab.hpp"
+#line 105 "parser.tab.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;

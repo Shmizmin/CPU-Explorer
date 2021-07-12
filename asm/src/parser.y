@@ -5,10 +5,14 @@
 
 #include <map>
 #include <regex>
+#include <tuple>
+#include <limits>
 #include <vector>
 #include <utility>
+#include <fstream>
 #include <optional>
 #include <iostream>
+#include <filesystem>
 
 extern int yylex();
 extern int yyparse();
@@ -84,7 +88,6 @@ int yyerror(const char* s);
 {
 	int ival;
 	char* sval;
-	std::vector<std::uint8_t> cval;
 }
 
 %token T_ENDL
@@ -96,7 +99,6 @@ int yyerror(const char* s);
 %token T_PLUS T_MINUS T_TIMES T_DIVIDE T_LSHIFT T_RSHIFT T_AMPERSAND T_CARET T_TILDE T_PIPE
 %token T_COMMA T_COLON T_LPAREN T_RPAREN T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_EQUAL
 %token T_HASH T_PERCENT
-//%token T_COMMENT
 %token T_ORIGIN T_MACRO T_VAR8 T_VAR16 T_ALIAS8 T_ALIAS16 T_ASCII
 
 %type<ival> imm
@@ -105,7 +107,6 @@ int yyerror(const char* s);
 %type<ival> operand
 %type<ival> expression
 %type<ival> paren_expr
-%type<cval> statement_with_endl
 
 %left T_PIPE
 %left T_CARET
@@ -342,8 +343,8 @@ expression:	number                            { $$ =  $1;       }
 |			expression T_CARET expression     { $$ =  $1 ^  $3; }
 |			expression T_AMPERSAND expression { $$ =  $1 &  $3; }
 |			expression T_PIPE expression      { $$ =  $1 |  $3; }
-|			T_MINUS expression %prec UNARY    { $$ = -$1;       }
-|			T_TILDE expression %prec UNARY    { $$ = ~$1;       }
+|			T_MINUS expression %prec UNARY    { $$ = -$2;       }
+|			T_TILDE expression %prec UNARY    { $$ = ~$2;       }
 
 label: T_IDENTIFIER T_COLON;
 
@@ -359,14 +360,14 @@ statement: instruction
 |		   directive
 |		   label;
 
-statement_with_endl: statement T_ENDL { $$ = assemble($1); }
-|					 statement T_EOF  { $$ = assemble($1); }
-|					 T_ENDL           { $$ = {};           }
+statement_with_endl: statement T_ENDL
+|					 statement T_EOF
+|					 T_ENDL;
 
-statements: statements statement_with_endl { code[write_head] = $2; ++write_head; }
+statements: statements statement_with_endl
 |			%empty;
 
-statements_recorded: statements_recorded statement_with_endl { macros[macro_iden].emplace_back($2); }
+statements_recorded: statements_recorded statement_with_endl
 |					 %empty;
 
 imm: T_HASH number     { $$ = $2; }
@@ -385,13 +386,17 @@ int yyerror(const char *s)
 
 int __cdecl main(const int argc, const char* const* const argv) noexcept
 {
-	//init the in file stream
-	yyin = nullptr;
+	//statement nterm
+	//{ $$ = assemble($1); }
+	//{ $$ = assemble($1); }
+	//{ $$ = {};           }
 
-	//file handle to our stream
-	std::FILE* handle = nullptr;
+	//statementes nterm
+	//{ code[write_head] = $2; ++write_head; }
 
-	//determine whether a filepath was supplied on the command line
+	//statements_recorded nterm
+	//{ macros[macro_iden].emplace_back($2); }
+
 	switch (argc)
 	{
 	case 2:
@@ -401,17 +406,79 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 		//open the file specified
 		std::ifstream file(fp);
 
-		//local cache of each macro that is found
-		std::vector<std::string> macro_list{};
-
-		std::regex
-
-		handle = std::fopen(argv[1], "r");
-		if (!handle) [[unlikely]]
+		//assert that the file supplied is readable
+		if (!file.good())
 		{
-			std::cerr << "Failed to open the speciifed file";
-			yyin = handle;
+			std::cerr << "Failed to open the specified file";
 			return 2;
+		}
+
+		//obtain the overall file size
+		const auto length = std::filesystem::file_size(fp);
+
+		//allocate and initialize a properly sized buffer
+		std::string buffer(length, '\0');
+
+		//read the entire file into the buffer
+		file.read(buffer.data(), length);
+		
+		//ties together each basic component of a macro
+		struct Macro { std::string identifier, arguments, statements; };
+
+		//local cache of macros that are found
+		std::vector<Macro> macro_list{};
+
+		//detects a valid macro declaration
+		std::regex rx_macro_decl(R"(\.macro ([a-zA-Z_]\w*)\(([^\)]*)\)\s?\{([^\}]*)\})");
+
+		//detects a valid macro invokation
+		std::regex rx_macro_invk(R"(([a-zA-Z_]\w*)\([^\)]*\))");
+
+		//will store each of the string regex matches that are made during the search
+		std::smatch matches{};
+
+		//discover all macro declarations present in the source file
+		while (std::regex_search(buffer, matches, rx_macro_decl))
+		{
+			macro_list.emplace_back({ matches[1], matches[2], matches[3] })
+		}
+
+		//then erase the macro source code from the file
+		std::regex_replace(buffer, rx_macro_decl, "");
+
+		//discover all macro invokations present in the source file
+		while (std::regex_search(buffer, matches, rx_macro_invk))
+		{
+			//get the raw string arguments list
+			auto extracted = std::move(matches[2]);
+
+			//remove any whitespace contained in the arguments list
+			std::erase(std::remove_if(extracted.begin(), extracted.end(),
+				[&](char c) { return std::isspace(static_cast<unsigned char>(c)); }), extracted.end());
+
+			//tokenize the string using the commas as delimiters
+			auto args = std::move([&](const std::string& input, const std::string& delim) noexcept
+			{
+				std::string token;
+				std::vector<string> res;
+				
+				while ((pos_end = input.find(delimiter, pos_start)) != std::string::npos)
+				{
+					token = input.substr(pos_start, pos_end - pos_start);
+					pos_start = pos_end + delim_len;
+					res.emplace_back(token);
+				}
+				
+				res.emplace_back(input.substr(pos_start));
+				return res;
+			}(std::move(extracted), ",");
+
+
+			for (auto&& arg : args)
+			{
+				std::regex_replace()
+			}
+		}
 
 		//lex and parse the file contents
 		do
@@ -426,16 +493,6 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 		return 1;
 	}
 
-	//verify that the file opening succedded
-	if (yyin == nullptr)
-	{
-		std::cerr << "Failed to open the specified file";
-		return 2;
-	}
-
-	//verify that the file handle is cleaned up properly
-	if (handle != nullptr)
-		std::fclose(handle);
-
+	//indicate program success
 	return 0;
 }
