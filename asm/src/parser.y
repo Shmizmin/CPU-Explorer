@@ -400,6 +400,24 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 	switch (argc)
 	{
 	case 2:
+		//local string split function to use
+		auto split = [&](const std::string& input, const std::string& delim) noexcept
+		{
+			std::size_t pos_start = 0, pos_end, delim_len = delim.length();
+			std::string token;
+			std::vector<std::string> res;
+
+			while ((pos_end = input.find(delim, pos_start)) != std::string::npos)
+			{
+				token = input.substr(pos_start, pos_end - pos_start);
+				pos_start = pos_end + delim_len;
+				res.emplace_back(token);
+			}
+
+			res.emplace_back(input.substr(pos_start));
+			return res;
+		};
+
 		//fetch the filepath off the command line
 		std::string fp = argv[1];
 
@@ -423,7 +441,7 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 		file.read(buffer.data(), length);
 		
 		//ties together each basic component of a macro
-		struct Macro { std::string identifier, arguments, statements; };
+		struct Macro { std::string identifier, statements; std::vector<std::string> arguments; };
 
 		//local cache of macros that are found
 		std::vector<Macro> macro_list{};
@@ -440,7 +458,12 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 		//discover all macro declarations present in the source file
 		while (std::regex_search(buffer, matches, rx_macro_decl))
 		{
-			macro_list.emplace_back({ matches[1], matches[2], matches[3] })
+			//remove any whitespace contained in the arguments list
+			std::erase(std::remove_if(matches[2].begin(), matches[2].end(),
+				[&](char c) { return std::isspace(static_cast<unsigned char>(c)); }), matches[2].end());
+
+			//tokenize the string using the commas as delimiters
+			macro_list.emplace_back({ matches[1], matches[3], split(matches[2], ",")});
 		}
 
 		//then erase the macro source code from the file
@@ -457,26 +480,12 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 				[&](char c) { return std::isspace(static_cast<unsigned char>(c)); }), extracted.end());
 
 			//tokenize the string using the commas as delimiters
-			auto args = std::move([&](const std::string& input, const std::string& delim) noexcept
-			{
-				std::string token;
-				std::vector<string> res;
-				
-				while ((pos_end = input.find(delimiter, pos_start)) != std::string::npos)
-				{
-					token = input.substr(pos_start, pos_end - pos_start);
-					pos_start = pos_end + delim_len;
-					res.emplace_back(token);
-				}
-				
-				res.emplace_back(input.substr(pos_start));
-				return res;
-			}(std::move(extracted), ",");
+			auto args = std::move(split(std::move(extracted), ","));
 
-
+			//iterate over each of the arguments
 			for (auto&& arg : args)
 			{
-				std::regex_replace()
+				std::regex_replace(buffer, std::regex(), )
 			}
 		}
 
