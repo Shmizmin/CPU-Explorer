@@ -82,6 +82,7 @@
 #include <fstream>
 #include <optional>
 #include <iostream>
+#include <stdexcept>
 #include <filesystem>
 
 extern int yylex();
@@ -92,6 +93,8 @@ extern int line_number;
 
 std::uint16_t macro_iden{ 1 },
 			  write_head{ 0 };
+
+struct Instruction;
 
 std::vector<std::uint8_t> code{ 0 };
 
@@ -107,7 +110,7 @@ enum class Qualifier
 	Variable16,
 };
 
-std::vector<std::uint8_t> assemble(const Instruction& insn) noexcept
+std::vector<std::uint8_t> assemble([[maybe_unused]] const Instruction& insn) noexcept
 {
 
 }
@@ -129,8 +132,8 @@ std::uint16_t ident2int(const std::string& str, std::map<std::string, std::pair<
 		std::exit(5);
 		break;
 
-	case Qualifier::Value8:     [[fallthrough]];
-	case Qualifier::Value16:    [[fallthrough]];
+	case Qualifier::Value8:  [[fallthrough]];
+	case Qualifier::Value16:
 		return res.second;
 		break;
 
@@ -141,7 +144,7 @@ std::uint16_t ident2int(const std::string& str, std::map<std::string, std::pair<
 	case Qualifier::Variable16:
 		auto lower = code[static_cast<int>(res.second) + 0];
 		auto upper = code[static_cast<int>(res.second) + 1];
-		return std::uint16_t{ (lower | (upper << 8)) };
+		return static_cast<std::uint16_t>(static_cast<std::uint16_t>(lower) | (static_cast<std::uint16_t>(upper) << 8));
 	}
 }
 
@@ -153,7 +156,7 @@ std::vector<Instruction> macros{};
 
 int yyerror(const char* s);
 
-#line 157 "parser.tab.cpp"
+#line 160 "parser.tab.cpp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -211,38 +214,32 @@ enum yysymbol_kind_t
   YYSYMBOL_T_HASH = 27,                    /* T_HASH  */
   YYSYMBOL_T_PERCENT = 28,                 /* T_PERCENT  */
   YYSYMBOL_T_ORIGIN = 29,                  /* T_ORIGIN  */
-  YYSYMBOL_T_MACRO = 30,                   /* T_MACRO  */
-  YYSYMBOL_T_VAR8 = 31,                    /* T_VAR8  */
-  YYSYMBOL_T_VAR16 = 32,                   /* T_VAR16  */
-  YYSYMBOL_T_ALIAS8 = 33,                  /* T_ALIAS8  */
-  YYSYMBOL_T_ALIAS16 = 34,                 /* T_ALIAS16  */
-  YYSYMBOL_T_ASCII = 35,                   /* T_ASCII  */
-  YYSYMBOL_UNARY = 36,                     /* UNARY  */
-  YYSYMBOL_YYACCEPT = 37,                  /* $accept  */
-  YYSYMBOL_program = 38,                   /* program  */
-  YYSYMBOL_declarations_helper = 39,       /* declarations_helper  */
-  YYSYMBOL_declarations = 40,              /* declarations  */
-  YYSYMBOL_arguments_helper = 41,          /* arguments_helper  */
-  YYSYMBOL_arguments = 42,                 /* arguments  */
-  YYSYMBOL_directive = 43,                 /* directive  */
-  YYSYMBOL_number = 44,                    /* number  */
-  YYSYMBOL_paren_expr = 45,                /* paren_expr  */
-  YYSYMBOL_expression = 46,                /* expression  */
-  YYSYMBOL_label = 47,                     /* label  */
-  YYSYMBOL_operand = 48,                   /* operand  */
-  YYSYMBOL_instruction = 49,               /* instruction  */
-  YYSYMBOL_statement = 50,                 /* statement  */
-  YYSYMBOL_statement_with_endl = 51,       /* statement_with_endl  */
-  YYSYMBOL_statements = 52,                /* statements  */
-  YYSYMBOL_statements_recorded = 53,       /* statements_recorded  */
-  YYSYMBOL_imm = 54,                       /* imm  */
-  YYSYMBOL_mem = 55                        /* mem  */
+  YYSYMBOL_T_VAR8 = 30,                    /* T_VAR8  */
+  YYSYMBOL_T_VAR16 = 31,                   /* T_VAR16  */
+  YYSYMBOL_T_ALIAS8 = 32,                  /* T_ALIAS8  */
+  YYSYMBOL_T_ALIAS16 = 33,                 /* T_ALIAS16  */
+  YYSYMBOL_T_ASCII = 34,                   /* T_ASCII  */
+  YYSYMBOL_UNARY = 35,                     /* UNARY  */
+  YYSYMBOL_YYACCEPT = 36,                  /* $accept  */
+  YYSYMBOL_program = 37,                   /* program  */
+  YYSYMBOL_directive = 38,                 /* directive  */
+  YYSYMBOL_number = 39,                    /* number  */
+  YYSYMBOL_paren_expr = 40,                /* paren_expr  */
+  YYSYMBOL_expression = 41,                /* expression  */
+  YYSYMBOL_label = 42,                     /* label  */
+  YYSYMBOL_operand = 43,                   /* operand  */
+  YYSYMBOL_instruction = 44,               /* instruction  */
+  YYSYMBOL_statement = 45,                 /* statement  */
+  YYSYMBOL_statement_with_endl = 46,       /* statement_with_endl  */
+  YYSYMBOL_statements = 47,                /* statements  */
+  YYSYMBOL_imm = 48,                       /* imm  */
+  YYSYMBOL_mem = 49                        /* mem  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
 
 /* Second part of user prologue.  */
-#line 122 "parser.y"
+#line 124 "parser.y"
 
 	enum class Mode : unsigned
 	{
@@ -357,13 +354,7 @@ typedef enum yysymbol_kind_t yysymbol_kind_t;
 		std::optional<Operand> operand1, operand2;
 	};
 
-	struct Expression
-	{
-		int ival;
-		char* sval;
-	};
-
-#line 367 "parser.tab.cpp"
+#line 358 "parser.tab.cpp"
 
 
 #ifdef short
@@ -669,19 +660,19 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  3
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   142
+#define YYLAST   121
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  37
+#define YYNTOKENS  36
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  19
+#define YYNNTS  14
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  56
+#define YYNRULES  44
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  99
+#define YYNSTATES  79
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   291
+#define YYMAXUTOK   290
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -724,19 +715,18 @@ static const yytype_int8 yytranslate[] =
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
-      35,    36
+      35
 };
 
 #if YYDEBUG
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   245,   245,   247,   248,   250,   251,   253,   254,   256,
-     257,   259,   265,   289,   292,   298,   306,   314,   320,   330,
-     331,   333,   334,   336,   337,   338,   339,   340,   341,   342,
-     343,   344,   345,   346,   347,   348,   350,   352,   353,   354,
-     356,   357,   358,   360,   361,   362,   364,   365,   366,   368,
-     369,   371,   372,   374,   375,   377,   378
+       0,   241,   241,   243,   246,   252,   260,   268,   274,   284,
+     285,   287,   288,   290,   291,   292,   293,   294,   295,   296,
+     297,   298,   299,   300,   301,   302,   304,   306,   307,   308,
+     310,   311,   312,   314,   315,   316,   318,   319,   320,   322,
+     323,   325,   326,   328,   329
 };
 #endif
 
@@ -757,11 +747,10 @@ static const char *const yytname[] =
   "T_LSHIFT", "T_RSHIFT", "T_AMPERSAND", "T_CARET", "T_TILDE", "T_PIPE",
   "T_COMMA", "T_COLON", "T_LPAREN", "T_RPAREN", "T_LBRACE", "T_RBRACE",
   "T_LBRACK", "T_RBRACK", "T_EQUAL", "T_HASH", "T_PERCENT", "T_ORIGIN",
-  "T_MACRO", "T_VAR8", "T_VAR16", "T_ALIAS8", "T_ALIAS16", "T_ASCII",
-  "UNARY", "$accept", "program", "declarations_helper", "declarations",
-  "arguments_helper", "arguments", "directive", "number", "paren_expr",
-  "expression", "label", "operand", "instruction", "statement",
-  "statement_with_endl", "statements", "statements_recorded", "imm", "mem", YY_NULLPTR
+  "T_VAR8", "T_VAR16", "T_ALIAS8", "T_ALIAS16", "T_ASCII", "UNARY",
+  "$accept", "program", "directive", "number", "paren_expr", "expression",
+  "label", "operand", "instruction", "statement", "statement_with_endl",
+  "statements", "imm", "mem", YY_NULLPTR
 };
 
 static const char *
@@ -779,11 +768,11 @@ static const yytype_int16 yytoknum[] =
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
-     285,   286,   287,   288,   289,   290,   291
+     285,   286,   287,   288,   289,   290
 };
 #endif
 
-#define YYPACT_NINF (-39)
+#define YYPACT_NINF (-36)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -795,18 +784,16 @@ static const yytype_int16 yytoknum[] =
 
   /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
      STATE-NUM.  */
-static const yytype_int16 yypact[] =
+static const yytype_int8 yypact[] =
 {
-     -39,     2,    19,   -39,   -39,    38,    20,     3,    57,    62,
-      63,    66,    68,   -39,   -39,   -39,    67,   -39,   -39,   -39,
-      20,    56,    56,    26,   -39,   -39,   -39,   -39,   -39,    53,
-      51,    52,    70,    81,   102,   -39,   -39,    92,    90,   -39,
-      55,    55,   -39,   -39,   -39,   -39,    18,   131,    55,    55,
-      55,    55,   -39,    20,   -39,    55,    55,   -39,   -39,    91,
-      73,   -39,   -39,   103,   117,   105,   105,   105,   105,   -39,
-     -39,   -39,    55,    55,    55,    55,    55,    55,    55,    55,
-      55,   -39,   -39,   133,   118,    -5,    -5,     7,     7,   -39,
-     -39,   123,    83,   115,   -39,   -39,    -2,   -39,   -39
+     -36,    14,     7,   -36,   -36,    15,    29,    43,    53,    54,
+      55,    57,   -36,   -36,   -36,    47,   -36,   -36,   -36,    -3,
+      -3,     5,   -36,   -36,   -36,   -36,   -36,    38,    39,    56,
+      67,    88,   -36,   -36,    42,    42,   -36,   -36,   -36,   -36,
+      17,    42,    42,    42,    42,   -36,    42,    42,   -36,   -36,
+      77,    59,   -36,    91,    91,    91,    91,   -36,   -36,    42,
+      42,    42,    42,    42,    42,    42,    42,    42,   -36,   -36,
+     107,   107,    -8,    -8,   -36,   -36,    44,    69,   101
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -814,30 +801,28 @@ static const yytype_int16 yypact[] =
      means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-      50,     0,     2,     1,    48,    40,     0,     0,     0,     0,
-       0,     0,     0,    44,    45,    43,     0,    49,    39,    36,
-      10,     0,     0,    41,    37,    38,    19,    20,    13,     0,
-       0,     0,     0,     0,     0,    47,    46,     9,     0,     8,
-       0,     0,    53,    54,    55,    56,     0,     6,     0,     0,
-       0,     0,    18,     0,    12,     0,     0,    23,    24,     0,
-       0,    42,     4,     5,     0,    17,    16,    14,    15,     7,
-      34,    35,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,    21,    22,     0,     0,    25,    26,    27,    28,    29,
-      30,    32,    31,    33,     3,    52,     0,    11,    51
+      40,     0,     2,     1,    38,    30,     0,     0,     0,     0,
+       0,     0,    34,    35,    33,     0,    39,    29,    26,     0,
+       0,    31,    27,    28,     9,    10,     3,     0,     0,     0,
+       0,     0,    37,    36,     0,     0,    41,    42,    43,    44,
+       0,     0,     0,     0,     0,     8,     0,     0,    13,    14,
+       0,     0,    32,     7,     6,     4,     5,    24,    25,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,    11,    12,
+      15,    16,    17,    18,    19,    20,    22,    21,    23
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -39,   -39,   -39,   -39,   -39,   -39,   -39,    -6,    34,   -38,
-     -39,    95,   -39,   -39,    46,   -39,   -39,   -39,   -39
+     -36,   -36,   -36,    -4,    -1,   -35,   -36,    81,   -36,   -36,
+     -36,   -36,   -36,   -36
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     1,    63,    64,    37,    38,    13,    57,    58,    59,
-      14,    23,    15,    16,    17,     2,    96,    24,    25
+      -1,     1,    12,    48,    49,    50,    13,    21,    14,    15,
+      16,     2,    22,    23
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -845,78 +830,70 @@ static const yytype_int8 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      28,     4,     3,    60,     5,    74,    75,    76,    77,    29,
-      65,    66,    67,    68,    39,    42,    44,    70,    71,    76,
-      77,    97,     4,    18,    26,     5,    27,     6,     7,     8,
-       9,    10,    11,    12,    85,    86,    87,    88,    89,    90,
-      91,    92,    93,    18,    46,    21,    22,    69,     6,     7,
-       8,     9,    10,    11,    12,    43,    45,    19,    20,    26,
-      26,    27,    27,    30,    55,    21,    22,    35,    31,    32,
-      36,    56,    33,    47,    34,    40,    40,    48,    49,    41,
-      41,    72,    73,    74,    75,    76,    77,    78,    79,    50,
-      80,    72,    73,    74,    75,    76,    77,    78,    82,    72,
-      73,    74,    75,    76,    77,    78,    79,    51,    80,    52,
-      53,    54,    81,    72,    73,    74,    75,    76,    77,    78,
-      79,    83,    80,    72,    73,    74,    75,    76,    77,    78,
-      79,    72,    73,    74,    75,    76,    77,    62,    84,    94,
-      95,    61,    98
+      51,    24,    26,    25,    63,    64,    53,    54,    55,    56,
+       4,    57,    58,     5,     3,    36,    38,    34,    37,    39,
+      17,    35,    17,    40,    70,    71,    72,    73,    74,    75,
+      76,    77,    78,    24,    18,    25,     6,     7,     8,     9,
+      10,    11,    19,    20,    19,    20,    24,    32,    25,    27,
+      33,    46,    59,    60,    61,    62,    63,    64,    47,    28,
+      29,    30,    34,    31,    41,    42,    35,    59,    60,    61,
+      62,    63,    64,    65,    66,    43,    67,    59,    60,    61,
+      62,    63,    64,    65,    69,    59,    60,    61,    62,    63,
+      64,    65,    66,    44,    67,    45,     0,     0,    68,    59,
+      60,    61,    62,    63,    64,    65,    66,     0,    67,    59,
+      60,    61,    62,    63,    64,    65,    66,    61,    62,    63,
+      64,    52
 };
 
 static const yytype_int8 yycheck[] =
 {
-       6,     3,     0,    41,     6,    10,    11,    12,    13,     6,
-      48,    49,    50,    51,    20,    21,    22,    55,    56,    12,
-      13,    23,     3,     5,     4,     6,     6,    29,    30,    31,
-      32,    33,    34,    35,    72,    73,    74,    75,    76,    77,
-      78,    79,    80,     5,    18,    27,    28,    53,    29,    30,
-      31,    32,    33,    34,    35,    21,    22,    19,    20,     4,
-       4,     6,     6,     6,     9,    27,    28,     0,     6,     6,
-       3,    16,     6,    20,     6,    20,    20,    26,    26,    24,
-      24,     8,     9,    10,    11,    12,    13,    14,    15,    19,
-      17,     8,     9,    10,    11,    12,    13,    14,    25,     8,
-       9,    10,    11,    12,    13,    14,    15,    26,    17,     7,
-      18,    21,    21,     8,     9,    10,    11,    12,    13,    14,
-      15,    18,    17,     8,     9,    10,    11,    12,    13,    14,
-      15,     8,     9,    10,    11,    12,    13,     6,    21,     6,
-      22,    46,    96
+      35,     4,     6,     6,    12,    13,    41,    42,    43,    44,
+       3,    46,    47,     6,     0,    19,    20,    20,    19,    20,
+       5,    24,     5,    18,    59,    60,    61,    62,    63,    64,
+      65,    66,    67,     4,    19,     6,    29,    30,    31,    32,
+      33,    34,    27,    28,    27,    28,     4,     0,     6,     6,
+       3,     9,     8,     9,    10,    11,    12,    13,    16,     6,
+       6,     6,    20,     6,    26,    26,    24,     8,     9,    10,
+      11,    12,    13,    14,    15,    19,    17,     8,     9,    10,
+      11,    12,    13,    14,    25,     8,     9,    10,    11,    12,
+      13,    14,    15,    26,    17,     7,    -1,    -1,    21,     8,
+       9,    10,    11,    12,    13,    14,    15,    -1,    17,     8,
+       9,    10,    11,    12,    13,    14,    15,    10,    11,    12,
+      13,    40
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
      symbol of state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,    38,    52,     0,     3,     6,    29,    30,    31,    32,
-      33,    34,    35,    43,    47,    49,    50,    51,     5,    19,
-      20,    27,    28,    48,    54,    55,     4,     6,    44,     6,
-       6,     6,     6,     6,     6,     0,     3,    41,    42,    44,
-      20,    24,    44,    45,    44,    45,    18,    20,    26,    26,
-      19,    26,     7,    18,    21,     9,    16,    44,    45,    46,
-      46,    48,     6,    39,    40,    46,    46,    46,    46,    44,
-      46,    46,     8,     9,    10,    11,    12,    13,    14,    15,
-      17,    21,    25,    18,    21,    46,    46,    46,    46,    46,
-      46,    46,    46,    46,     6,    22,    53,    23,    51
+       0,    37,    47,     0,     3,     6,    29,    30,    31,    32,
+      33,    34,    38,    42,    44,    45,    46,     5,    19,    27,
+      28,    43,    48,    49,     4,     6,    39,     6,     6,     6,
+       6,     6,     0,     3,    20,    24,    39,    40,    39,    40,
+      18,    26,    26,    19,    26,     7,     9,    16,    39,    40,
+      41,    41,    43,    41,    41,    41,    41,    41,    41,     8,
+       9,    10,    11,    12,    13,    14,    15,    17,    21,    25,
+      41,    41,    41,    41,    41,    41,    41,    41,    41
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    37,    38,    39,    39,    40,    40,    41,    41,    42,
-      42,    43,    43,    43,    43,    43,    43,    43,    43,    44,
-      44,    45,    45,    46,    46,    46,    46,    46,    46,    46,
-      46,    46,    46,    46,    46,    46,    47,    48,    48,    48,
-      49,    49,    49,    50,    50,    50,    51,    51,    51,    52,
-      52,    53,    53,    54,    54,    55,    55
+       0,    36,    37,    38,    38,    38,    38,    38,    38,    39,
+      39,    40,    40,    41,    41,    41,    41,    41,    41,    41,
+      41,    41,    41,    41,    41,    41,    42,    43,    43,    43,
+      44,    44,    44,    45,    45,    45,    46,    46,    46,    47,
+      47,    48,    48,    49,    49
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
 static const yytype_int8 yyr2[] =
 {
-       0,     2,     1,     3,     1,     1,     0,     3,     1,     1,
-       0,     8,     4,     2,     4,     4,     4,     4,     3,     1,
+       0,     2,     1,     2,     4,     4,     4,     4,     3,     1,
        1,     3,     3,     1,     1,     3,     3,     3,     3,     3,
        3,     3,     3,     3,     2,     2,     2,     1,     1,     1,
        1,     2,     4,     1,     1,     1,     2,     2,     1,     2,
-       0,     2,     0,     2,     2,     2,     2
+       0,     2,     2,     2,     2
 };
 
 
@@ -1384,109 +1361,69 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* program: statements  */
-#line 245 "parser.y"
+#line 241 "parser.y"
                     { std::puts("Parsing..."); }
-#line 1390 "parser.tab.cpp"
+#line 1367 "parser.tab.cpp"
     break;
 
-  case 11: /* directive: T_MACRO T_IDENTIFIER T_LPAREN declarations T_RPAREN T_LBRACE statements_recorded T_RBRACE  */
-#line 259 "parser.y"
-                                                                                                     {
-																								//identifiers[$2] = std::make_pair(Qualifier::Macro, macro_iden);
-																								identifiers[(yyvsp[-6].sval)] = { Qualifier::Macro, macro_iden };
-																								macros.emplace_back()
-																								++macro_iden;
-																							}
-#line 1401 "parser.tab.cpp"
-    break;
-
-  case 12: /* directive: T_IDENTIFIER T_LPAREN arguments T_RPAREN  */
-#line 265 "parser.y"
-                                                            {
-														std::cout << "invoked a macro" << std::endl;
-
-														//auto result = std::find(identifiers.begin(), identifiers.end(), { Qualifier::Macro, $1 });
-														auto result = identifiers.find((yyvsp[-3].sval));
-														if (result->first == Qualifier::Macro)
-														{
-															if (result not_eq identifiers.end()) [[likely]]
-															{
-																std::cout << result->second << std::endl;
-															}
-
-															else [[unlikely]]
-															{
-
-															}
-														}
-														
-														else
-														{
-															std::cerr << "Macro " << (yyvsp[-3].sval) << " was invoked but was not previously defined";
-															std::exit(4);
-														}
-													}
-#line 1430 "parser.tab.cpp"
-    break;
-
-  case 13: /* directive: T_ORIGIN number  */
-#line 289 "parser.y"
-                                   {
-								write_head = (yyvsp[0].ival);
+  case 3: /* directive: T_ORIGIN number  */
+#line 243 "parser.y"
+                           {
+								write_head = static_cast<std::uint16_t>((yyvsp[0].ival));
 						   }
-#line 1438 "parser.tab.cpp"
+#line 1375 "parser.tab.cpp"
     break;
 
-  case 14: /* directive: T_ALIAS8 T_IDENTIFIER T_COLON expression  */
-#line 292 "parser.y"
+  case 4: /* directive: T_ALIAS8 T_IDENTIFIER T_COLON expression  */
+#line 246 "parser.y"
                                                             {
 														//identifiers[$2] = std::make_pair(Qualifier::Value8, $4);
 														contains(identifiers, (yyvsp[-2].sval), { Qualifier::Value8, (yyvsp[0].ival) });
-														code[write_head] = (yyvsp[0].ival);
+														code[write_head] = static_cast<std::uint8_t>((yyvsp[0].ival));
 														++write_head;
 													}
-#line 1449 "parser.tab.cpp"
+#line 1386 "parser.tab.cpp"
     break;
 
-  case 15: /* directive: T_ALIAS16 T_IDENTIFIER T_EQUAL expression  */
-#line 298 "parser.y"
+  case 5: /* directive: T_ALIAS16 T_IDENTIFIER T_EQUAL expression  */
+#line 252 "parser.y"
                                                              {
 														//identifiers[$2] = std::make_pair(Qualifier::Value16, $4);
 														contains(identifiers, (yyvsp[-2].sval), { Qualifier::Value16, (yyvsp[0].ival) });
-														code[write_head] = ((yyvsp[0].ival) & 0x00FF);
+														code[write_head] = static_cast<std::uint8_t>((yyvsp[0].ival) & 0x00FF);
 														++write_head;
-														code[write_head] = ((yyvsp[0].ival) & 0xFF00);
+														code[write_head] = static_cast<std::uint8_t>((yyvsp[0].ival) & 0xFF00);
 														++write_head;
 													}
-#line 1462 "parser.tab.cpp"
+#line 1399 "parser.tab.cpp"
     break;
 
-  case 16: /* directive: T_VAR16 T_IDENTIFIER T_EQUAL expression  */
-#line 306 "parser.y"
+  case 6: /* directive: T_VAR16 T_IDENTIFIER T_EQUAL expression  */
+#line 260 "parser.y"
                                                            {
 														//identifiers[$2] = std::make_pair(Qualifier::Variable16, $4);
 														contains(identifiers, (yyvsp[-2].sval), { Qualifier::Variable16, write_head });
-														code[write_head] = ((yyvsp[0].ival) & 0x00FF);
+														code[write_head] = static_cast<std::uint8_t>((yyvsp[0].ival) & 0x00FF);
 														++write_head;
-														code[write_head] = ((yyvsp[0].ival) & 0xFF00);
+														code[write_head] = static_cast<std::uint8_t>((yyvsp[0].ival) & 0xFF00);
 														++write_head;
 												   }
-#line 1475 "parser.tab.cpp"
+#line 1412 "parser.tab.cpp"
     break;
 
-  case 17: /* directive: T_VAR8 T_IDENTIFIER T_EQUAL expression  */
-#line 314 "parser.y"
+  case 7: /* directive: T_VAR8 T_IDENTIFIER T_EQUAL expression  */
+#line 268 "parser.y"
                                                           {
 													//identifiers[$2] = std::make_pair(Qualifier::Variable8, $4);
 													contains(identifiers, (yyvsp[-2].sval), { Qualifier::Variable8, write_head });
-													code[write_head] = (yyvsp[0].ival);
+													code[write_head] = static_cast<std::uint8_t>((yyvsp[0].ival));
 													++write_head;
-												 }
-#line 1486 "parser.tab.cpp"
+												  }
+#line 1423 "parser.tab.cpp"
     break;
 
-  case 18: /* directive: T_ASCII T_IDENTIFIER T_STRING  */
-#line 320 "parser.y"
+  case 8: /* directive: T_ASCII T_IDENTIFIER T_STRING  */
+#line 274 "parser.y"
                                                  {
 											identifiers[(yyvsp[-1].sval)] = std::make_pair(Qualifier::Ascii, write_head);
 
@@ -1495,155 +1432,155 @@ yyreduce:
 											std::memcpy(&code[write_head], &chars, count)
 											write_head += count;
 										 }
-#line 1499 "parser.tab.cpp"
+#line 1436 "parser.tab.cpp"
     break;
 
-  case 19: /* number: T_INT  */
-#line 330 "parser.y"
-                     { (yyval.ival) = (yyvsp[0].ival);            }
-#line 1505 "parser.tab.cpp"
+  case 9: /* number: T_INT  */
+#line 284 "parser.y"
+                     { (yyval.ival) = (yyvsp[0].ival);                         }
+#line 1442 "parser.tab.cpp"
     break;
 
-  case 20: /* number: T_IDENTIFIER  */
-#line 331 "parser.y"
-                             { (yyval.ival) = ident2int((yyvsp[0].sval)); }
-#line 1511 "parser.tab.cpp"
+  case 10: /* number: T_IDENTIFIER  */
+#line 285 "parser.y"
+                             { (yyval.ival) = ident2int((yyvsp[0].sval), identifiers); }
+#line 1448 "parser.tab.cpp"
     break;
 
-  case 21: /* paren_expr: T_LPAREN expression T_RPAREN  */
-#line 333 "parser.y"
+  case 11: /* paren_expr: T_LPAREN expression T_RPAREN  */
+#line 287 "parser.y"
                                          { (yyval.ival) = (yyvsp[-1].ival); }
-#line 1517 "parser.tab.cpp"
+#line 1454 "parser.tab.cpp"
     break;
 
-  case 22: /* paren_expr: T_LBRACK expression T_RBRACK  */
-#line 334 "parser.y"
+  case 12: /* paren_expr: T_LBRACK expression T_RBRACK  */
+#line 288 "parser.y"
                                                      { (yyval.ival) = (yyvsp[-1].ival); }
-#line 1523 "parser.tab.cpp"
+#line 1460 "parser.tab.cpp"
     break;
 
-  case 23: /* expression: number  */
-#line 336 "parser.y"
-                                                  { (yyval.ival) =  (yyvsp[0].ival);       }
-#line 1529 "parser.tab.cpp"
+  case 13: /* expression: number  */
+#line 290 "parser.y"
+                                                              { (yyval.ival) =  (yyvsp[0].ival);       }
+#line 1466 "parser.tab.cpp"
     break;
 
-  case 24: /* expression: paren_expr  */
-#line 337 "parser.y"
-                                                          { (yyval.ival) =  (yyvsp[0].ival);       }
-#line 1535 "parser.tab.cpp"
+  case 14: /* expression: paren_expr  */
+#line 291 "parser.y"
+                                                                      { (yyval.ival) =  (yyvsp[0].ival);       }
+#line 1472 "parser.tab.cpp"
     break;
 
-  case 25: /* expression: expression T_PLUS expression  */
-#line 338 "parser.y"
-                                                          { (yyval.ival) =  (yyvsp[-2].ival) +  (yyvsp[0].ival); }
-#line 1541 "parser.tab.cpp"
+  case 15: /* expression: expression T_PLUS expression  */
+#line 292 "parser.y"
+                                                                      { (yyval.ival) =  (yyvsp[-2].ival) +  (yyvsp[0].ival); }
+#line 1478 "parser.tab.cpp"
     break;
 
-  case 26: /* expression: expression T_MINUS expression  */
-#line 339 "parser.y"
-                                                          { (yyval.ival) =  (yyvsp[-2].ival) -  (yyvsp[0].ival); }
-#line 1547 "parser.tab.cpp"
+  case 16: /* expression: expression T_MINUS expression  */
+#line 293 "parser.y"
+                                                                      { (yyval.ival) =  (yyvsp[-2].ival) -  (yyvsp[0].ival); }
+#line 1484 "parser.tab.cpp"
     break;
 
-  case 27: /* expression: expression T_TIMES expression  */
-#line 340 "parser.y"
-                                                          { (yyval.ival) =  (yyvsp[-2].ival) *  (yyvsp[0].ival); }
-#line 1553 "parser.tab.cpp"
+  case 17: /* expression: expression T_TIMES expression  */
+#line 294 "parser.y"
+                                                                      { (yyval.ival) =  (yyvsp[-2].ival) *  (yyvsp[0].ival); }
+#line 1490 "parser.tab.cpp"
     break;
 
-  case 28: /* expression: expression T_DIVIDE expression  */
-#line 341 "parser.y"
-                                                          { (yyval.ival) =  (yyvsp[-2].ival) /  (yyvsp[0].ival); }
-#line 1559 "parser.tab.cpp"
+  case 18: /* expression: expression T_DIVIDE expression  */
+#line 295 "parser.y"
+                                                                      { (yyval.ival) =  (yyvsp[-2].ival) /  (yyvsp[0].ival); }
+#line 1496 "parser.tab.cpp"
     break;
 
-  case 29: /* expression: expression T_LSHIFT expression  */
-#line 342 "parser.y"
-                                                          { (yyval.ival) =  (yyvsp[-2].ival) << (yyvsp[0].ival); }
-#line 1565 "parser.tab.cpp"
+  case 19: /* expression: expression T_LSHIFT expression  */
+#line 296 "parser.y"
+                                                                      { (yyval.ival) =  (yyvsp[-2].ival) << (yyvsp[0].ival); }
+#line 1502 "parser.tab.cpp"
     break;
 
-  case 30: /* expression: expression T_RSHIFT expression  */
-#line 343 "parser.y"
-                                                          { (yyval.ival) =  (yyvsp[-2].ival) >> (yyvsp[0].ival); }
-#line 1571 "parser.tab.cpp"
+  case 20: /* expression: expression T_RSHIFT expression  */
+#line 297 "parser.y"
+                                                                      { (yyval.ival) =  (yyvsp[-2].ival) >> (yyvsp[0].ival); }
+#line 1508 "parser.tab.cpp"
     break;
 
-  case 31: /* expression: expression T_CARET expression  */
-#line 344 "parser.y"
-                                                          { (yyval.ival) =  (yyvsp[-2].ival) ^  (yyvsp[0].ival); }
-#line 1577 "parser.tab.cpp"
+  case 21: /* expression: expression T_CARET expression  */
+#line 298 "parser.y"
+                                                                      { (yyval.ival) =  (yyvsp[-2].ival) ^  (yyvsp[0].ival); }
+#line 1514 "parser.tab.cpp"
     break;
 
-  case 32: /* expression: expression T_AMPERSAND expression  */
-#line 345 "parser.y"
-                                                          { (yyval.ival) =  (yyvsp[-2].ival) &  (yyvsp[0].ival); }
-#line 1583 "parser.tab.cpp"
+  case 22: /* expression: expression T_AMPERSAND expression  */
+#line 299 "parser.y"
+                                                                      { (yyval.ival) =  (yyvsp[-2].ival) &  (yyvsp[0].ival); }
+#line 1520 "parser.tab.cpp"
     break;
 
-  case 33: /* expression: expression T_PIPE expression  */
-#line 346 "parser.y"
-                                                          { (yyval.ival) =  (yyvsp[-2].ival) |  (yyvsp[0].ival); }
-#line 1589 "parser.tab.cpp"
+  case 23: /* expression: expression T_PIPE expression  */
+#line 300 "parser.y"
+                                                                      { (yyval.ival) =  (yyvsp[-2].ival) |  (yyvsp[0].ival); }
+#line 1526 "parser.tab.cpp"
     break;
 
-  case 34: /* expression: T_MINUS expression  */
-#line 347 "parser.y"
-                                                          { (yyval.ival) = -(yyvsp[0].ival);       }
-#line 1595 "parser.tab.cpp"
+  case 24: /* expression: T_MINUS expression  */
+#line 301 "parser.y"
+                                                                      { (yyval.ival) = -(yyvsp[0].ival);       }
+#line 1532 "parser.tab.cpp"
     break;
 
-  case 35: /* expression: T_TILDE expression  */
-#line 348 "parser.y"
-                                                          { (yyval.ival) = ~(yyvsp[0].ival);       }
-#line 1601 "parser.tab.cpp"
+  case 25: /* expression: T_TILDE expression  */
+#line 302 "parser.y"
+                                                                      { (yyval.ival) = ~(yyvsp[0].ival);       }
+#line 1538 "parser.tab.cpp"
     break;
 
-  case 37: /* operand: imm  */
-#line 352 "parser.y"
+  case 27: /* operand: imm  */
+#line 306 "parser.y"
                     { (yyval.ival) = (yyvsp[0].ival); }
-#line 1607 "parser.tab.cpp"
+#line 1544 "parser.tab.cpp"
     break;
 
-  case 38: /* operand: mem  */
-#line 353 "parser.y"
+  case 28: /* operand: mem  */
+#line 307 "parser.y"
                             { (yyval.ival) = (yyvsp[0].ival); }
-#line 1613 "parser.tab.cpp"
+#line 1550 "parser.tab.cpp"
     break;
 
-  case 39: /* operand: T_REGISTER  */
-#line 354 "parser.y"
+  case 29: /* operand: T_REGISTER  */
+#line 308 "parser.y"
                             { (yyval.ival) = (yyvsp[0].ival); }
-#line 1619 "parser.tab.cpp"
+#line 1556 "parser.tab.cpp"
     break;
 
-  case 53: /* imm: T_HASH number  */
-#line 374 "parser.y"
+  case 41: /* imm: T_HASH number  */
+#line 325 "parser.y"
                        { (yyval.ival) = (yyvsp[0].ival); }
-#line 1625 "parser.tab.cpp"
+#line 1562 "parser.tab.cpp"
     break;
 
-  case 54: /* imm: T_HASH paren_expr  */
-#line 375 "parser.y"
+  case 42: /* imm: T_HASH paren_expr  */
+#line 326 "parser.y"
                            { (yyval.ival) = (yyvsp[0].ival); }
-#line 1631 "parser.tab.cpp"
+#line 1568 "parser.tab.cpp"
     break;
 
-  case 55: /* mem: T_PERCENT number  */
-#line 377 "parser.y"
+  case 43: /* mem: T_PERCENT number  */
+#line 328 "parser.y"
                           { (yyval.ival) = (yyvsp[0].ival); }
-#line 1637 "parser.tab.cpp"
+#line 1574 "parser.tab.cpp"
     break;
 
-  case 56: /* mem: T_PERCENT paren_expr  */
-#line 378 "parser.y"
+  case 44: /* mem: T_PERCENT paren_expr  */
+#line 329 "parser.y"
                               { (yyval.ival) = (yyvsp[0].ival); }
-#line 1643 "parser.tab.cpp"
+#line 1580 "parser.tab.cpp"
     break;
 
 
-#line 1647 "parser.tab.cpp"
+#line 1584 "parser.tab.cpp"
 
       default: break;
     }
@@ -1837,7 +1774,7 @@ yyreturn:
   return yyresult;
 }
 
-#line 380 "parser.y"
+#line 331 "parser.y"
 
 
 int yyerror(const char *s)
@@ -1862,8 +1799,27 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 	switch (argc)
 	{
 	case 2:
+	{
+		//local string split function to use
+		auto split = [&](const std::string& input, const std::string& delim) noexcept
+		{
+			std::size_t pos_start = 0, pos_end, delim_len = delim.length();
+			std::string token;
+			std::vector<std::string> res;
+
+			while ((pos_end = input.find(delim, pos_start)) != std::string::npos)
+			{
+				token = input.substr(pos_start, pos_end - pos_start);
+				pos_start = pos_end + delim_len;
+				res.emplace_back(token);
+			}
+
+			res.emplace_back(input.substr(pos_start));
+			return res;
+		};
+
 		//fetch the filepath off the command line
-		std::string fp = argv[1];
+		std::string fp =  argv[1];
 
 		//open the file specified
 		std::ifstream file(fp);
@@ -1885,37 +1841,79 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 		file.read(buffer.data(), length);
 		
 		//ties together each basic component of a macro
-		struct Macro { std::string identifier, arguments, statements; };
+		struct Macro { std::string identifier, statements; std::vector<std::string> arguments; };
 
-		//local cache of each macro that is found
-		std::vector<Macro> macro_list{};
+		//local cache of macros that are found
+		std::map<std::string, Macro> macro_list{};
 
 		//detects a valid macro declaration
 		std::regex rx_macro_decl(R"(\.macro ([a-zA-Z_]\w*)\(([^\)]*)\)\s?\{([^\}]*)\})");
 
 		//detects a valid macro invokation
-		std::regex rx_macro_invk(R"()");
+		std::regex rx_macro_invk(R"(([a-zA-Z_]\w*)\([^\)]*\))");
 
 		//will store each of the string regex matches that are made during the search
 		std::smatch matches{};
 
+		//discover all macro declarations present in the source file
 		while (std::regex_search(buffer, matches, rx_macro_decl))
 		{
-			for (auto& s : matches)
-			{
-				std::cout << s << std::endl;
-			}
+			//move the argument contents to a new string
+			auto extracted = std::move(matches[2].str());
 
+			//remove any whitespace contained in the arguments list
+			std::erase(std::remove_if(extracted.begin(), extracted.end(),
+				[&](char c) { return std::isspace(static_cast<unsigned char>(c)); }), extracted.end());
 
-			//macro_list.emplace_back({ matches[1], matches[2], matches[3] })
+			//tokenize the string using the commas as delimiters
+			macro_list.try_emplace({ { matches[1] }, { matches[1], matches[3], split(extracted, "," } });
 		}
 
-		handle = std::fopen(argv[1], "r");
-		if (!handle) [[unlikely]]
+		//then erase the macro source code from the file
+		std::regex_replace(buffer, rx_macro_decl, "");
+
+		//discover all macro invokations present in the source file
+		while (std::regex_search(buffer, matches, rx_macro_invk))
 		{
-			std::cerr << "Failed to open the speciifed file";
-			yyin = handle;
-			return 2;
+			//move the argument contents to a new string
+			auto extracted = std::move(matches[2].str());
+
+			//remove any whitespace contained in the arguments list
+			std::erase(std::remove_if(extracted.begin(), extracted.end(),
+				[&](char c) { return std::isspace(static_cast<unsigned char>(c)); }), extracted.end());
+
+			//tokenize the string using the commas as delimiters
+			auto args = split(extracted, ",");
+
+			//dynamically assert that the invoked macro actually exists
+			try
+			{
+				//verify that the correct number of arguments was supplied
+				auto&& str = matches[1].str();
+				auto m = macro_list.at(str);
+				auto s = m.arguments.size();
+				auto a = args.size();
+
+				if (a != s) [[unlikely]]
+				{
+					std::cerr << "Macro " << str << " was supplied " << a << " arguments, but takes " << s << " arguments";
+					return 100;
+				}
+			}
+
+			//in the case that it doesn't
+			catch (std::out_of_range)
+			{
+				std::cerr << "Macro " << matches[1].str() << " was invoked, but not defined";
+				return 101;
+			}
+			
+			//iterate over each of the arguments
+			for (auto i = 0; i < args.size(); ++i)
+			{
+				std::regex_replace(buffer, macro_list.at(matches[1]).arguments[i], args[i]);
+			}
+		}
 
 		//lex and parse the file contents
 		do
@@ -1923,6 +1921,7 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 			yyparse();
 		} while(!std::feof(yyin));
 		break;
+	}
 
 	default:
 		//otherwise throw an error
@@ -1930,16 +1929,6 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 		return 1;
 	}
 
-	//verify that the file opening succedded
-	if (yyin == nullptr)
-	{
-		std::cerr << "Failed to open the specified file";
-		return 2;
-	}
-
-	//verify that the file handle is cleaned up properly
-	if (handle != nullptr)
-		std::fclose(handle);
-
+	//indicate program success
 	return 0;
 }

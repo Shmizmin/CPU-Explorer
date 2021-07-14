@@ -81,13 +81,12 @@ extern int yydebug;
     T_HASH = 282,                  /* T_HASH  */
     T_PERCENT = 283,               /* T_PERCENT  */
     T_ORIGIN = 284,                /* T_ORIGIN  */
-    T_MACRO = 285,                 /* T_MACRO  */
-    T_VAR8 = 286,                  /* T_VAR8  */
-    T_VAR16 = 287,                 /* T_VAR16  */
-    T_ALIAS8 = 288,                /* T_ALIAS8  */
-    T_ALIAS16 = 289,               /* T_ALIAS16  */
-    T_ASCII = 290,                 /* T_ASCII  */
-    UNARY = 291                    /* UNARY  */
+    T_VAR8 = 285,                  /* T_VAR8  */
+    T_VAR16 = 286,                 /* T_VAR16  */
+    T_ALIAS8 = 287,                /* T_ALIAS8  */
+    T_ALIAS16 = 288,               /* T_ALIAS16  */
+    T_ASCII = 289,                 /* T_ASCII  */
+    UNARY = 290                    /* UNARY  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -96,12 +95,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 88 "parser.y"
+#line 91 "parser.y"
 
 	int ival;
 	char* sval;
 
-#line 105 "parser.tab.hpp"
+#line 104 "parser.tab.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;

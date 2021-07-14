@@ -95,7 +95,6 @@ stringliteral   ((\"|\')(([^\"]|\\\")*[^\\])?(\"|\'))
 ">>" { return T_RSHIFT;    }
 
 ".ascii" { return T_ASCII; }
-".macro" { return T_MACRO; }
 ".org" { return T_ORIGIN; }
 
 ".alias8" { return T_ALIAS8; }

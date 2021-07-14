@@ -12,6 +12,7 @@
 #include <fstream>
 #include <optional>
 #include <iostream>
+#include <stdexcept>
 #include <filesystem>
 
 extern int yylex();
@@ -22,6 +23,8 @@ extern int line_number;
 
 std::uint16_t macro_iden{ 1 },
 			  write_head{ 0 };
+
+struct Instruction;
 
 std::vector<std::uint8_t> code{ 0 };
 
@@ -37,7 +40,7 @@ enum class Qualifier
 	Variable16,
 };
 
-std::vector<std::uint8_t> assemble(const Instruction& insn) noexcept
+std::vector<std::uint8_t> assemble([[maybe_unused]] const Instruction& insn) noexcept
 {
 
 }
@@ -59,8 +62,8 @@ std::uint16_t ident2int(const std::string& str, std::map<std::string, std::pair<
 		std::exit(5);
 		break;
 
-	case Qualifier::Value8:     [[fallthrough]];
-	case Qualifier::Value16:    [[fallthrough]];
+	case Qualifier::Value8:  [[fallthrough]];
+	case Qualifier::Value16:
 		return res.second;
 		break;
 
@@ -71,7 +74,7 @@ std::uint16_t ident2int(const std::string& str, std::map<std::string, std::pair<
 	case Qualifier::Variable16:
 		auto lower = code[static_cast<int>(res.second) + 0];
 		auto upper = code[static_cast<int>(res.second) + 1];
-		return std::uint16_t{ (lower | (upper << 8)) };
+		return static_cast<std::uint16_t>(static_cast<std::uint16_t>(lower) | (static_cast<std::uint16_t>(upper) << 8));
 	}
 }
 
@@ -99,7 +102,7 @@ int yyerror(const char* s);
 %token T_PLUS T_MINUS T_TIMES T_DIVIDE T_LSHIFT T_RSHIFT T_AMPERSAND T_CARET T_TILDE T_PIPE
 %token T_COMMA T_COLON T_LPAREN T_RPAREN T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_EQUAL
 %token T_HASH T_PERCENT
-%token T_ORIGIN T_MACRO T_VAR8 T_VAR16 T_ALIAS8 T_ALIAS16 T_ASCII
+%token T_ORIGIN T_VAR8 T_VAR16 T_ALIAS8 T_ALIAS16 T_ASCII
 
 %type<ival> imm
 %type<ival> mem
@@ -231,91 +234,43 @@ int yyerror(const char* s);
 		Mnemonic mnemonic;
 		std::optional<Operand> operand1, operand2;
 	};
-
-	struct Expression
-	{
-		int ival;
-		char* sval;
-	};
 %}
 
 %%
 
 program: statements { std::puts("Parsing..."); };
 
-declarations_helper: declarations_helper T_COMMA T_IDENTIFIER
-|					 T_IDENTIFIER;
-
-declarations: declarations_helper
-|			  %empty;
-
-arguments_helper: arguments_helper T_COMMA number
-|				  number;
-
-arguments: arguments_helper
-|		   %empty;
-
-directive: T_MACRO T_IDENTIFIER T_LPAREN declarations T_RPAREN T_LBRACE statements_recorded T_RBRACE {
-																								//identifiers[$2] = std::make_pair(Qualifier::Macro, macro_iden);
-																								identifiers[$2] = { Qualifier::Macro, macro_iden };
-																								macros.emplace_back()
-																								++macro_iden;
-																							}
-|		   T_IDENTIFIER T_LPAREN arguments T_RPAREN {
-														std::cout << "invoked a macro" << std::endl;
-
-														//auto result = std::find(identifiers.begin(), identifiers.end(), { Qualifier::Macro, $1 });
-														auto result = identifiers.find($1);
-														if (result->first == Qualifier::Macro)
-														{
-															if (result not_eq identifiers.end()) [[likely]]
-															{
-																std::cout << result->second << std::endl;
-															}
-
-															else [[unlikely]]
-															{
-
-															}
-														}
-														
-														else
-														{
-															std::cerr << "Macro " << $1 << " was invoked but was not previously defined";
-															std::exit(4);
-														}
-													}
-|		   T_ORIGIN number {
-								write_head = $2;
+directive: T_ORIGIN number {
+								write_head = static_cast<std::uint16_t>($2);
 						   }
 |		   T_ALIAS8 T_IDENTIFIER T_COLON expression {
 														//identifiers[$2] = std::make_pair(Qualifier::Value8, $4);
 														contains(identifiers, $2, { Qualifier::Value8, $4 });
-														code[write_head] = $4;
+														code[write_head] = static_cast<std::uint8_t>($4);
 														++write_head;
 													}
 |		   T_ALIAS16 T_IDENTIFIER T_EQUAL expression {
 														//identifiers[$2] = std::make_pair(Qualifier::Value16, $4);
 														contains(identifiers, $2, { Qualifier::Value16, $4 });
-														code[write_head] = ($4 & 0x00FF);
+														code[write_head] = static_cast<std::uint8_t>($4 & 0x00FF);
 														++write_head;
-														code[write_head] = ($4 & 0xFF00);
+														code[write_head] = static_cast<std::uint8_t>($4 & 0xFF00);
 														++write_head;
 													}
 |		   T_VAR16 T_IDENTIFIER T_EQUAL expression {
 														//identifiers[$2] = std::make_pair(Qualifier::Variable16, $4);
 														contains(identifiers, $2, { Qualifier::Variable16, write_head });
-														code[write_head] = ($4 & 0x00FF);
+														code[write_head] = static_cast<std::uint8_t>($4 & 0x00FF);
 														++write_head;
-														code[write_head] = ($4 & 0xFF00);
+														code[write_head] = static_cast<std::uint8_t>($4 & 0xFF00);
 														++write_head;
 												   }
 |		   T_VAR8 T_IDENTIFIER T_EQUAL expression {
 													//identifiers[$2] = std::make_pair(Qualifier::Variable8, $4);
 													contains(identifiers, $2, { Qualifier::Variable8, write_head });
-													code[write_head] = $4;
+													code[write_head] = static_cast<std::uint8_t>($4);
 													++write_head;
-												 }
+												  }
 |		   T_ASCII T_IDENTIFIER T_STRING {
 											identifiers[$2] = std::make_pair(Qualifier::Ascii, write_head);
 
@@ -326,25 +281,25 @@ directive: T_MACRO T_IDENTIFIER T_LPAREN declarations T_RPAREN T_LBRACE statemen
 										 };
 
 
-number: T_INT        { $$ = $1;            }
-|		T_IDENTIFIER { $$ = ident2int($1); }
+number: T_INT        { $$ = $1;                         }
+|		T_IDENTIFIER { $$ = ident2int($1, identifiers); }
 
 paren_expr: T_LPAREN expression T_RPAREN { $$ = $2; }
 |			T_LBRACK expression T_RBRACK { $$ = $2; };
 
-expression:	number                            { $$ =  $1;       }
-|			paren_expr                        { $$ =  $1;       }
-|			expression T_PLUS expression      { $$ =  $1 +  $3; }
-|			expression T_MINUS expression     { $$ =  $1 -  $3; }
-|			expression T_TIMES expression     { $$ =  $1 *  $3; }
-|			expression T_DIVIDE expression    { $$ =  $1 /  $3; }
-|			expression T_LSHIFT expression    { $$ =  $1 << $3; }
-|			expression T_RSHIFT expression    { $$ =  $1 >> $3; }
-|			expression T_CARET expression     { $$ =  $1 ^  $3; }
-|			expression T_AMPERSAND expression { $$ =  $1 &  $3; }
-|			expression T_PIPE expression      { $$ =  $1 |  $3; }
-|			T_MINUS expression %prec UNARY    { $$ = -$2;       }
-|			T_TILDE expression %prec UNARY    { $$ = ~$2;       }
+expression:	number                                        { $$ =  $1;       }
+|			paren_expr                                    { $$ =  $1;       }
+|			expression T_PLUS      expression             { $$ =  $1 +  $3; }
+|			expression T_MINUS     expression             { $$ =  $1 -  $3; }
+|			expression T_TIMES     expression             { $$ =  $1 *  $3; }
+|			expression T_DIVIDE    expression             { $$ =  $1 /  $3; }
+|			expression T_LSHIFT    expression             { $$ =  $1 << $3; }
+|			expression T_RSHIFT    expression             { $$ =  $1 >> $3; }
+|			expression T_CARET     expression             { $$ =  $1 ^  $3; }
+|			expression T_AMPERSAND expression             { $$ =  $1 &  $3; }
+|			expression T_PIPE      expression             { $$ =  $1 |  $3; }
+|			T_MINUS                expression %prec UNARY { $$ = -$2;       }
+|			T_TILDE                expression %prec UNARY { $$ = ~$2;       }
 
 label: T_IDENTIFIER T_COLON;
 
@@ -366,9 +321,6 @@ statement_with_endl: statement T_ENDL
 
 statements: statements statement_with_endl
 |			%empty;
-
-statements_recorded: statements_recorded statement_with_endl
-|					 %empty;
 
 imm: T_HASH number     { $$ = $2; }
 |	 T_HASH paren_expr { $$ = $2; };
@@ -400,6 +352,7 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 	switch (argc)
 	{
 	case 2:
+	{
 		//local string split function to use
 		auto split = [&](const std::string& input, const std::string& delim) noexcept
 		{
@@ -419,7 +372,7 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 		};
 
 		//fetch the filepath off the command line
-		std::string fp = argv[1];
+		std::string fp =  argv[1];
 
 		//open the file specified
 		std::ifstream file(fp);
@@ -444,7 +397,7 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 		struct Macro { std::string identifier, statements; std::vector<std::string> arguments; };
 
 		//local cache of macros that are found
-		std::vector<Macro> macro_list{};
+		std::map<std::string, Macro> macro_list{};
 
 		//detects a valid macro declaration
 		std::regex rx_macro_decl(R"(\.macro ([a-zA-Z_]\w*)\(([^\)]*)\)\s?\{([^\}]*)\})");
@@ -458,12 +411,15 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 		//discover all macro declarations present in the source file
 		while (std::regex_search(buffer, matches, rx_macro_decl))
 		{
+			//move the argument contents to a new string
+			auto extracted = std::move(matches[2].str());
+
 			//remove any whitespace contained in the arguments list
-			std::erase(std::remove_if(matches[2].begin(), matches[2].end(),
-				[&](char c) { return std::isspace(static_cast<unsigned char>(c)); }), matches[2].end());
+			std::erase(std::remove_if(extracted.begin(), extracted.end(),
+				[&](char c) { return std::isspace(static_cast<unsigned char>(c)); }), extracted.end());
 
 			//tokenize the string using the commas as delimiters
-			macro_list.emplace_back({ matches[1], matches[3], split(matches[2], ",")});
+			macro_list.try_emplace({ { matches[1] }, { matches[1], matches[3], split(extracted, "," } });
 		}
 
 		//then erase the macro source code from the file
@@ -472,20 +428,43 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 		//discover all macro invokations present in the source file
 		while (std::regex_search(buffer, matches, rx_macro_invk))
 		{
-			//get the raw string arguments list
-			auto extracted = std::move(matches[2]);
+			//move the argument contents to a new string
+			auto extracted = std::move(matches[2].str());
 
 			//remove any whitespace contained in the arguments list
 			std::erase(std::remove_if(extracted.begin(), extracted.end(),
 				[&](char c) { return std::isspace(static_cast<unsigned char>(c)); }), extracted.end());
 
 			//tokenize the string using the commas as delimiters
-			auto args = std::move(split(std::move(extracted), ","));
+			auto args = split(extracted, ",");
 
-			//iterate over each of the arguments
-			for (auto&& arg : args)
+			//dynamically assert that the invoked macro actually exists
+			try
 			{
-				std::regex_replace(buffer, std::regex(), )
+				//verify that the correct number of arguments was supplied
+				auto&& str = matches[1].str();
+				auto m = macro_list.at(str);
+				auto s = m.arguments.size();
+				auto a = args.size();
+
+				if (a != s) [[unlikely]]
+				{
+					std::cerr << "Macro " << str << " was supplied " << a << " arguments, but takes " << s << " arguments";
+					return 100;
+				}
+			}
+
+			//in the case that it doesn't
+			catch (std::out_of_range)
+			{
+				std::cerr << "Macro " << matches[1].str() << " was invoked, but not defined";
+				return 101;
+			}
+			
+			//iterate over each of the arguments
+			for (auto i = 0; i < args.size(); ++i)
+			{
+				std::regex_replace(buffer, macro_list.at(matches[1]).arguments[i], args[i]);
 			}
 		}
 
@@ -495,6 +474,7 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 			yyparse();
 		} while(!std::feof(yyin));
 		break;
+	}
 
 	default:
 		//otherwise throw an error
