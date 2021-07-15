@@ -115,6 +115,16 @@ std::vector<std::uint8_t> assemble([[maybe_unused]] const Instruction& insn) noe
 
 }
 
+auto contains(std::map<std::string, std::pair<Qualifier, std::uint16_t>>& idents, std::string key, std::pair<Qualifier, std::uint16_t>&& value) noexcept
+{
+	if (idents.try_emplace(std::move(key), std::move(value)).first != idents.end()) [[likely]]
+		;
+	else
+	{
+		std::cerr << "Identifier " << key.c_str() << " was multiply defined";
+		std::exit(50);
+	}
+}
 
 std::uint16_t ident2int(const std::string& str, std::map<std::string, std::pair<Qualifier, std::uint16_t>>& idents) noexcept
 {
@@ -156,7 +166,7 @@ std::vector<Instruction> macros{};
 
 int yyerror(const char* s);
 
-#line 160 "parser.tab.cpp"
+#line 170 "parser.tab.cpp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -239,7 +249,7 @@ typedef enum yysymbol_kind_t yysymbol_kind_t;
 
 
 /* Second part of user prologue.  */
-#line 124 "parser.y"
+#line 134 "parser.y"
 
 	enum class Mode : unsigned
 	{
@@ -354,7 +364,7 @@ typedef enum yysymbol_kind_t yysymbol_kind_t;
 		std::optional<Operand> operand1, operand2;
 	};
 
-#line 358 "parser.tab.cpp"
+#line 368 "parser.tab.cpp"
 
 
 #ifdef short
@@ -722,11 +732,11 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   241,   241,   243,   246,   252,   260,   268,   274,   284,
-     285,   287,   288,   290,   291,   292,   293,   294,   295,   296,
-     297,   298,   299,   300,   301,   302,   304,   306,   307,   308,
-     310,   311,   312,   314,   315,   316,   318,   319,   320,   322,
-     323,   325,   326,   328,   329
+       0,   251,   251,   253,   256,   262,   270,   278,   284,   294,
+     295,   297,   298,   300,   301,   302,   303,   304,   305,   306,
+     307,   308,   309,   310,   311,   312,   314,   316,   317,   318,
+     320,   321,   322,   324,   325,   326,   328,   329,   330,   332,
+     333,   335,   336,   338,   339
 };
 #endif
 
@@ -1361,32 +1371,32 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* program: statements  */
-#line 241 "parser.y"
+#line 251 "parser.y"
                     { std::puts("Parsing..."); }
-#line 1367 "parser.tab.cpp"
+#line 1377 "parser.tab.cpp"
     break;
 
   case 3: /* directive: T_ORIGIN number  */
-#line 243 "parser.y"
+#line 253 "parser.y"
                            {
 								write_head = static_cast<std::uint16_t>((yyvsp[0].ival));
 						   }
-#line 1375 "parser.tab.cpp"
+#line 1385 "parser.tab.cpp"
     break;
 
   case 4: /* directive: T_ALIAS8 T_IDENTIFIER T_COLON expression  */
-#line 246 "parser.y"
+#line 256 "parser.y"
                                                             {
 														//identifiers[$2] = std::make_pair(Qualifier::Value8, $4);
-														contains(identifiers, (yyvsp[-2].sval), { Qualifier::Value8, (yyvsp[0].ival) });
+														contains(identifiers, (yyvsp[-2].sval), { Qualifier::Value8, (yyvsp[0].ival) }); 
 														code[write_head] = static_cast<std::uint8_t>((yyvsp[0].ival));
 														++write_head;
 													}
-#line 1386 "parser.tab.cpp"
+#line 1396 "parser.tab.cpp"
     break;
 
   case 5: /* directive: T_ALIAS16 T_IDENTIFIER T_EQUAL expression  */
-#line 252 "parser.y"
+#line 262 "parser.y"
                                                              {
 														//identifiers[$2] = std::make_pair(Qualifier::Value16, $4);
 														contains(identifiers, (yyvsp[-2].sval), { Qualifier::Value16, (yyvsp[0].ival) });
@@ -1395,11 +1405,11 @@ yyreduce:
 														code[write_head] = static_cast<std::uint8_t>((yyvsp[0].ival) & 0xFF00);
 														++write_head;
 													}
-#line 1399 "parser.tab.cpp"
+#line 1409 "parser.tab.cpp"
     break;
 
   case 6: /* directive: T_VAR16 T_IDENTIFIER T_EQUAL expression  */
-#line 260 "parser.y"
+#line 270 "parser.y"
                                                            {
 														//identifiers[$2] = std::make_pair(Qualifier::Variable16, $4);
 														contains(identifiers, (yyvsp[-2].sval), { Qualifier::Variable16, write_head });
@@ -1408,179 +1418,179 @@ yyreduce:
 														code[write_head] = static_cast<std::uint8_t>((yyvsp[0].ival) & 0xFF00);
 														++write_head;
 												   }
-#line 1412 "parser.tab.cpp"
+#line 1422 "parser.tab.cpp"
     break;
 
   case 7: /* directive: T_VAR8 T_IDENTIFIER T_EQUAL expression  */
-#line 268 "parser.y"
+#line 278 "parser.y"
                                                           {
 													//identifiers[$2] = std::make_pair(Qualifier::Variable8, $4);
 													contains(identifiers, (yyvsp[-2].sval), { Qualifier::Variable8, write_head });
 													code[write_head] = static_cast<std::uint8_t>((yyvsp[0].ival));
 													++write_head;
 												  }
-#line 1423 "parser.tab.cpp"
+#line 1433 "parser.tab.cpp"
     break;
 
   case 8: /* directive: T_ASCII T_IDENTIFIER T_STRING  */
-#line 274 "parser.y"
+#line 284 "parser.y"
                                                  {
 											identifiers[(yyvsp[-1].sval)] = std::make_pair(Qualifier::Ascii, write_head);
 
 											auto chars = (yyvsp[0].sval);
 											auto count = (std::strlen(chars) + 1);
-											std::memcpy(&code[write_head], &chars, count)
-											write_head += count;
+											std::memcpy(&code[write_head], &chars, count);
+											write_head += static_cast<std::uint16_t>(count);
 										 }
-#line 1436 "parser.tab.cpp"
+#line 1446 "parser.tab.cpp"
     break;
 
   case 9: /* number: T_INT  */
-#line 284 "parser.y"
+#line 294 "parser.y"
                      { (yyval.ival) = (yyvsp[0].ival);                         }
-#line 1442 "parser.tab.cpp"
+#line 1452 "parser.tab.cpp"
     break;
 
   case 10: /* number: T_IDENTIFIER  */
-#line 285 "parser.y"
+#line 295 "parser.y"
                              { (yyval.ival) = ident2int((yyvsp[0].sval), identifiers); }
-#line 1448 "parser.tab.cpp"
+#line 1458 "parser.tab.cpp"
     break;
 
   case 11: /* paren_expr: T_LPAREN expression T_RPAREN  */
-#line 287 "parser.y"
+#line 297 "parser.y"
                                          { (yyval.ival) = (yyvsp[-1].ival); }
-#line 1454 "parser.tab.cpp"
+#line 1464 "parser.tab.cpp"
     break;
 
   case 12: /* paren_expr: T_LBRACK expression T_RBRACK  */
-#line 288 "parser.y"
+#line 298 "parser.y"
                                                      { (yyval.ival) = (yyvsp[-1].ival); }
-#line 1460 "parser.tab.cpp"
+#line 1470 "parser.tab.cpp"
     break;
 
   case 13: /* expression: number  */
-#line 290 "parser.y"
+#line 300 "parser.y"
                                                               { (yyval.ival) =  (yyvsp[0].ival);       }
-#line 1466 "parser.tab.cpp"
+#line 1476 "parser.tab.cpp"
     break;
 
   case 14: /* expression: paren_expr  */
-#line 291 "parser.y"
+#line 301 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[0].ival);       }
-#line 1472 "parser.tab.cpp"
+#line 1482 "parser.tab.cpp"
     break;
 
   case 15: /* expression: expression T_PLUS expression  */
-#line 292 "parser.y"
+#line 302 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[-2].ival) +  (yyvsp[0].ival); }
-#line 1478 "parser.tab.cpp"
+#line 1488 "parser.tab.cpp"
     break;
 
   case 16: /* expression: expression T_MINUS expression  */
-#line 293 "parser.y"
+#line 303 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[-2].ival) -  (yyvsp[0].ival); }
-#line 1484 "parser.tab.cpp"
+#line 1494 "parser.tab.cpp"
     break;
 
   case 17: /* expression: expression T_TIMES expression  */
-#line 294 "parser.y"
+#line 304 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[-2].ival) *  (yyvsp[0].ival); }
-#line 1490 "parser.tab.cpp"
+#line 1500 "parser.tab.cpp"
     break;
 
   case 18: /* expression: expression T_DIVIDE expression  */
-#line 295 "parser.y"
+#line 305 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[-2].ival) /  (yyvsp[0].ival); }
-#line 1496 "parser.tab.cpp"
+#line 1506 "parser.tab.cpp"
     break;
 
   case 19: /* expression: expression T_LSHIFT expression  */
-#line 296 "parser.y"
+#line 306 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[-2].ival) << (yyvsp[0].ival); }
-#line 1502 "parser.tab.cpp"
+#line 1512 "parser.tab.cpp"
     break;
 
   case 20: /* expression: expression T_RSHIFT expression  */
-#line 297 "parser.y"
+#line 307 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[-2].ival) >> (yyvsp[0].ival); }
-#line 1508 "parser.tab.cpp"
+#line 1518 "parser.tab.cpp"
     break;
 
   case 21: /* expression: expression T_CARET expression  */
-#line 298 "parser.y"
+#line 308 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[-2].ival) ^  (yyvsp[0].ival); }
-#line 1514 "parser.tab.cpp"
+#line 1524 "parser.tab.cpp"
     break;
 
   case 22: /* expression: expression T_AMPERSAND expression  */
-#line 299 "parser.y"
+#line 309 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[-2].ival) &  (yyvsp[0].ival); }
-#line 1520 "parser.tab.cpp"
+#line 1530 "parser.tab.cpp"
     break;
 
   case 23: /* expression: expression T_PIPE expression  */
-#line 300 "parser.y"
+#line 310 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[-2].ival) |  (yyvsp[0].ival); }
-#line 1526 "parser.tab.cpp"
+#line 1536 "parser.tab.cpp"
     break;
 
   case 24: /* expression: T_MINUS expression  */
-#line 301 "parser.y"
+#line 311 "parser.y"
                                                                       { (yyval.ival) = -(yyvsp[0].ival);       }
-#line 1532 "parser.tab.cpp"
+#line 1542 "parser.tab.cpp"
     break;
 
   case 25: /* expression: T_TILDE expression  */
-#line 302 "parser.y"
+#line 312 "parser.y"
                                                                       { (yyval.ival) = ~(yyvsp[0].ival);       }
-#line 1538 "parser.tab.cpp"
+#line 1548 "parser.tab.cpp"
     break;
 
   case 27: /* operand: imm  */
-#line 306 "parser.y"
+#line 316 "parser.y"
                     { (yyval.ival) = (yyvsp[0].ival); }
-#line 1544 "parser.tab.cpp"
+#line 1554 "parser.tab.cpp"
     break;
 
   case 28: /* operand: mem  */
-#line 307 "parser.y"
+#line 317 "parser.y"
                             { (yyval.ival) = (yyvsp[0].ival); }
-#line 1550 "parser.tab.cpp"
+#line 1560 "parser.tab.cpp"
     break;
 
   case 29: /* operand: T_REGISTER  */
-#line 308 "parser.y"
+#line 318 "parser.y"
                             { (yyval.ival) = (yyvsp[0].ival); }
-#line 1556 "parser.tab.cpp"
+#line 1566 "parser.tab.cpp"
     break;
 
   case 41: /* imm: T_HASH number  */
-#line 325 "parser.y"
+#line 335 "parser.y"
                        { (yyval.ival) = (yyvsp[0].ival); }
-#line 1562 "parser.tab.cpp"
+#line 1572 "parser.tab.cpp"
     break;
 
   case 42: /* imm: T_HASH paren_expr  */
-#line 326 "parser.y"
+#line 336 "parser.y"
                            { (yyval.ival) = (yyvsp[0].ival); }
-#line 1568 "parser.tab.cpp"
+#line 1578 "parser.tab.cpp"
     break;
 
   case 43: /* mem: T_PERCENT number  */
-#line 328 "parser.y"
+#line 338 "parser.y"
                           { (yyval.ival) = (yyvsp[0].ival); }
-#line 1574 "parser.tab.cpp"
+#line 1584 "parser.tab.cpp"
     break;
 
   case 44: /* mem: T_PERCENT paren_expr  */
-#line 329 "parser.y"
+#line 339 "parser.y"
                               { (yyval.ival) = (yyvsp[0].ival); }
-#line 1580 "parser.tab.cpp"
+#line 1590 "parser.tab.cpp"
     break;
 
 
-#line 1584 "parser.tab.cpp"
+#line 1594 "parser.tab.cpp"
 
       default: break;
     }
@@ -1774,28 +1784,17 @@ yyreturn:
   return yyresult;
 }
 
-#line 331 "parser.y"
+#line 341 "parser.y"
 
 
-int yyerror(const char *s)
-{ 
-	std::printf("%s\n", s);
+int yyerror(const char* s)
+{
+	std::cout << s << '\n';
 	return 0;
 }
 
-int __cdecl main(const int argc, const char* const* const argv) noexcept
+int __cdecl main(const int argc, const char** argv) noexcept
 {
-	//statement nterm
-	//{ $$ = assemble($1); }
-	//{ $$ = assemble($1); }
-	//{ $$ = {};           }
-
-	//statementes nterm
-	//{ code[write_head] = $2; ++write_head; }
-
-	//statements_recorded nterm
-	//{ macros[macro_iden].emplace_back($2); }
-
 	switch (argc)
 	{
 	case 2:
@@ -1819,7 +1818,7 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 		};
 
 		//fetch the filepath off the command line
-		std::string fp =  argv[1];
+		std::string fp(argv[1]);
 
 		//open the file specified
 		std::ifstream file(fp);
@@ -1866,7 +1865,13 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 				[&](char c) { return std::isspace(static_cast<unsigned char>(c)); }), extracted.end());
 
 			//tokenize the string using the commas as delimiters
-			macro_list.try_emplace({ { matches[1] }, { matches[1], matches[3], split(extracted, "," } });
+			if (macro_list.try_emplace(std::move(matches[1].str()), { matches[1].str(), matches[3].str(), split(extracted, ",") }).first != macro_list.end()) [[likely]]
+				;
+			else
+			{
+				std::cerr << "Macro " << matches[1].str() << " was multiply defined";
+				return 100;
+			}
 		}
 
 		//then erase the macro source code from the file
@@ -1886,26 +1891,28 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 			auto args = split(extracted, ",");
 
 			//dynamically assert that the invoked macro actually exists
-			try
 			{
-				//verify that the correct number of arguments was supplied
-				auto&& str = matches[1].str();
-				auto m = macro_list.at(str);
-				auto s = m.arguments.size();
-				auto a = args.size();
-
-				if (a != s) [[unlikely]]
+				try
 				{
-					std::cerr << "Macro " << str << " was supplied " << a << " arguments, but takes " << s << " arguments";
-					return 100;
-				}
-			}
+					//verify that the correct number of arguments was supplied
+					auto&& str = matches[1].str();
+					auto m = macro_list.at(str);
+					auto s = m.arguments.size();
+					auto a = args.size();
 
-			//in the case that it doesn't
-			catch (std::out_of_range)
-			{
-				std::cerr << "Macro " << matches[1].str() << " was invoked, but not defined";
-				return 101;
+					if (a != s) [[unlikely]]
+					{
+						std::cerr << "Macro " << str << " was supplied " << a << " arguments, but takes " << s << " arguments";
+						return 110;
+					}
+				}
+
+				//in the case that it doesn't
+				catch (std::out_of_range)
+				{
+					std::cerr << "Macro " << matches[1].str() << " was invoked, but not defined";
+					return 120;
+				}
 			}
 			
 			//iterate over each of the arguments

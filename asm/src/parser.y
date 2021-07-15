@@ -45,6 +45,16 @@ std::vector<std::uint8_t> assemble([[maybe_unused]] const Instruction& insn) noe
 
 }
 
+auto contains(std::map<std::string, std::pair<Qualifier, std::uint16_t>>& idents, std::string key, std::pair<Qualifier, std::uint16_t>&& value) noexcept
+{
+	if (idents.try_emplace(std::move(key), std::move(value)).first != idents.end()) [[likely]]
+		;
+	else
+	{
+		std::cerr << "Identifier " << key.c_str() << " was multiply defined";
+		std::exit(50);
+	}
+}
 
 std::uint16_t ident2int(const std::string& str, std::map<std::string, std::pair<Qualifier, std::uint16_t>>& idents) noexcept
 {
@@ -245,7 +255,7 @@ directive: T_ORIGIN number {
 						   }
 |		   T_ALIAS8 T_IDENTIFIER T_COLON expression {
 														//identifiers[$2] = std::make_pair(Qualifier::Value8, $4);
-														contains(identifiers, $2, { Qualifier::Value8, $4 });
+														contains(identifiers, $2, { Qualifier::Value8, $4 }); 
 														code[write_head] = static_cast<std::uint8_t>($4);
 														++write_head;
 													}
@@ -276,8 +286,8 @@ directive: T_ORIGIN number {
 
 											auto chars = $3;
 											auto count = (std::strlen(chars) + 1);
-											std::memcpy(&code[write_head], &chars, count)
-											write_head += count;
+											std::memcpy(&code[write_head], &chars, count);
+											write_head += static_cast<std::uint16_t>(count);
 										 };
 
 
@@ -330,25 +340,14 @@ mem: T_PERCENT number     { $$ = $2; }
 
 %%
 
-int yyerror(const char *s)
-{ 
-	std::printf("%s\n", s);
+int yyerror(const char* s)
+{
+	std::cout << s << '\n';
 	return 0;
 }
 
-int __cdecl main(const int argc, const char* const* const argv) noexcept
+int __cdecl main(const int argc, const char** argv) noexcept
 {
-	//statement nterm
-	//{ $$ = assemble($1); }
-	//{ $$ = assemble($1); }
-	//{ $$ = {};           }
-
-	//statementes nterm
-	//{ code[write_head] = $2; ++write_head; }
-
-	//statements_recorded nterm
-	//{ macros[macro_iden].emplace_back($2); }
-
 	switch (argc)
 	{
 	case 2:
@@ -372,7 +371,7 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 		};
 
 		//fetch the filepath off the command line
-		std::string fp =  argv[1];
+		std::string fp(argv[1]);
 
 		//open the file specified
 		std::ifstream file(fp);
@@ -419,7 +418,13 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 				[&](char c) { return std::isspace(static_cast<unsigned char>(c)); }), extracted.end());
 
 			//tokenize the string using the commas as delimiters
-			macro_list.try_emplace({ { matches[1] }, { matches[1], matches[3], split(extracted, "," } });
+			if (macro_list.try_emplace(std::move(matches[1].str()), { matches[1].str(), matches[3].str(), split(extracted, ",") }).first != macro_list.end()) [[likely]]
+				;
+			else
+			{
+				std::cerr << "Macro " << matches[1].str() << " was multiply defined";
+				return 100;
+			}
 		}
 
 		//then erase the macro source code from the file
@@ -439,26 +444,28 @@ int __cdecl main(const int argc, const char* const* const argv) noexcept
 			auto args = split(extracted, ",");
 
 			//dynamically assert that the invoked macro actually exists
-			try
 			{
-				//verify that the correct number of arguments was supplied
-				auto&& str = matches[1].str();
-				auto m = macro_list.at(str);
-				auto s = m.arguments.size();
-				auto a = args.size();
-
-				if (a != s) [[unlikely]]
+				try
 				{
-					std::cerr << "Macro " << str << " was supplied " << a << " arguments, but takes " << s << " arguments";
-					return 100;
-				}
-			}
+					//verify that the correct number of arguments was supplied
+					auto&& str = matches[1].str();
+					auto m = macro_list.at(str);
+					auto s = m.arguments.size();
+					auto a = args.size();
 
-			//in the case that it doesn't
-			catch (std::out_of_range)
-			{
-				std::cerr << "Macro " << matches[1].str() << " was invoked, but not defined";
-				return 101;
+					if (a != s) [[unlikely]]
+					{
+						std::cerr << "Macro " << str << " was supplied " << a << " arguments, but takes " << s << " arguments";
+						return 110;
+					}
+				}
+
+				//in the case that it doesn't
+				catch (std::out_of_range)
+				{
+					std::cerr << "Macro " << matches[1].str() << " was invoked, but not defined";
+					return 120;
+				}
 			}
 			
 			//iterate over each of the arguments
