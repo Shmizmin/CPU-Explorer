@@ -5,8 +5,7 @@
 
 #include <map>
 #include <regex>
-#include <tuple>
-#include <limits>
+//#include <limits>
 #include <vector>
 #include <utility>
 #include <fstream>
@@ -40,12 +39,12 @@ enum class Qualifier
 	Variable16,
 };
 
-std::vector<std::uint8_t> assemble([[maybe_unused]] const Instruction& insn) noexcept
-{
+//std::vector<std::uint8_t> assemble([[maybe_unused]] const Instruction& insn) noexcept
+//{
+//
+//}
 
-}
-
-auto contains(std::map<std::string, std::pair<Qualifier, std::uint16_t>>& idents, std::string key, std::pair<Qualifier, std::uint16_t>&& value) noexcept
+auto contains(std::map<std::string, std::pair<Qualifier, std::uint16_t>>& idents, std::string key, std::pair<Qualifier, std::uint16_t> value) noexcept
 {
 	if (idents.try_emplace(std::move(key), std::move(value)).first != idents.end()) [[likely]]
 		;
@@ -64,12 +63,12 @@ std::uint16_t ident2int(const std::string& str, std::map<std::string, std::pair<
 	{
 	case Qualifier::Macro:
 		std::cout << "Macro identifiers cannot be converted implicitly to integer";
-		std::exit(5);
+		std::exit(11);
 		break;
 
 	case Qualifier::Ascii:
 		std::cout << "Ascii identifiers cannot be converted implicitly to integer";
-		std::exit(5);
+		std::exit(12);
 		break;
 
 	case Qualifier::Value8:  [[fallthrough]];
@@ -82,9 +81,15 @@ std::uint16_t ident2int(const std::string& str, std::map<std::string, std::pair<
 		break;
 
 	case Qualifier::Variable16:
+	{
 		auto lower = code[static_cast<int>(res.second) + 0];
 		auto upper = code[static_cast<int>(res.second) + 1];
-		return static_cast<std::uint16_t>(static_cast<std::uint16_t>(lower) | (static_cast<std::uint16_t>(upper) << 8));
+		return (static_cast<std::uint16_t>(lower) | (static_cast<std::uint16_t>(upper) << 8));
+	}
+
+	default:
+		std::cerr << "Unrecognized identifier with qualifier type ID of " << static_cast<int>(res.first) << " was encountered";
+		std::exit(13);
 	}
 }
 
@@ -255,13 +260,13 @@ directive: T_ORIGIN number {
 						   }
 |		   T_ALIAS8 T_IDENTIFIER T_COLON expression {
 														//identifiers[$2] = std::make_pair(Qualifier::Value8, $4);
-														contains(identifiers, $2, { Qualifier::Value8, $4 }); 
+														contains(identifiers, $2, { Qualifier::Value8, static_cast<std::uint16_t>($4) }); 
 														code[write_head] = static_cast<std::uint8_t>($4);
 														++write_head;
 													}
 |		   T_ALIAS16 T_IDENTIFIER T_EQUAL expression {
 														//identifiers[$2] = std::make_pair(Qualifier::Value16, $4);
-														contains(identifiers, $2, { Qualifier::Value16, $4 });
+														contains(identifiers, $2, { Qualifier::Value16, static_cast<std::uint16_t>($4) });
 														code[write_head] = static_cast<std::uint8_t>($4 & 0x00FF);
 														++write_head;
 														code[write_head] = static_cast<std::uint8_t>($4 & 0xFF00);
@@ -282,7 +287,8 @@ directive: T_ORIGIN number {
 													++write_head;
 												  }
 |		   T_ASCII T_IDENTIFIER T_STRING {
-											identifiers[$2] = std::make_pair(Qualifier::Ascii, write_head);
+											contains(identifiers, $2, { Qualifier::Ascii, write_head });
+											//identifiers[$2] = std::make_pair(Qualifier::Ascii, write_head);
 
 											auto chars = $3;
 											auto count = (std::strlen(chars) + 1);
@@ -370,6 +376,18 @@ int __cdecl main(const int argc, const char** argv) noexcept
 			return res;
 		};
 
+		//local string character escape function to use
+		auto replace = [&](std::string& str, const std::string& from, const std::string& to) noexcept
+		{
+			if (from.empty()) return;
+			std::size_t start_pos = 0;
+			while((start_pos = str.find(from, start_pos)) != std::string::npos)
+			{
+				str.replace(start_pos, from.length(), to);
+				start_pos += to.length();
+			}
+		};
+
 		//fetch the filepath off the command line
 		std::string fp(argv[1]);
 
@@ -402,7 +420,10 @@ int __cdecl main(const int argc, const char** argv) noexcept
 		std::regex rx_macro_decl(R"(\.macro ([a-zA-Z_]\w*)\(([^\)]*)\)\s?\{([^\}]*)\})");
 
 		//detects a valid macro invokation
-		std::regex rx_macro_invk(R"(([a-zA-Z_]\w*)\([^\)]*\))");
+		std::regex rx_macro_invk(R"(([a-zA-Z_]\w*)\(([^\)]*)\))");
+
+		//detects a comment within a statement
+		std::regex rx_stmt_cmmnt(R"((\s*([^\;]*)(\;(.*)?)?\s+))");
 
 		//will store each of the string regex matches that are made during the search
 		std::smatch matches{};
@@ -413,22 +434,29 @@ int __cdecl main(const int argc, const char** argv) noexcept
 			//move the argument contents to a new string
 			auto extracted = std::move(matches[2].str());
 
+			//remove any comments that exist in the macro statements
+			auto statements = std::regex_replace(matches[3].str(), rx_stmt_cmmnt, "$2\n");
+
 			//remove any whitespace contained in the arguments list
-			std::erase(std::remove_if(extracted.begin(), extracted.end(),
+			extracted.erase(std::remove_if(extracted.begin(), extracted.end(),
 				[&](char c) { return std::isspace(static_cast<unsigned char>(c)); }), extracted.end());
 
 			//tokenize the string using the commas as delimiters
-			if (macro_list.try_emplace(std::move(matches[1].str()), { matches[1].str(), matches[3].str(), split(extracted, ",") }).first != macro_list.end()) [[likely]]
-				;
+			if (macro_list.try_emplace(std::move(matches[1].str()), Macro{ matches[1].str(), statements, split(extracted, ",") }).first != macro_list.end()) [[likely]]
+			{
+				//then erase the macro source code from the 
+				replace(buffer, matches[0].str(), "");
+			}
 			else
 			{
+				//if there was an errror, report it
 				std::cerr << "Macro " << matches[1].str() << " was multiply defined";
 				return 100;
 			}
 		}
 
 		//then erase the macro source code from the file
-		std::regex_replace(buffer, rx_macro_decl, "");
+		//buffer = std::regex_replace(buffer, rx_macro_decl, "");
 
 		//discover all macro invokations present in the source file
 		while (std::regex_search(buffer, matches, rx_macro_invk))
@@ -437,7 +465,7 @@ int __cdecl main(const int argc, const char** argv) noexcept
 			auto extracted = std::move(matches[2].str());
 
 			//remove any whitespace contained in the arguments list
-			std::erase(std::remove_if(extracted.begin(), extracted.end(),
+			extracted.erase(std::remove_if(extracted.begin(), extracted.end(),
 				[&](char c) { return std::isspace(static_cast<unsigned char>(c)); }), extracted.end());
 
 			//tokenize the string using the commas as delimiters
@@ -461,18 +489,28 @@ int __cdecl main(const int argc, const char** argv) noexcept
 				}
 
 				//in the case that it doesn't
-				catch (std::out_of_range)
+				catch (std::out_of_range&)
 				{
 					std::cerr << "Macro " << matches[1].str() << " was invoked, but not defined";
 					return 120;
 				}
 			}
 			
+			//copy the whole invokation string for loop usage
+ 			auto whole = matches[0].str();
+
+			//copy the identifier string for loop usage
+			auto ident = matches[1].str();
+
 			//iterate over each of the arguments
 			for (auto i = 0; i < args.size(); ++i)
 			{
-				std::regex_replace(buffer, macro_list.at(matches[1]).arguments[i], args[i]);
+				//perform the macro expansion using simple textual replacement
+				replace(macro_list.at(ident).statements, macro_list.at(ident).arguments[i], args[i]);
 			}
+
+			//then commit the changes to the file buffer
+			replace(buffer, whole, macro_list.at(ident).statements);
 		}
 
 		//lex and parse the file contents
