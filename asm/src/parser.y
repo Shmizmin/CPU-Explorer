@@ -5,7 +5,6 @@
 
 #include <map>
 #include <regex>
-//#include <limits>
 #include <vector>
 #include <utility>
 #include <fstream>
@@ -38,11 +37,6 @@ enum class Qualifier
 	Variable8,
 	Variable16,
 };
-
-//std::vector<std::uint8_t> assemble([[maybe_unused]] const Instruction& insn) noexcept
-//{
-//
-//}
 
 auto contains(std::map<std::string, std::pair<Qualifier, std::uint16_t>>& idents, std::string key, std::pair<Qualifier, std::uint16_t> value) noexcept
 {
@@ -259,13 +253,11 @@ directive: T_ORIGIN number {
 								write_head = static_cast<std::uint16_t>($2);
 						   }
 |		   T_ALIAS8 T_IDENTIFIER T_COLON expression {
-														//identifiers[$2] = std::make_pair(Qualifier::Value8, $4);
 														contains(identifiers, $2, { Qualifier::Value8, static_cast<std::uint16_t>($4) }); 
 														code[write_head] = static_cast<std::uint8_t>($4);
 														++write_head;
 													}
 |		   T_ALIAS16 T_IDENTIFIER T_EQUAL expression {
-														//identifiers[$2] = std::make_pair(Qualifier::Value16, $4);
 														contains(identifiers, $2, { Qualifier::Value16, static_cast<std::uint16_t>($4) });
 														code[write_head] = static_cast<std::uint8_t>($4 & 0x00FF);
 														++write_head;
@@ -273,7 +265,6 @@ directive: T_ORIGIN number {
 														++write_head;
 													}
 |		   T_VAR16 T_IDENTIFIER T_EQUAL expression {
-														//identifiers[$2] = std::make_pair(Qualifier::Variable16, $4);
 														contains(identifiers, $2, { Qualifier::Variable16, write_head });
 														code[write_head] = static_cast<std::uint8_t>($4 & 0x00FF);
 														++write_head;
@@ -281,15 +272,12 @@ directive: T_ORIGIN number {
 														++write_head;
 												   }
 |		   T_VAR8 T_IDENTIFIER T_EQUAL expression {
-													//identifiers[$2] = std::make_pair(Qualifier::Variable8, $4);
 													contains(identifiers, $2, { Qualifier::Variable8, write_head });
 													code[write_head] = static_cast<std::uint8_t>($4);
 													++write_head;
 												  }
 |		   T_ASCII T_IDENTIFIER T_STRING {
 											contains(identifiers, $2, { Qualifier::Ascii, write_head });
-											//identifiers[$2] = std::make_pair(Qualifier::Ascii, write_head);
-
 											auto chars = $3;
 											auto count = (std::strlen(chars) + 1);
 											std::memcpy(&code[write_head], &chars, count);
@@ -454,9 +442,6 @@ int __cdecl main(const int argc, const char** argv) noexcept
 				return 100;
 			}
 		}
-
-		//then erase the macro source code from the file
-		//buffer = std::regex_replace(buffer, rx_macro_decl, "");
 
 		//discover all macro invokations present in the source file
 		while (std::regex_search(buffer, matches, rx_macro_invk))
