@@ -7,6 +7,7 @@
 #include <regex>
 #include <vector>
 #include <utility>
+#include <cassert>
 #include <fstream>
 #include <optional>
 #include <iostream>
@@ -385,7 +386,7 @@ int __cdecl main(const int argc, const char** argv) noexcept
 		//assert that the file supplied is readable
 		if (!file.good())
 		{
-			std::cerr << "Failed to open the specified file";
+			std::cerr << "Failed to open the specified file for reading";
 			return 2;
 		}
 
@@ -401,102 +402,128 @@ int __cdecl main(const int argc, const char** argv) noexcept
 		//ties together each basic component of a macro
 		struct Macro { std::string identifier, statements; std::vector<std::string> arguments; };
 
-		//local cache of macros that are found
-		std::map<std::string, Macro> macro_list{};
+		//for freeing the macro code segment after preprocessing
+		{
+			//local cache of macros that are found
+			std::map<std::string, Macro> macro_list{};
 
-		//detects a valid macro declaration
-		std::regex rx_macro_decl(R"(\.macro ([a-zA-Z_]\w*)\(([^\)]*)\)\s?\{([^\}]*)\})");
+			//detects a valid macro declaration
+			std::regex rx_macro_decl(R"(\.macro ([a-zA-Z_]\w*)\(([^\)]*)\)\s?\{([^\}]*)\})");
 
-		//detects a valid macro invokation
-		std::regex rx_macro_invk(R"(([a-zA-Z_]\w*)\(([^\)]*)\))");
+			//detects a valid macro invokation
+			std::regex rx_macro_invk(R"(([a-zA-Z_]\w*)\(([^\)]*)\))");
 
-		//detects a comment within a statement
-		std::regex rx_stmt_cmmnt(R"((\s*([^\;]*)(\;(.*)?)?\s+))");
+			//detects a comment within a statement
+			std::regex rx_stmt_cmmnt(R"((\s*([^\;]*)(\;(.*)?)?\s+))");
+
+			//will store each of the string regex matches that are made during the search
+			std::smatch matches{};
+
+			//discover all macro declarations present in the source file
+			while (std::regex_search(buffer, matches, rx_macro_decl))
+			{
+				//move the argument contents to a new string
+				auto extracted = std::move(matches[2].str());
+
+				//remove any comments that exist in the macro statements
+				auto statements = std::regex_replace(matches[3].str(), rx_stmt_cmmnt, "$2\n");
+
+				//remove any whitespace contained in the arguments list
+				extracted.erase(std::remove_if(extracted.begin(), extracted.end(),
+					[&](char c) { return std::isspace(static_cast<unsigned char>(c)); }), extracted.end());
+
+				//tokenize the string using the commas as delimiters
+				if (macro_list.try_emplace(std::move(matches[1].str()), Macro{ matches[1].str(), statements, split(extracted, ",") }).first != macro_list.end()) [[likely]]
+				{
+					//then erase the macro source code from the 
+					replace(buffer, matches[0].str(), "");
+				}
+				else
+				{
+					//if there was an errror, report it
+					std::cerr << "Macro " << matches[1].str() << " was multiply defined";
+					return 100;
+				}
+			}
+
+			//discover all macro invokations present in the source file
+			while (std::regex_search(buffer, matches, rx_macro_invk))
+			{
+				//move the argument contents to a new string
+				auto extracted = std::move(matches[2].str());
+
+				//remove any whitespace contained in the arguments list
+				extracted.erase(std::remove_if(extracted.begin(), extracted.end(),
+					[&](char c) { return std::isspace(static_cast<unsigned char>(c)); }), extracted.end());
+
+				//tokenize the string using the commas as delimiters
+				auto args = split(extracted, ",");
+
+				//dynamically assert that the invoked macro actually exists
+				{
+					try
+					{
+						//verify that the correct number of arguments was supplied
+						auto&& str = matches[1].str();
+						auto m = macro_list.at(str);
+						auto s = m.arguments.size();
+						auto a = args.size();
+
+						if (a != s) [[unlikely]]
+						{
+							std::cerr << "Macro " << str << " was supplied " << a << " arguments, but takes " << s << " arguments";
+							return 110;
+						}
+					}
+
+					//in the case that it doesn't
+					catch (std::out_of_range&)
+					{
+						std::cerr << "Macro " << matches[1].str() << " was invoked, but not defined";
+						return 120;
+					}
+				}
+				
+				//copy the whole invokation string for loop usage
+ 				auto whole = matches[0].str();
+
+				//copy the identifier string for loop usage
+				auto ident = matches[1].str();
+
+				//iterate over each of the arguments
+				for (auto i = 0; i < args.size(); ++i)
+				{
+					//perform the macro expansion using simple textual replacement
+					replace(macro_list.at(ident).statements, macro_list.at(ident).arguments[i], args[i]);
+				}
+
+				//then commit the changes to the file buffer
+				replace(buffer, whole, macro_list.at(ident).statements);
+			}
+		}
+
+		//saves the preprocessed source out to disk
+		{
+			auto* fptr = std::fopen((fp + ".pps").c_str(), "w");
+			
+			if (fptr == NULL)
+			{
+				std::cerr << "Failed to open the specified file for writing";
+				return 6;
+			}
+
+			std::fwrite(buffer.data(), sizeof(buffer[0]), buffer.size(), fptr);
+			std::fclose(fptr);
+		}
+
+		//detects a valid label declaration
+		std::regex rx_label_decl(R"(^([a-zA-Z_][a-zA-Z0-9_]*)\:\s*(?:\;.*)?$)");
 
 		//will store each of the string regex matches that are made during the search
 		std::smatch matches{};
 
-		//discover all macro declarations present in the source file
-		while (std::regex_search(buffer, matches, rx_macro_decl))
-		{
-			//move the argument contents to a new string
-			auto extracted = std::move(matches[2].str());
-
-			//remove any comments that exist in the macro statements
-			auto statements = std::regex_replace(matches[3].str(), rx_stmt_cmmnt, "$2\n");
-
-			//remove any whitespace contained in the arguments list
-			extracted.erase(std::remove_if(extracted.begin(), extracted.end(),
-				[&](char c) { return std::isspace(static_cast<unsigned char>(c)); }), extracted.end());
-
-			//tokenize the string using the commas as delimiters
-			if (macro_list.try_emplace(std::move(matches[1].str()), Macro{ matches[1].str(), statements, split(extracted, ",") }).first != macro_list.end()) [[likely]]
-			{
-				//then erase the macro source code from the 
-				replace(buffer, matches[0].str(), "");
-			}
-			else
-			{
-				//if there was an errror, report it
-				std::cerr << "Macro " << matches[1].str() << " was multiply defined";
-				return 100;
-			}
-		}
-
-		//discover all macro invokations present in the source file
-		while (std::regex_search(buffer, matches, rx_macro_invk))
-		{
-			//move the argument contents to a new string
-			auto extracted = std::move(matches[2].str());
-
-			//remove any whitespace contained in the arguments list
-			extracted.erase(std::remove_if(extracted.begin(), extracted.end(),
-				[&](char c) { return std::isspace(static_cast<unsigned char>(c)); }), extracted.end());
-
-			//tokenize the string using the commas as delimiters
-			auto args = split(extracted, ",");
-
-			//dynamically assert that the invoked macro actually exists
-			{
-				try
-				{
-					//verify that the correct number of arguments was supplied
-					auto&& str = matches[1].str();
-					auto m = macro_list.at(str);
-					auto s = m.arguments.size();
-					auto a = args.size();
-
-					if (a != s) [[unlikely]]
-					{
-						std::cerr << "Macro " << str << " was supplied " << a << " arguments, but takes " << s << " arguments";
-						return 110;
-					}
-				}
-
-				//in the case that it doesn't
-				catch (std::out_of_range&)
-				{
-					std::cerr << "Macro " << matches[1].str() << " was invoked, but not defined";
-					return 120;
-				}
-			}
-			
-			//copy the whole invokation string for loop usage
- 			auto whole = matches[0].str();
-
-			//copy the identifier string for loop usage
-			auto ident = matches[1].str();
-
-			//iterate over each of the arguments
-			for (auto i = 0; i < args.size(); ++i)
-			{
-				//perform the macro expansion using simple textual replacement
-				replace(macro_list.at(ident).statements, macro_list.at(ident).arguments[i], args[i]);
-			}
-
-			//then commit the changes to the file buffer
-			replace(buffer, whole, macro_list.at(ident).statements);
-		}
+		//discover all loop identifiers
+		while (std::regex_search(buffer, ))
 
 		//lex and parse the file contents
 		do
