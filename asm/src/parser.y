@@ -130,6 +130,7 @@ int yyerror(const char* s);
 %left UNARY
 
 %start program
+%locations
 
 %{
 	enum class Mode : unsigned
@@ -502,19 +503,31 @@ int __cdecl main(const int argc, const char** argv) noexcept
 			}
 		}
 
+		//obtains a local
+		auto path = (fp + ".pps").c_str();
+
 		//saves the preprocessed source out to disk
 		{
-			auto* fptr = std::fopen((fp + ".pps").c_str(), "w");
+			//attempts to open up a file handle
+			auto* fptr = std::fopen(path, "w");
 			
+			//errors if not opened correctly
 			if (fptr == NULL)
 			{
 				std::cerr << "Failed to open the specified file for writing";
 				return 6;
 			}
 
+			//
 			std::fwrite(buffer.data(), sizeof(buffer[0]), buffer.size(), fptr);
 			std::fclose(fptr);
 		}
+
+		//reads out the saved preprocessed source
+		auto* fptr = std::fopen(path, "r");
+		auto  size = std::filesystem::file_size(path);
+		std::string text(size, '\0');
+		(void)std::fread(text.data(), sizeof(text[0]), size, fptr);
 
 		//detects a valid label declaration
 		std::regex rx_label_decl(R"(^([a-zA-Z_][a-zA-Z0-9_]*)\:\s*(?:\;.*)?$)");
@@ -523,7 +536,10 @@ int __cdecl main(const int argc, const char** argv) noexcept
 		std::smatch matches{};
 
 		//discover all loop identifiers
-		while (std::regex_search(buffer, ))
+		while (std::regex_search(text, matches, rx_label_decl))
+		{
+			
+		}
 
 		//lex and parse the file contents
 		do

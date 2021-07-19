@@ -249,7 +249,7 @@ typedef enum yysymbol_kind_t yysymbol_kind_t;
 
 
 /* Second part of user prologue.  */
-#line 134 "parser.y"
+#line 135 "parser.y"
 
 	enum class Mode : unsigned
 	{
@@ -609,13 +609,15 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
-         || (defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
+         || (defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL \
+             && defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
 
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
   yy_state_t yyss_alloc;
   YYSTYPE yyvs_alloc;
+  YYLTYPE yyls_alloc;
 };
 
 /* The size of the maximum gap between one aligned stack and the next.  */
@@ -624,8 +626,9 @@ union yyalloc
 /* The size of an array large to enough to hold all stacks, each with
    N elements.  */
 # define YYSTACK_BYTES(N) \
-     ((N) * (YYSIZEOF (yy_state_t) + YYSIZEOF (YYSTYPE)) \
-      + YYSTACK_GAP_MAXIMUM)
+     ((N) * (YYSIZEOF (yy_state_t) + YYSIZEOF (YYSTYPE) \
+             + YYSIZEOF (YYLTYPE)) \
+      + 2 * YYSTACK_GAP_MAXIMUM)
 
 # define YYCOPY_NEEDED 1
 
@@ -732,11 +735,11 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   251,   251,   253,   256,   261,   268,   275,   280,   289,
-     290,   292,   293,   295,   296,   297,   298,   299,   300,   301,
-     302,   303,   304,   305,   306,   307,   309,   311,   312,   313,
-     315,   316,   317,   319,   320,   321,   323,   324,   325,   327,
-     328,   330,   331,   333,   334
+       0,   252,   252,   254,   257,   262,   269,   276,   281,   290,
+     291,   293,   294,   296,   297,   298,   299,   300,   301,   302,
+     303,   304,   305,   306,   307,   308,   310,   312,   313,   314,
+     316,   317,   318,   320,   321,   322,   324,   325,   326,   328,
+     329,   331,   332,   334,   335
 };
 #endif
 
@@ -940,6 +943,32 @@ enum { YYENOMEM = -2 };
    Use YYerror or YYUNDEF. */
 #define YYERRCODE YYUNDEF
 
+/* YYLLOC_DEFAULT -- Set CURRENT to span from RHS[1] to RHS[N].
+   If N is 0, then set CURRENT to the empty location which ends
+   the previous symbol: RHS[0] (always defined).  */
+
+#ifndef YYLLOC_DEFAULT
+# define YYLLOC_DEFAULT(Current, Rhs, N)                                \
+    do                                                                  \
+      if (N)                                                            \
+        {                                                               \
+          (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;        \
+          (Current).first_column = YYRHSLOC (Rhs, 1).first_column;      \
+          (Current).last_line    = YYRHSLOC (Rhs, N).last_line;         \
+          (Current).last_column  = YYRHSLOC (Rhs, N).last_column;       \
+        }                                                               \
+      else                                                              \
+        {                                                               \
+          (Current).first_line   = (Current).last_line   =              \
+            YYRHSLOC (Rhs, 0).last_line;                                \
+          (Current).first_column = (Current).last_column =              \
+            YYRHSLOC (Rhs, 0).last_column;                              \
+        }                                                               \
+    while (0)
+#endif
+
+#define YYRHSLOC(Rhs, K) ((Rhs)[K])
+
 
 /* Enable debugging if requested.  */
 #if YYDEBUG
@@ -955,10 +984,49 @@ do {                                            \
     YYFPRINTF Args;                             \
 } while (0)
 
-/* This macro is provided for backward compatibility. */
+
+/* YY_LOCATION_PRINT -- Print the location on the stream.
+   This macro was not mandated originally: define only if we know
+   we won't break user code: when these are the locations we know.  */
+
 # ifndef YY_LOCATION_PRINT
-#  define YY_LOCATION_PRINT(File, Loc) ((void) 0)
-# endif
+#  if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
+
+/* Print *YYLOCP on YYO.  Private, do not rely on its existence. */
+
+YY_ATTRIBUTE_UNUSED
+static int
+yy_location_print_ (FILE *yyo, YYLTYPE const * const yylocp)
+{
+  int res = 0;
+  int end_col = 0 != yylocp->last_column ? yylocp->last_column - 1 : 0;
+  if (0 <= yylocp->first_line)
+    {
+      res += YYFPRINTF (yyo, "%d", yylocp->first_line);
+      if (0 <= yylocp->first_column)
+        res += YYFPRINTF (yyo, ".%d", yylocp->first_column);
+    }
+  if (0 <= yylocp->last_line)
+    {
+      if (yylocp->first_line < yylocp->last_line)
+        {
+          res += YYFPRINTF (yyo, "-%d", yylocp->last_line);
+          if (0 <= end_col)
+            res += YYFPRINTF (yyo, ".%d", end_col);
+        }
+      else if (0 <= end_col && yylocp->first_column < end_col)
+        res += YYFPRINTF (yyo, "-%d", end_col);
+    }
+  return res;
+ }
+
+#   define YY_LOCATION_PRINT(File, Loc)          \
+  yy_location_print_ (File, &(Loc))
+
+#  else
+#   define YY_LOCATION_PRINT(File, Loc) ((void) 0)
+#  endif
+# endif /* !defined YY_LOCATION_PRINT */
 
 
 # define YY_SYMBOL_PRINT(Title, Kind, Value, Location)                    \
@@ -967,7 +1035,7 @@ do {                                                                      \
     {                                                                     \
       YYFPRINTF (stderr, "%s ", Title);                                   \
       yy_symbol_print (stderr,                                            \
-                  Kind, Value); \
+                  Kind, Value, Location); \
       YYFPRINTF (stderr, "\n");                                           \
     }                                                                     \
 } while (0)
@@ -979,10 +1047,11 @@ do {                                                                      \
 
 static void
 yy_symbol_value_print (FILE *yyo,
-                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep)
+                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp)
 {
   FILE *yyoutput = yyo;
   YYUSE (yyoutput);
+  YYUSE (yylocationp);
   if (!yyvaluep)
     return;
 # ifdef YYPRINT
@@ -1001,12 +1070,14 @@ yy_symbol_value_print (FILE *yyo,
 
 static void
 yy_symbol_print (FILE *yyo,
-                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep)
+                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp)
 {
   YYFPRINTF (yyo, "%s %s (",
              yykind < YYNTOKENS ? "token" : "nterm", yysymbol_name (yykind));
 
-  yy_symbol_value_print (yyo, yykind, yyvaluep);
+  YY_LOCATION_PRINT (yyo, *yylocationp);
+  YYFPRINTF (yyo, ": ");
+  yy_symbol_value_print (yyo, yykind, yyvaluep, yylocationp);
   YYFPRINTF (yyo, ")");
 }
 
@@ -1039,7 +1110,7 @@ do {                                                            \
 `------------------------------------------------*/
 
 static void
-yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
+yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp, YYLTYPE *yylsp,
                  int yyrule)
 {
   int yylno = yyrline[yyrule];
@@ -1053,7 +1124,8 @@ yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
       YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr,
                        YY_ACCESSING_SYMBOL (+yyssp[yyi + 1 - yynrhs]),
-                       &yyvsp[(yyi + 1) - (yynrhs)]);
+                       &yyvsp[(yyi + 1) - (yynrhs)],
+                       &(yylsp[(yyi + 1) - (yynrhs)]));
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -1061,7 +1133,7 @@ yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
 # define YY_REDUCE_PRINT(Rule)          \
 do {                                    \
   if (yydebug)                          \
-    yy_reduce_print (yyssp, yyvsp, Rule); \
+    yy_reduce_print (yyssp, yyvsp, yylsp, Rule); \
 } while (0)
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1102,9 +1174,10 @@ int yydebug;
 
 static void
 yydestruct (const char *yymsg,
-            yysymbol_kind_t yykind, YYSTYPE *yyvaluep)
+            yysymbol_kind_t yykind, YYSTYPE *yyvaluep, YYLTYPE *yylocationp)
 {
   YYUSE (yyvaluep);
+  YYUSE (yylocationp);
   if (!yymsg)
     yymsg = "Deleting";
   YY_SYMBOL_PRINT (yymsg, yykind, yyvaluep, yylocationp);
@@ -1120,6 +1193,12 @@ int yychar;
 
 /* The semantic value of the lookahead symbol.  */
 YYSTYPE yylval;
+/* Location data for the lookahead symbol.  */
+YYLTYPE yylloc
+# if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
+  = { 1, 1, 1, 1 }
+# endif
+;
 /* Number of syntax errors so far.  */
 int yynerrs;
 
@@ -1153,6 +1232,11 @@ yyparse (void)
     YYSTYPE *yyvs = yyvsa;
     YYSTYPE *yyvsp = yyvs;
 
+    /* The location stack: array, bottom, top.  */
+    YYLTYPE yylsa[YYINITDEPTH];
+    YYLTYPE *yyls = yylsa;
+    YYLTYPE *yylsp = yyls;
+
   int yyn;
   /* The return value of yyparse.  */
   int yyresult;
@@ -1161,10 +1245,14 @@ yyparse (void)
   /* The variables used to return semantic value and location from the
      action routines.  */
   YYSTYPE yyval;
+  YYLTYPE yyloc;
+
+  /* The locations where the error started and ended.  */
+  YYLTYPE yyerror_range[3];
 
 
 
-#define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
+#define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N), yylsp -= (N))
 
   /* The number of symbols on the RHS of the reduced rule.
      Keep to zero when no symbol should be popped.  */
@@ -1173,6 +1261,7 @@ yyparse (void)
   YYDPRINTF ((stderr, "Starting parse\n"));
 
   yychar = YYEMPTY; /* Cause a token to be read.  */
+  yylsp[0] = yylloc;
   goto yysetstate;
 
 
@@ -1211,6 +1300,7 @@ yysetstate:
            memory.  */
         yy_state_t *yyss1 = yyss;
         YYSTYPE *yyvs1 = yyvs;
+        YYLTYPE *yyls1 = yyls;
 
         /* Each stack pointer address is followed by the size of the
            data in use in that stack, in bytes.  This used to be a
@@ -1219,9 +1309,11 @@ yysetstate:
         yyoverflow (YY_("memory exhausted"),
                     &yyss1, yysize * YYSIZEOF (*yyssp),
                     &yyvs1, yysize * YYSIZEOF (*yyvsp),
+                    &yyls1, yysize * YYSIZEOF (*yylsp),
                     &yystacksize);
         yyss = yyss1;
         yyvs = yyvs1;
+        yyls = yyls1;
       }
 # else /* defined YYSTACK_RELOCATE */
       /* Extend the stack our own way.  */
@@ -1240,6 +1332,7 @@ yysetstate:
           goto yyexhaustedlab;
         YYSTACK_RELOCATE (yyss_alloc, yyss);
         YYSTACK_RELOCATE (yyvs_alloc, yyvs);
+        YYSTACK_RELOCATE (yyls_alloc, yyls);
 #  undef YYSTACK_RELOCATE
         if (yyss1 != yyssa)
           YYSTACK_FREE (yyss1);
@@ -1248,6 +1341,7 @@ yysetstate:
 
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
+      yylsp = yyls + yysize - 1;
 
       YY_IGNORE_USELESS_CAST_BEGIN
       YYDPRINTF ((stderr, "Stack size increased to %ld\n",
@@ -1300,6 +1394,7 @@ yybackup:
          loop in error recovery. */
       yychar = YYUNDEF;
       yytoken = YYSYMBOL_YYerror;
+      yyerror_range[1] = yylloc;
       goto yyerrlab1;
     }
   else
@@ -1333,6 +1428,7 @@ yybackup:
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
   *++yyvsp = yylval;
   YY_IGNORE_MAYBE_UNINITIALIZED_END
+  *++yylsp = yylloc;
 
   /* Discard the shifted token.  */
   yychar = YYEMPTY;
@@ -1366,36 +1462,38 @@ yyreduce:
      GCC warning that YYVAL may be used uninitialized.  */
   yyval = yyvsp[1-yylen];
 
-
+  /* Default location. */
+  YYLLOC_DEFAULT (yyloc, (yylsp - yylen), yylen);
+  yyerror_range[1] = yyloc;
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
   case 2: /* program: statements  */
-#line 251 "parser.y"
+#line 252 "parser.y"
                     { std::puts("Parsing..."); }
-#line 1377 "parser.tab.cpp"
+#line 1475 "parser.tab.cpp"
     break;
 
   case 3: /* directive: T_ORIGIN number  */
-#line 253 "parser.y"
+#line 254 "parser.y"
                            {
 								write_head = static_cast<std::uint16_t>((yyvsp[0].ival));
 						   }
-#line 1385 "parser.tab.cpp"
+#line 1483 "parser.tab.cpp"
     break;
 
   case 4: /* directive: T_ALIAS8 T_IDENTIFIER T_COLON expression  */
-#line 256 "parser.y"
+#line 257 "parser.y"
                                                             {
 														contains(identifiers, (yyvsp[-2].sval), { Qualifier::Value8, static_cast<std::uint16_t>((yyvsp[0].ival)) }); 
 														code[write_head] = static_cast<std::uint8_t>((yyvsp[0].ival));
 														++write_head;
 													}
-#line 1395 "parser.tab.cpp"
+#line 1493 "parser.tab.cpp"
     break;
 
   case 5: /* directive: T_ALIAS16 T_IDENTIFIER T_EQUAL expression  */
-#line 261 "parser.y"
+#line 262 "parser.y"
                                                              {
 														contains(identifiers, (yyvsp[-2].sval), { Qualifier::Value16, static_cast<std::uint16_t>((yyvsp[0].ival)) });
 														code[write_head] = static_cast<std::uint8_t>((yyvsp[0].ival) & 0x00FF);
@@ -1403,11 +1501,11 @@ yyreduce:
 														code[write_head] = static_cast<std::uint8_t>((yyvsp[0].ival) & 0xFF00);
 														++write_head;
 													}
-#line 1407 "parser.tab.cpp"
+#line 1505 "parser.tab.cpp"
     break;
 
   case 6: /* directive: T_VAR16 T_IDENTIFIER T_EQUAL expression  */
-#line 268 "parser.y"
+#line 269 "parser.y"
                                                            {
 														contains(identifiers, (yyvsp[-2].sval), { Qualifier::Variable16, write_head });
 														code[write_head] = static_cast<std::uint8_t>((yyvsp[0].ival) & 0x00FF);
@@ -1415,21 +1513,21 @@ yyreduce:
 														code[write_head] = static_cast<std::uint8_t>((yyvsp[0].ival) & 0xFF00);
 														++write_head;
 												   }
-#line 1419 "parser.tab.cpp"
+#line 1517 "parser.tab.cpp"
     break;
 
   case 7: /* directive: T_VAR8 T_IDENTIFIER T_EQUAL expression  */
-#line 275 "parser.y"
+#line 276 "parser.y"
                                                           {
 													contains(identifiers, (yyvsp[-2].sval), { Qualifier::Variable8, write_head });
 													code[write_head] = static_cast<std::uint8_t>((yyvsp[0].ival));
 													++write_head;
 												  }
-#line 1429 "parser.tab.cpp"
+#line 1527 "parser.tab.cpp"
     break;
 
   case 8: /* directive: T_ASCII T_IDENTIFIER T_STRING  */
-#line 280 "parser.y"
+#line 281 "parser.y"
                                                  {
 											contains(identifiers, (yyvsp[-1].sval), { Qualifier::Ascii, write_head });
 											auto chars = (yyvsp[0].sval);
@@ -1437,155 +1535,155 @@ yyreduce:
 											std::memcpy(&code[write_head], &chars, count);
 											write_head += static_cast<std::uint16_t>(count);
 										 }
-#line 1441 "parser.tab.cpp"
+#line 1539 "parser.tab.cpp"
     break;
 
   case 9: /* number: T_INT  */
-#line 289 "parser.y"
+#line 290 "parser.y"
                      { (yyval.ival) = (yyvsp[0].ival);                         }
-#line 1447 "parser.tab.cpp"
+#line 1545 "parser.tab.cpp"
     break;
 
   case 10: /* number: T_IDENTIFIER  */
-#line 290 "parser.y"
+#line 291 "parser.y"
                              { (yyval.ival) = ident2int((yyvsp[0].sval), identifiers); }
-#line 1453 "parser.tab.cpp"
+#line 1551 "parser.tab.cpp"
     break;
 
   case 11: /* paren_expr: T_LPAREN expression T_RPAREN  */
-#line 292 "parser.y"
+#line 293 "parser.y"
                                          { (yyval.ival) = (yyvsp[-1].ival); }
-#line 1459 "parser.tab.cpp"
+#line 1557 "parser.tab.cpp"
     break;
 
   case 12: /* paren_expr: T_LBRACK expression T_RBRACK  */
-#line 293 "parser.y"
+#line 294 "parser.y"
                                                      { (yyval.ival) = (yyvsp[-1].ival); }
-#line 1465 "parser.tab.cpp"
+#line 1563 "parser.tab.cpp"
     break;
 
   case 13: /* expression: number  */
-#line 295 "parser.y"
+#line 296 "parser.y"
                                                               { (yyval.ival) =  (yyvsp[0].ival);       }
-#line 1471 "parser.tab.cpp"
+#line 1569 "parser.tab.cpp"
     break;
 
   case 14: /* expression: paren_expr  */
-#line 296 "parser.y"
+#line 297 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[0].ival);       }
-#line 1477 "parser.tab.cpp"
+#line 1575 "parser.tab.cpp"
     break;
 
   case 15: /* expression: expression T_PLUS expression  */
-#line 297 "parser.y"
+#line 298 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[-2].ival) +  (yyvsp[0].ival); }
-#line 1483 "parser.tab.cpp"
+#line 1581 "parser.tab.cpp"
     break;
 
   case 16: /* expression: expression T_MINUS expression  */
-#line 298 "parser.y"
+#line 299 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[-2].ival) -  (yyvsp[0].ival); }
-#line 1489 "parser.tab.cpp"
+#line 1587 "parser.tab.cpp"
     break;
 
   case 17: /* expression: expression T_TIMES expression  */
-#line 299 "parser.y"
+#line 300 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[-2].ival) *  (yyvsp[0].ival); }
-#line 1495 "parser.tab.cpp"
+#line 1593 "parser.tab.cpp"
     break;
 
   case 18: /* expression: expression T_DIVIDE expression  */
-#line 300 "parser.y"
+#line 301 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[-2].ival) /  (yyvsp[0].ival); }
-#line 1501 "parser.tab.cpp"
+#line 1599 "parser.tab.cpp"
     break;
 
   case 19: /* expression: expression T_LSHIFT expression  */
-#line 301 "parser.y"
+#line 302 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[-2].ival) << (yyvsp[0].ival); }
-#line 1507 "parser.tab.cpp"
+#line 1605 "parser.tab.cpp"
     break;
 
   case 20: /* expression: expression T_RSHIFT expression  */
-#line 302 "parser.y"
+#line 303 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[-2].ival) >> (yyvsp[0].ival); }
-#line 1513 "parser.tab.cpp"
+#line 1611 "parser.tab.cpp"
     break;
 
   case 21: /* expression: expression T_CARET expression  */
-#line 303 "parser.y"
+#line 304 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[-2].ival) ^  (yyvsp[0].ival); }
-#line 1519 "parser.tab.cpp"
+#line 1617 "parser.tab.cpp"
     break;
 
   case 22: /* expression: expression T_AMPERSAND expression  */
-#line 304 "parser.y"
+#line 305 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[-2].ival) &  (yyvsp[0].ival); }
-#line 1525 "parser.tab.cpp"
+#line 1623 "parser.tab.cpp"
     break;
 
   case 23: /* expression: expression T_PIPE expression  */
-#line 305 "parser.y"
+#line 306 "parser.y"
                                                                       { (yyval.ival) =  (yyvsp[-2].ival) |  (yyvsp[0].ival); }
-#line 1531 "parser.tab.cpp"
+#line 1629 "parser.tab.cpp"
     break;
 
   case 24: /* expression: T_MINUS expression  */
-#line 306 "parser.y"
+#line 307 "parser.y"
                                                                       { (yyval.ival) = -(yyvsp[0].ival);       }
-#line 1537 "parser.tab.cpp"
+#line 1635 "parser.tab.cpp"
     break;
 
   case 25: /* expression: T_TILDE expression  */
-#line 307 "parser.y"
+#line 308 "parser.y"
                                                                       { (yyval.ival) = ~(yyvsp[0].ival);       }
-#line 1543 "parser.tab.cpp"
+#line 1641 "parser.tab.cpp"
     break;
 
   case 27: /* operand: imm  */
-#line 311 "parser.y"
+#line 312 "parser.y"
                     { (yyval.ival) = (yyvsp[0].ival); }
-#line 1549 "parser.tab.cpp"
+#line 1647 "parser.tab.cpp"
     break;
 
   case 28: /* operand: mem  */
-#line 312 "parser.y"
+#line 313 "parser.y"
                             { (yyval.ival) = (yyvsp[0].ival); }
-#line 1555 "parser.tab.cpp"
+#line 1653 "parser.tab.cpp"
     break;
 
   case 29: /* operand: T_REGISTER  */
-#line 313 "parser.y"
+#line 314 "parser.y"
                             { (yyval.ival) = (yyvsp[0].ival); }
-#line 1561 "parser.tab.cpp"
+#line 1659 "parser.tab.cpp"
     break;
 
   case 41: /* imm: T_HASH number  */
-#line 330 "parser.y"
+#line 331 "parser.y"
                        { (yyval.ival) = (yyvsp[0].ival); }
-#line 1567 "parser.tab.cpp"
+#line 1665 "parser.tab.cpp"
     break;
 
   case 42: /* imm: T_HASH paren_expr  */
-#line 331 "parser.y"
+#line 332 "parser.y"
                            { (yyval.ival) = (yyvsp[0].ival); }
-#line 1573 "parser.tab.cpp"
+#line 1671 "parser.tab.cpp"
     break;
 
   case 43: /* mem: T_PERCENT number  */
-#line 333 "parser.y"
+#line 334 "parser.y"
                           { (yyval.ival) = (yyvsp[0].ival); }
-#line 1579 "parser.tab.cpp"
+#line 1677 "parser.tab.cpp"
     break;
 
   case 44: /* mem: T_PERCENT paren_expr  */
-#line 334 "parser.y"
+#line 335 "parser.y"
                               { (yyval.ival) = (yyvsp[0].ival); }
-#line 1585 "parser.tab.cpp"
+#line 1683 "parser.tab.cpp"
     break;
 
 
-#line 1589 "parser.tab.cpp"
+#line 1687 "parser.tab.cpp"
 
       default: break;
     }
@@ -1606,6 +1704,7 @@ yyreduce:
   yylen = 0;
 
   *++yyvsp = yyval;
+  *++yylsp = yyloc;
 
   /* Now 'shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
@@ -1635,6 +1734,7 @@ yyerrlab:
       yyerror (YY_("syntax error"));
     }
 
+  yyerror_range[1] = yylloc;
   if (yyerrstatus == 3)
     {
       /* If just tried and failed to reuse lookahead token after an
@@ -1649,7 +1749,7 @@ yyerrlab:
       else
         {
           yydestruct ("Error: discarding",
-                      yytoken, &yylval);
+                      yytoken, &yylval, &yylloc);
           yychar = YYEMPTY;
         }
     }
@@ -1702,9 +1802,9 @@ yyerrlab1:
       if (yyssp == yyss)
         YYABORT;
 
-
+      yyerror_range[1] = *yylsp;
       yydestruct ("Error: popping",
-                  YY_ACCESSING_SYMBOL (yystate), yyvsp);
+                  YY_ACCESSING_SYMBOL (yystate), yyvsp, yylsp);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -1714,6 +1814,9 @@ yyerrlab1:
   *++yyvsp = yylval;
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 
+  yyerror_range[2] = yylloc;
+  ++yylsp;
+  YYLLOC_DEFAULT (*yylsp, yyerror_range, 2);
 
   /* Shift the error token.  */
   YY_SYMBOL_PRINT ("Shifting", YY_ACCESSING_SYMBOL (yyn), yyvsp, yylsp);
@@ -1759,7 +1862,7 @@ yyreturn:
          user semantic actions for why this is necessary.  */
       yytoken = YYTRANSLATE (yychar);
       yydestruct ("Cleanup: discarding lookahead",
-                  yytoken, &yylval);
+                  yytoken, &yylval, &yylloc);
     }
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYABORT or YYACCEPT.  */
@@ -1768,7 +1871,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  YY_ACCESSING_SYMBOL (+*yyssp), yyvsp);
+                  YY_ACCESSING_SYMBOL (+*yyssp), yyvsp, yylsp);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -1779,7 +1882,7 @@ yyreturn:
   return yyresult;
 }
 
-#line 336 "parser.y"
+#line 337 "parser.y"
 
 
 int yyerror(const char* s)
@@ -1833,7 +1936,7 @@ int __cdecl main(const int argc, const char** argv) noexcept
 		//assert that the file supplied is readable
 		if (!file.good())
 		{
-			std::cerr << "Failed to open the specified file";
+			std::cerr << "Failed to open the specified file for reading";
 			return 2;
 		}
 
@@ -1949,8 +2052,31 @@ int __cdecl main(const int argc, const char** argv) noexcept
 			}
 		}
 
+		//obtains a local
+		auto path = (fp + ".pps").c_str();
+
 		//saves the preprocessed source out to disk
-		assert(std::FILE* fptr = std::fopen((fp + ".pps").c_str(), "w")));
+		{
+			//attempts to open up a file handle
+			auto* fptr = std::fopen(path, "w");
+			
+			//errors if not opened correctly
+			if (fptr == NULL)
+			{
+				std::cerr << "Failed to open the specified file for writing";
+				return 6;
+			}
+
+			//
+			std::fwrite(buffer.data(), sizeof(buffer[0]), buffer.size(), fptr);
+			std::fclose(fptr);
+		}
+
+		//reads out the saved preprocessed source
+		auto* fptr = std::fopen(path, "r");
+		auto  size = std::filesystem::file_size(path);
+		std::string text(size, '\0');
+		(void)std::fread(text.data(), sizeof(text[0]), size, fptr);
 
 		//detects a valid label declaration
 		std::regex rx_label_decl(R"(^([a-zA-Z_][a-zA-Z0-9_]*)\:\s*(?:\;.*)?$)");
@@ -1959,7 +2085,10 @@ int __cdecl main(const int argc, const char** argv) noexcept
 		std::smatch matches{};
 
 		//discover all loop identifiers
-		while (std::regex_search(buffer, ))
+		while (std::regex_search(text, matches, rx_label_decl))
+		{
+			
+		}
 
 		//lex and parse the file contents
 		do

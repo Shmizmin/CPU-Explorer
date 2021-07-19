@@ -166,7 +166,7 @@
       <OpenMPSupport>true</OpenMPSupport>
       <EnableModules>false</EnableModules>
       <CallingConvention>VectorCall</CallingConvention>
-      <DisableSpecificWarnings>4065;4505;4702</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4065;4505;4702;4127</DisableSpecificWarnings>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <FunctionLevelLinking>false</FunctionLevelLinking>
@@ -197,7 +197,7 @@
       <OpenMPSupport>true</OpenMPSupport>
       <EnableModules>false</EnableModules>
       <CallingConvention>VectorCall</CallingConvention>
-      <DisableSpecificWarnings>4065;4505;4702</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4065;4505;4702;4127</DisableSpecificWarnings>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
