@@ -535,10 +535,18 @@ int __cdecl main(const int argc, const char** argv) noexcept
 		//will store each of the string regex matches that are made during the search
 		std::smatch matches{};
 
-		//discover all loop identifiers
+		//will store every label identifier discovered
+		std::map<std::string, int> labels{};
+		
+		//discover all label identifiers present in the source file
 		while (std::regex_search(text, matches, rx_label_decl))
 		{
-			
+			//assuming label doesn't already exist
+			if (labels.try_emplace(matches[1].str(), 1) == labels.end()) [[unlikely]]
+			{
+				std::cerr << "Duplicate label identifier " << matches[1].str() << " was found";
+				return 7;
+			}
 		}
 
 		//lex and parse the file contents
