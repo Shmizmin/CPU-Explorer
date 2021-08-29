@@ -4,6 +4,7 @@
 #include <cstdlib>
 
 #include <map>
+#include <set>
 #include <regex>
 #include <vector>
 #include <utility>
@@ -13,6 +14,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <filesystem>
+#include <unordered_set>
 
 extern int yylex();
 extern int yyparse();
@@ -20,8 +22,7 @@ extern std::FILE* yyin;
 
 extern int line_number;
 
-std::uint16_t macro_iden{ 1 },
-			  write_head{ 0 };
+std::uint16_t write_head{ 0 };
 
 struct Instruction;
 
@@ -90,9 +91,6 @@ std::uint16_t ident2int(const std::string& str, std::map<std::string, std::pair<
 
 //maps any string identifier to a 16bit integer with a 'direct-ness' tag
 std::map<std::string, std::pair<Qualifier, std::uint16_t>> identifiers{};
-
-//stores all of the parsed macros
-std::vector<Instruction> macros{};
 
 int yyerror(const char* s);
 %}
@@ -191,80 +189,26 @@ int yyerror(const char* s);
 		Push,
 		Pop,
 	};
-
-	struct ModRM
-	{
-		Rsel rsel;
-		Mode mode1, mode2;
-		Addr addr1, addr2;
-
-		constexpr auto from_byte(std::uint8_t byte) noexcept
-		{
-			rsel  = static_cast<Rsel>((byte & 0b11000000) >> 6);
-			mode1 = static_cast<Mode>((byte & 0b00110000) >> 4);
-			mode2 = static_cast<Mode>((byte & 0b00001100) >> 2);
-			addr1 = static_cast<Addr>((byte & 0b00000010) >> 1);
-			addr2 = static_cast<Addr>((byte & 0b00000001) >> 0);
-		}
-
-		constexpr auto to_byte(void) noexcept
-		{
-			auto   byte  =  static_cast<std::uint8_t>(0);
-				   byte |= (static_cast<std::uint8_t>(rsel)  << 6);
-				   byte |= (static_cast<std::uint8_t>(mode1) << 4);
-				   byte |= (static_cast<std::uint8_t>(mode2) << 2);
-				   byte |= (static_cast<std::uint8_t>(addr1) << 1);
-				   byte |= (static_cast<std::uint8_t>(addr2) << 0);
-			return byte;
-		}
-
-		constexpr ModRM(std::uint8_t byte) noexcept
-			{ from_byte(byte); }
-	};
-
-	struct Operand
-	{
-		ModRM modrm;
-
-		union
-		{
-			std::uint8_t val8;
-			std::uint16_t val16;
-		};
-	};
-
-	struct Mnemonic
-	{
-		Mode mode;
-		Addr addr;
-		Opcode opcode;
-	};
-
-	struct Instruction
-	{
-		Mnemonic mnemonic;
-		std::optional<Operand> operand1, operand2;
-	};
 %}
 
 %%
 
-program: statements { std::puts("Parsing..."); };
+program: statements { std::cout << "Parsing..."; }
 
 directive: T_ORIGIN number {
 								write_head = static_cast<std::uint16_t>($2);
 						   }
 |		   T_ALIAS8 T_IDENTIFIER T_COLON expression {
-														contains(identifiers, $2, { Qualifier::Value8, static_cast<std::uint16_t>($4) }); 
-														code[write_head] = static_cast<std::uint8_t>($4);
-														++write_head;
+														contains(identifiers, $2, { Qualifier::Value8, static_cast<std::uint16_t>($4) });
+														//code[write_head] = static_cast<std::uint8_t>($4);
+														//++write_head;
 													}
 |		   T_ALIAS16 T_IDENTIFIER T_EQUAL expression {
 														contains(identifiers, $2, { Qualifier::Value16, static_cast<std::uint16_t>($4) });
-														code[write_head] = static_cast<std::uint8_t>($4 & 0x00FF);
-														++write_head;
-														code[write_head] = static_cast<std::uint8_t>($4 & 0xFF00);
-														++write_head;
+														//code[write_head] = static_cast<std::uint8_t>($4 & 0x00FF);
+														//++write_head;
+														//code[write_head] = static_cast<std::uint8_t>($4 & 0xFF00);
+														//++write_head;
 													}
 |		   T_VAR16 T_IDENTIFIER T_EQUAL expression {
 														contains(identifiers, $2, { Qualifier::Variable16, write_head });
@@ -399,7 +343,7 @@ int __cdecl main(const int argc, const char** argv) noexcept
 
 		//read the entire file into the buffer
 		file.read(buffer.data(), length);
-		
+
 		//ties together each basic component of a macro
 		struct Macro { std::string identifier, statements; std::vector<std::string> arguments; };
 
@@ -436,7 +380,7 @@ int __cdecl main(const int argc, const char** argv) noexcept
 				//tokenize the string using the commas as delimiters
 				if (macro_list.try_emplace(std::move(matches[1].str()), Macro{ matches[1].str(), statements, split(extracted, ",") }).first != macro_list.end()) [[likely]]
 				{
-					//then erase the macro source code from the 
+					//then erase the macro source code from the
 					replace(buffer, matches[0].str(), "");
 				}
 				else
@@ -484,7 +428,7 @@ int __cdecl main(const int argc, const char** argv) noexcept
 						return 120;
 					}
 				}
-				
+
 				//copy the whole invokation string for loop usage
  				auto whole = matches[0].str();
 
@@ -503,14 +447,14 @@ int __cdecl main(const int argc, const char** argv) noexcept
 			}
 		}
 
-		//obtains a local
-		auto path = (fp + ".pps").c_str();
+		//indicate preprocessed source filepath
+		std::string path = (fp + ".pps");
 
 		//saves the preprocessed source out to disk
 		{
 			//attempts to open up a file handle
-			auto* fptr = std::fopen(path, "w");
-			
+			auto* fptr = std::fopen(path.c_str(), "w");
+
 			//errors if not opened correctly
 			if (fptr == NULL)
 			{
@@ -518,16 +462,16 @@ int __cdecl main(const int argc, const char** argv) noexcept
 				return 6;
 			}
 
-			//
+			//write out to disk and close the file handle
 			std::fwrite(buffer.data(), sizeof(buffer[0]), buffer.size(), fptr);
 			std::fclose(fptr);
 		}
 
 		//reads out the saved preprocessed source
-		auto* fptr = std::fopen(path, "r");
+		auto* fptr = std::fopen(path.c_str(), "r");
 		auto  size = std::filesystem::file_size(path);
 		std::string text(size, '\0');
-		(void)std::fread(text.data(), sizeof(text[0]), size, fptr);
+		static_cast<void>(std::fread(text.data(), sizeof(text[0]), size, fptr));
 
 		//detects a valid label declaration
 		std::regex rx_label_decl(R"(^([a-zA-Z_][a-zA-Z0-9_]*)\:\s*(?:\;.*)?$)");
@@ -536,17 +480,25 @@ int __cdecl main(const int argc, const char** argv) noexcept
 		std::smatch matches{};
 
 		//will store every label identifier discovered
-		std::map<std::string, int> labels{};
-		
+		//std::map<std::string, int> labels{};
+		std::unordered_set<std::string> labels{};
+
 		//discover all label identifiers present in the source file
-		while (std::regex_search(text, matches, rx_label_decl))
+		auto reg = rx_label_decl;
+		auto iter = std::sregex_iterator(text.begin(), text.end(), reg);
+		std::sregex_iterator end;
+
+		while (iter != end)
 		{
-			//assuming label doesn't already exist
-			if (labels.try_emplace(matches[1].str(), 1) == labels.end()) [[unlikely]]
+			std::smatch match = *iter;
+
+			if (!labels.emplace(match[1].str()).second) [[unlikely]]
 			{
 				std::cerr << "Duplicate label identifier " << matches[1].str() << " was found";
 				return 7;
 			}
+
+			++iter;
 		}
 
 		//lex and parse the file contents

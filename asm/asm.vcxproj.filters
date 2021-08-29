@@ -19,9 +19,6 @@
     <Filter Include="Supporting Files">
       <UniqueIdentifier>{fcae9dfb-6594-4c3d-9d9f-04b4f4a23259}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Grammar Files\lpp">
-      <UniqueIdentifier>{9019a6fa-e8c2-4809-bf92-7e5243852503}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\parser.tab.hpp">
